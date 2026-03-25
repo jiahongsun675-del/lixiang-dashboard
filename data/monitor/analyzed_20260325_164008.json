@@ -1,0 +1,53 @@
+{
+  "iteration": 1,
+  "timestamp": "20260325_164008",
+  "count": 1,
+  "results": [
+    {
+      "bvid": "BV1bnQyBMERi",
+      "title": "理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！",
+      "author": "抽象行为学",
+      "pubdate": "2026-03-25T07:10:20",
+      "total_score": 72.0,
+      "priority": "medium",
+      "recommendation": "可考虑小额测试投流",
+      "suggested_budget": "2000-4000元",
+      "is_underdog": true,
+      "underdog_bonus": 15,
+      "dimensions": {
+        "interaction": {
+          "score": 33,
+          "interaction_rate": 5.61,
+          "like_rate": 5.05,
+          "comment_rate": 0.19,
+          "evaluation": "优秀"
+        },
+        "growth_trend": {
+          "score": 12,
+          "available": false,
+          "evaluation": "数据不足"
+        },
+        "up_quality": {
+          "score": 4.0,
+          "up_fans": 0,
+          "priority": "medium",
+          "evaluation": "普通创作者"
+        },
+        "sentiment": {
+          "score": 8.0,
+          "like_reply_ratio": 27.0,
+          "coin_rate": 0.0,
+          "evaluation": "正向反馈"
+        }
+      },
+      "raw_data": {
+        "play": 535,
+        "like": 27,
+        "coin": 0,
+        "favorite": 1,
+        "reply": 1,
+        "danmaku": 1
+      }
+    }
+  ]
+}

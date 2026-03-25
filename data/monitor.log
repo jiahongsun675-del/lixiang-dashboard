@@ -1,0 +1,208 @@
+/Users/jiajia/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[2026-03-25 16:33:25] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:33:25] [INFO] 提醒阈值: 70分
+[2026-03-25 16:33:25] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 70, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:33:25] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:33:25] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+[2026-03-25 16:33:29] [INFO] 关键词搜索发现 18 个视频
+[2026-03-25 16:33:29] [INFO] 去重后共 8 个视频
+[2026-03-25 16:33:29] [INFO] 正在获取详细数据...
+[2026-03-25 16:33:34] [INFO] 成功获取 8 个视频的详细数据
+[2026-03-25 16:33:34] [INFO] 开始分析 8 个视频...
+[2026-03-25 16:33:34] [INFO] 分析完成,1 个视频达到提醒阈值(70分)
+[2026-03-25 16:33:34] [ALERT] 发送提醒: 理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。 (评分: 71.9分)
+[2026-03-25 16:33:35] [INFO] 提醒结果: {'feishu': '飞书通知已发送'}
+[2026-03-25 16:33:35] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:33:35] [INFO] 等待 30 分钟后进行下次监控...
+[2026-03-25 16:39:15] [INFO] 监控已停止
+[2026-03-25 16:33:25] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:33:25] [INFO] 提醒阈值: 70分
+[2026-03-25 16:33:25] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 70, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:33:25] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:33:25] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+搜索关键词: 理想汽车
+搜索关键词 理想汽车 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L9
+搜索关键词 理想L9 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想MEGA
+搜索关键词 理想MEGA 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L8
+搜索关键词: 理想L7
+搜索关键词: 理想L6
+关键词搜索共发现 18 个视频
+[2026-03-25 16:33:29] [INFO] 关键词搜索发现 18 个视频
+[2026-03-25 16:33:29] [INFO] 去重后共 8 个视频
+[2026-03-25 16:33:29] [INFO] 正在获取详细数据...
+获取详细数据: BV1cxQmBaER3
+获取详细数据: BV13kQmBDEzx
+获取详细数据: BV1h3Q6BZEE5
+获取详细数据: BV1t5Q6BdEUS
+获取详细数据: BV1vrQ6BMEDE
+获取详细数据: BV1e1Q6BvEub
+获取详细数据: BV1TZQBBUEAn
+获取详细数据: BV1tKQ1BqENX
+[2026-03-25 16:33:34] [INFO] 成功获取 8 个视频的详细数据
+[2026-03-25 16:33:34] [INFO] 开始分析 8 个视频...
+[2026-03-25 16:33:34] [INFO] 分析完成,1 个视频达到提醒阈值(70分)
+[2026-03-25 16:33:34] [ALERT] 发送提醒: 理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。 (评分: 71.9分)
+[2026-03-25 16:33:35] [INFO] 提醒结果: {'feishu': '飞书通知已发送'}
+[2026-03-25 16:33:35] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:33:35] [INFO] 等待 30 分钟后进行下次监控...
+
+
+收到退出信号,正在优雅停止...
+[2026-03-25 16:39:15] [INFO] 监控已停止
+/Users/jiajia/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[2026-03-25 16:39:49] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:39:49] [INFO] 提醒阈值: 70分
+[2026-03-25 16:39:49] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 70, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:39:49] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:39:49] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+[2026-03-25 16:39:53] [INFO] 关键词搜索发现 33 个视频
+[2026-03-25 16:39:53] [INFO] 去重后共 24 个视频
+[2026-03-25 16:39:53] [INFO] 正在获取详细数据...
+[2026-03-25 16:40:07] [INFO] 成功获取 24 个视频的详细数据
+[2026-03-25 16:40:07] [INFO] 开始分析 24 个视频...
+[2026-03-25 16:40:08] [INFO] 分析完成,1 个视频达到提醒阈值(70分)
+[2026-03-25 16:40:08] [ALERT] 发送批量推荐: 1 个视频
+[2026-03-25 16:40:08] [INFO] 提醒结果: {'feishu': '批量推荐已发送(1个视频)'}
+[2026-03-25 16:40:08] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:40:08] [INFO] 等待 30 分钟后进行下次监控...
+[2026-03-25 16:46:38] [INFO] 监控已停止
+[2026-03-25 16:39:49] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:39:49] [INFO] 提醒阈值: 70分
+[2026-03-25 16:39:49] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 70, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:39:49] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:39:49] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+搜索关键词: 理想汽车
+搜索关键词: 理想L9
+搜索关键词 理想L9 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想MEGA
+搜索关键词 理想MEGA 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L8
+搜索关键词: 理想L7
+搜索关键词: 理想L6
+搜索关键词 理想L6 失败: Expecting value: line 1 column 1 (char 0)
+关键词搜索共发现 33 个视频
+[2026-03-25 16:39:53] [INFO] 关键词搜索发现 33 个视频
+[2026-03-25 16:39:53] [INFO] 去重后共 24 个视频
+[2026-03-25 16:39:53] [INFO] 正在获取详细数据...
+获取详细数据: BV1cxQmBaER3
+获取详细数据: BV1rPQUBvEaK
+获取详细数据: BV1tKQ1BqENX
+获取详细数据: BV1LDQyBmEiA
+获取详细数据: BV16cQ2BfE8T
+获取详细数据: BV1StQ2B3EAi
+获取详细数据: BV1FnQCBJE8v
+获取详细数据: BV1bnQyBMERi
+获取详细数据: BV19gQkBTEhB
+获取详细数据: BV1GgQ6B8ExG
+获取详细数据: BV1vrQ6BMEDE
+获取详细数据: BV1qrQ6BMECD
+获取详细数据: BV1e1Q6BvEub
+获取详细数据: BV1g9Q6BFEZb
+获取详细数据: BV1dxQrBTEcY
+获取详细数据: BV1gYQrBYEqD
+获取详细数据: BV1FVQrBjEiG
+获取详细数据: BV1kiAAzKEGU
+获取详细数据: BV1dvPZzEELW
+获取详细数据: BV1wTQzBkEFj
+获取详细数据: BV13kQmBDEzx
+获取详细数据: BV1h3Q6BZEE5
+获取详细数据: BV1t5Q6BdEUS
+获取详细数据: BV1TZQBBUEAn
+[2026-03-25 16:40:07] [INFO] 成功获取 24 个视频的详细数据
+[2026-03-25 16:40:07] [INFO] 开始分析 24 个视频...
+[2026-03-25 16:40:08] [INFO] 分析完成,1 个视频达到提醒阈值(70分)
+[2026-03-25 16:40:08] [ALERT] 发送批量推荐: 1 个视频
+[2026-03-25 16:40:08] [INFO] 提醒结果: {'feishu': '批量推荐已发送(1个视频)'}
+[2026-03-25 16:40:08] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:40:08] [INFO] 等待 30 分钟后进行下次监控...
+
+
+收到退出信号,正在优雅停止...
+[2026-03-25 16:46:38] [INFO] 监控已停止
+/Users/jiajia/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[2026-03-25 16:46:42] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:46:42] [INFO] 提醒阈值: 55分
+[2026-03-25 16:46:42] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 55, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:46:42] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:46:42] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+[2026-03-25 16:46:45] [INFO] 关键词搜索发现 25 个视频
+[2026-03-25 16:46:45] [INFO] 去重后共 22 个视频
+[2026-03-25 16:46:45] [INFO] 正在获取详细数据...
+[2026-03-25 16:46:58] [INFO] 成功获取 22 个视频的详细数据
+[2026-03-25 16:46:58] [INFO] 开始分析 22 个视频...
+[2026-03-25 16:46:58] [INFO] 分析完成,2 个视频达到提醒阈值(55分)
+[2026-03-25 16:46:58] [ALERT] 发送批量推荐: 2 个视频
+[2026-03-25 16:46:58] [INFO] 提醒结果: {'feishu': '批量推荐已发送(2个视频)'}
+[2026-03-25 16:46:58] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:46:58] [INFO] 等待 30 分钟后进行下次监控...
+[2026-03-25 17:01:48] [INFO] 监控已停止
+[2026-03-25 16:46:42] [INFO] 持续监控已启动,监控间隔: 30分钟
+[2026-03-25 16:46:42] [INFO] 提醒阈值: 55分
+[2026-03-25 16:46:42] [INFO] 配置文件: {'interval_minutes': 30, 'search_days': 1, 'alert_threshold': 55, 'enable_keyword_search': True, 'keywords': ['理想汽车', '理想L9', '理想MEGA', '理想L8', '理想L7', '理想L6'], 'enable_up_monitor': False, 'up_list_file': 'references/key_ups.json', 'scoring_rules_file': 'references/scoring_rules.json', 'historical_db': 'data/history.db', 'notification': {'enabled_channels': ['feishu'], 'feishu_webhook_url': 'https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149'}, 'output_dir': 'data/monitor', 'alert_record_file': 'data/alert_records.json', 'log_file': 'data/monitor.log'}
+[2026-03-25 16:46:42] [INFO] ========== 第 1 次监控 ==========
+[2026-03-25 16:46:42] [INFO] 开始关键词搜索: 理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6
+搜索关键词: 理想汽车
+搜索关键词: 理想L9
+搜索关键词: 理想MEGA
+搜索关键词 理想MEGA 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L8
+搜索关键词 理想L8 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L7
+搜索关键词 理想L7 失败: Expecting value: line 1 column 1 (char 0)
+搜索关键词: 理想L6
+搜索关键词 理想L6 失败: Expecting value: line 1 column 1 (char 0)
+关键词搜索共发现 25 个视频
+[2026-03-25 16:46:45] [INFO] 关键词搜索发现 25 个视频
+[2026-03-25 16:46:45] [INFO] 去重后共 22 个视频
+[2026-03-25 16:46:45] [INFO] 正在获取详细数据...
+获取详细数据: BV1cxQmBaER3
+获取详细数据: BV1rPQUBvEaK
+获取详细数据: BV1tKQ1BqENX
+获取详细数据: BV1LDQyBmEiA
+获取详细数据: BV16cQ2BfE8T
+获取详细数据: BV1StQ2B3EAi
+获取详细数据: BV1FnQCBJE8v
+获取详细数据: BV1bnQyBMERi
+获取详细数据: BV19gQkBTEhB
+获取详细数据: BV1GgQ6B8ExG
+获取详细数据: BV1vrQ6BMEDE
+获取详细数据: BV1qrQ6BMECD
+获取详细数据: BV1e1Q6BvEub
+获取详细数据: BV1g9Q6BFEZb
+获取详细数据: BV1dxQrBTEcY
+获取详细数据: BV1gYQrBYEqD
+获取详细数据: BV1FVQrBjEiG
+获取详细数据: BV1kiAAzKEGU
+获取详细数据: BV1dvPZzEELW
+获取详细数据: BV1wTQzBkEFj
+获取详细数据: BV1h3Q6BZEE5
+获取详细数据: BV1t5Q6BdEUS
+[2026-03-25 16:46:58] [INFO] 成功获取 22 个视频的详细数据
+[2026-03-25 16:46:58] [INFO] 开始分析 22 个视频...
+[2026-03-25 16:46:58] [INFO] 分析完成,2 个视频达到提醒阈值(55分)
+[2026-03-25 16:46:58] [ALERT] 发送批量推荐: 2 个视频
+[2026-03-25 16:46:58] [INFO] 提醒结果: {'feishu': '批量推荐已发送(2个视频)'}
+[2026-03-25 16:46:58] [INFO] ========== 第 1 次监控完成 ==========
+
+[2026-03-25 16:46:58] [INFO] 等待 30 分钟后进行下次监控...
+
+
+收到退出信号,正在优雅停止...
+[2026-03-25 17:01:48] [INFO] 监控已停止
+/Users/jiajia/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[2026-03-25 17:02:05] [INFO] 定时推送模式已启动,推送时间: 12:00, 17:00
+[2026-03-25 17:02:05] [INFO] 提醒阈值: 70分
+[2026-03-25 17:02:05] [INFO] 每天将在以下时间自动推送: 12:00, 17:00
+[2026-03-25 17:02:05] [INFO] 新的一天开始: 2026-03-25

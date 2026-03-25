@@ -1,0 +1,105 @@
+{
+  "iteration": 1,
+  "timestamp": "20260325_164658",
+  "count": 2,
+  "results": [
+    {
+      "bvid": "BV1bnQyBMERi",
+      "title": "理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！",
+      "author": "抽象行为学",
+      "pubdate": "2026-03-25T07:10:20",
+      "total_score": 60.4,
+      "priority": "medium",
+      "recommendation": "可考虑小额测试投流",
+      "suggested_budget": "2000-4000元",
+      "is_underdog": true,
+      "underdog_bonus": 15,
+      "dimensions": {
+        "interaction": {
+          "score": 33,
+          "interaction_rate": 5.55,
+          "like_rate": 4.99,
+          "comment_rate": 0.18,
+          "evaluation": "优秀"
+        },
+        "growth_trend": {
+          "score": 0.4,
+          "available": true,
+          "play_growth_rate": 1.12,
+          "like_growth_rate": 0.0,
+          "hours": 6,
+          "evaluation": "增长缓慢"
+        },
+        "up_quality": {
+          "score": 4.0,
+          "up_fans": 0,
+          "priority": "medium",
+          "evaluation": "普通创作者"
+        },
+        "sentiment": {
+          "score": 8.0,
+          "like_reply_ratio": 27.0,
+          "coin_rate": 0.0,
+          "evaluation": "正向反馈"
+        }
+      },
+      "raw_data": {
+        "play": 541,
+        "like": 27,
+        "coin": 0,
+        "favorite": 1,
+        "reply": 1,
+        "danmaku": 1
+      }
+    },
+    {
+      "bvid": "BV1e1Q6BvEub",
+      "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。",
+      "author": "叶枫有理想",
+      "pubdate": "2026-03-24T21:49:16",
+      "total_score": 60.0,
+      "priority": "medium",
+      "recommendation": "可考虑小额测试投流",
+      "suggested_budget": "2000-4000元",
+      "is_underdog": true,
+      "underdog_bonus": 15,
+      "dimensions": {
+        "interaction": {
+          "score": 30.7,
+          "interaction_rate": 9.01,
+          "like_rate": 1.97,
+          "comment_rate": 0.41,
+          "evaluation": "良好"
+        },
+        "growth_trend": {
+          "score": 0.2,
+          "available": true,
+          "play_growth_rate": 0.58,
+          "like_growth_rate": 0.0,
+          "hours": 6,
+          "evaluation": "增长缓慢"
+        },
+        "up_quality": {
+          "score": 4.0,
+          "up_fans": 0,
+          "priority": "medium",
+          "evaluation": "普通创作者"
+        },
+        "sentiment": {
+          "score": 10.1,
+          "like_reply_ratio": 4.8,
+          "coin_rate": 0.9,
+          "evaluation": "正向反馈"
+        }
+      },
+      "raw_data": {
+        "play": 1221,
+        "like": 24,
+        "coin": 11,
+        "favorite": 69,
+        "reply": 5,
+        "danmaku": 0
+      }
+    }
+  ]
+}

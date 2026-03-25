@@ -1,0 +1,53 @@
+{
+  "iteration": 1,
+  "timestamp": "20260325_163335",
+  "count": 1,
+  "results": [
+    {
+      "bvid": "BV1e1Q6BvEub",
+      "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。",
+      "author": "叶枫有理想",
+      "pubdate": "2026-03-24T21:49:16",
+      "total_score": 71.9,
+      "priority": "medium",
+      "recommendation": "可考虑小额测试投流",
+      "suggested_budget": "2000-4000元",
+      "is_underdog": true,
+      "underdog_bonus": 15,
+      "dimensions": {
+        "interaction": {
+          "score": 30.7,
+          "interaction_rate": 8.98,
+          "like_rate": 1.98,
+          "comment_rate": 0.41,
+          "evaluation": "良好"
+        },
+        "growth_trend": {
+          "score": 12,
+          "available": false,
+          "evaluation": "数据不足"
+        },
+        "up_quality": {
+          "score": 4.0,
+          "up_fans": 0,
+          "priority": "medium",
+          "evaluation": "普通创作者"
+        },
+        "sentiment": {
+          "score": 10.2,
+          "like_reply_ratio": 4.8,
+          "coin_rate": 0.91,
+          "evaluation": "正向反馈"
+        }
+      },
+      "raw_data": {
+        "play": 1214,
+        "like": 24,
+        "coin": 11,
+        "favorite": 68,
+        "reply": 5,
+        "danmaku": 0
+      }
+    }
+  ]
+}
