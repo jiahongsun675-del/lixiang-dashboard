@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="refresh" content="300">
+<title>B站AI起飞加热监测工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;padding:20px}
+.wrap{max-width:1200px;margin:0 auto}
+
+.header{text-align:center;color:#fff;margin-bottom:28px}
+.header h1{font-size:2em;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,0.5)}
+.header .sub{opacity:.75;font-size:.95em}
+.header .ts{opacity:.55;font-size:.82em;margin-top:6px}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:18px;color:#fff;text-align:center}
+.sc .lbl{font-size:.8em;opacity:.7;margin-bottom:6px}
+.sc .val{font-size:2em;font-weight:700}
+.sc .unit{font-size:.45em;opacity:.65;margin-left:2px}
+
+.section{background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.section h2{font-size:1.3em;color:#1a1a2e;border-bottom:3px solid #667eea;padding-bottom:10px;margin-bottom:18px}
+.snote{font-size:.82em;color:#999;margin-top:-12px;margin-bottom:16px}
+
+.video-list{display:grid;gap:16px}
+.video-item{border:1px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;gap:14px;transition:all .2s}
+.video-item:hover{background:#f9fafb;border-color:#667eea}
+.video-rank{font-size:1.6em;font-weight:700;min-width:38px;text-align:center;color:#667eea;padding-top:2px}
+.video-rank.top1{color:#ef4444}
+.video-rank.top2{color:#f59e0b}
+.video-rank.top3{color:#10b981}
+.video-info{flex:1;min-width:0}
+.video-title{font-size:1em;font-weight:600;color:#1a1a2e;margin-bottom:5px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.video-title a{color:inherit;text-decoration:none;word-break:break-all}
+.video-title a:hover{color:#667eea}
+.video-meta{color:#999;font-size:.82em;margin-bottom:8px}
+
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.7em;font-weight:600;white-space:nowrap}
+.badge-neutral{background:#f1f5f9;color:#475569}
+.badge-positive{background:#dcfce7;color:#166534}
+.badge-medium{background:#fed7aa;color:#9a3412}
+.badge-underdog{background:#fef3c7;color:#92400e}
+
+.recommendation-box{background:#f0f9ff;border-left:4px solid #3b82f6;padding:10px 14px;margin:10px 0;border-radius:4px}
+.rec-title{font-weight:600;color:#1e40af;font-size:.88em;margin-bottom:5px}
+.rec-list{margin:0;padding-left:16px;color:#334155;font-size:.85em}
+.rec-list li{margin-bottom:3px;line-height:1.6}
+
+.video-stats{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.s-item{font-size:.82em;color:#666;white-space:nowrap}
+
+.dim-grid{margin:10px 0;padding:10px;background:#fafafa;border-radius:6px;display:grid;gap:7px}
+.dim-row{display:grid;grid-template-columns:72px 1fr 50px 70px;align-items:center;gap:8px}
+.dim-lbl{font-size:.78em;color:#888}
+.dim-bar{height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.dim-fill{height:100%}
+.dim-val{font-size:.78em;font-weight:600;color:#333;text-align:right}
+.dim-tag{font-size:.72em;color:#888;text-align:right}
+
+.score-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:.88em;color:#555}
+.score-bar{flex:1;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+.score-fill{height:100%;background:linear-gradient(90deg,#10b981,#3b82f6,#667eea)}
+.score-val{font-weight:700;color:#667eea;min-width:52px;text-align:right}
+.budget-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:4px}
+.budget-lbl{font-weight:600;color:#92400e;font-size:.88em}
+.budget-val{font-weight:700;color:#78350f}
+
+.alert-list{display:grid;gap:8px}
+.alert-item{padding:10px 14px;border-left:3px solid #667eea;background:#f9fafb;border-radius:4px}
+.alert-title{font-weight:600;color:#333;margin-bottom:3px;font-size:.95em}
+.alert-meta{font-size:.8em;color:#999}
+
+.promo-list{display:grid;gap:14px}
+.promo-card{border:1px solid #e5e7eb;border-radius:10px;padding:16px}
+.promo-title{font-weight:600;margin-bottom:12px}
+.promo-title a{color:#1a1a2e;text-decoration:none}
+.promo-title a:hover{color:#667eea}
+.promo-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
+.ps{background:#f9fafb;border-radius:8px;padding:10px;text-align:center}
+.ps-l{font-size:.75em;color:#999;margin-bottom:4px}
+.ps-v{font-size:1.2em;font-weight:700}
+.invest{color:#7c3aed}.plays{color:#2563eb}.interact{color:#059669}.cpm{color:#dc2626}.cost{color:#d97706}
+.promo-summary{padding:9px 12px;background:linear-gradient(135deg,#667eea18,#764ba218);border-radius:6px;font-size:.88em;margin-bottom:5px}
+.promo-meta{font-size:.78em;color:#bbb}
+
+/* BV查询区 */
+.bv-section{background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.bv-section h2{font-size:1.3em;color:#1a1a2e;border-bottom:3px solid #667eea;padding-bottom:10px;margin-bottom:18px}
+.bv-input-row{display:flex;gap:12px;margin-bottom:16px}
+.bv-input{flex:1;padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:1em;outline:none;transition:border-color .2s}
+.bv-input:focus{border-color:#667eea}
+.bv-btn{padding:10px 24px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+.bv-btn:hover{background:#4f46e5}
+.bv-btn:disabled{background:#aaa;cursor:not-allowed}
+#bv-result{min-height:60px}
+.bv-card{border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin-top:4px}
+.bv-card-title{font-size:1.1em;font-weight:700;margin-bottom:8px}
+.bv-card-title a{color:#1a1a2e;text-decoration:none}
+.bv-card-title a:hover{color:#667eea}
+.bv-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.bv-stat{background:#f9fafb;border-radius:8px;padding:10px;text-align:center}
+.bv-stat-l{font-size:.78em;color:#999;margin-bottom:4px}
+.bv-stat-v{font-size:1.3em;font-weight:700;color:#333}
+.bv-ir{font-size:.88em;padding:8px 12px;background:#f0f9ff;border-radius:6px;color:#334155;margin-bottom:8px}
+.bv-rec{padding:10px 14px;border-radius:6px;font-weight:600;text-align:center;margin-top:8px}
+.bv-rec.high{background:#dcfce7;color:#166534}
+.bv-rec.medium{background:#fef9c3;color:#854d0e}
+.bv-rec.low{background:#f1f5f9;color:#64748b}
+.bv-error{padding:14px;background:#fee2e2;border-radius:8px;color:#991b1b;font-size:.9em}
+.bv-loading{padding:14px;color:#888;font-size:.9em}
+.empty{text-align:center;padding:30px;color:#bbb;font-size:.9em}
+
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.cfg-item{padding:10px 14px;background:#f9fafb;border-radius:6px}
+.cfg-l{font-size:.8em;color:#888;margin-bottom:3px;font-weight:600}
+.cfg-v{font-size:.9em;color:#333}
+
+@media(max-width:700px){
+  .promo-stats{grid-template-columns:repeat(2,1fr)}
+  .bv-stats-grid{grid-template-columns:repeat(2,1fr)}
+  .dim-row{grid-template-columns:64px 1fr 44px 58px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <h1>🚀 B站AI起飞加热监测工具</h1>
+  <div class="sub">理想汽车全站内容监测 · 互动率+增长趋势智能评分</div>
+  <div class="ts">数据更新: 2026-03-30 14:58:06 &nbsp;|&nbsp; 页面刷新: 2026-03-30 14:58:06 &nbsp;|&nbsp; 每5分钟自动刷新</div>
+</div>
+
+<div class="stats-row">
+  <div class="sc"><div class="lbl">本次分析</div><div class="val">0<span class="unit">个</span></div></div>
+  <div class="sc"><div class="lbl">达标推荐</div><div class="val">9<span class="unit">个</span></div></div>
+  <div class="sc"><div class="lbl">高优先级(≥80分)</div><div class="val">3<span class="unit">个</span></div></div>
+  <div class="sc"><div class="lbl">累计提醒</div><div class="val">19<span class="unit">次</span></div></div>
+  <div class="sc"><div class="lbl">投放记录</div><div class="val">0<span class="unit">条</span></div></div>
+</div>
+
+<div class="section">
+  <h2>🔥 推荐内容排行 TOP9 (综合评分)</h2>
+  <p class="snote">汇总近20次巡检结果 · 已过滤竞品/负面/无关内容 · 按互动率×增长趋势×口碑综合评分排序</p>
+  <div class="video-list">
+    
+    <div class="video-item">
+        <div class="video-rank top1">#1</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1FVXoBxEWC" target="_blank">CIASI 2025年测评车型  理想i6</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-high">强烈推荐</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 中保研汽车技术研究院  | BV: BV1FVXoBxEWC</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率5.20%</strong> — 优秀，远超行业均值</li><li>🚀 <strong>正在爆发</strong> — 6小时播放增长205.2%</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 1,828</span>
+                <span class="s-item">👍 68 (3.72%)</span>
+                <span class="s-item">💰 投币9 (0.49%)</span>
+                <span class="s-item">⭐ 收藏4</span>
+                <span class="s-item">💬 41</span>
+                <span class="s-item">📊 互动率5.20%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#3b82f6"></div></div>
+                    <span class="dim-val">30.0/30</span>
+                    <span class="dim-tag">快速爆发</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:32%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">4.8/15</span>
+                    <span class="dim-tag">一般</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:94%"></div></div>
+                <span class="score-val">93.8分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">3000-6000元(素人内容性价比高)</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank top2">#2</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1oBAHz2EmN" target="_blank">这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-high">强烈推荐</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 安磊Antony  | BV: BV1oBAHz2EmN</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率9.95%</strong> — 优秀，远超行业均值</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li><li>💰 投币率1.74% — 用户认可度高</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 1,095</span>
+                <span class="s-item">👍 45 (4.11%)</span>
+                <span class="s-item">💰 投币19 (1.74%)</span>
+                <span class="s-item">⭐ 收藏41</span>
+                <span class="s-item">💬 8</span>
+                <span class="s-item">📊 互动率9.95%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:40%;background:#3b82f6"></div></div>
+                    <span class="dim-val">12.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:77%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">11.5/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:82%"></div></div>
+                <span class="score-val">82.5分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">3000-6000元(素人内容性价比高)</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank top3">#3</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1HPcQzvE8y" target="_blank">开理想MEGA，一定要内心强大？</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-high">强烈推荐</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 百车全说  | BV: BV1HPcQzvE8y</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率6.06%</strong> — 优秀，远超行业均值</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li><li>💰 投币率1.05% — 用户认可度高</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 7.1万</span>
+                <span class="s-item">👍 3,133 (4.44%)</span>
+                <span class="s-item">💰 投币740 (1.05%)</span>
+                <span class="s-item">⭐ 收藏290</span>
+                <span class="s-item">💬 766</span>
+                <span class="s-item">📊 互动率6.06%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:40%;background:#3b82f6"></div></div>
+                    <span class="dim-val">12.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:69%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">10.3/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:81%"></div></div>
+                <span class="score-val">81.3分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">3000-6000元(素人内容性价比高)</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#4</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1dKXNBMEUu" target="_blank">理想i6荣获C-GCAP全五星+最高评级</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-high">强烈推荐</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 理想汽车  | BV: BV1dKXNBMEUu</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率5.26%</strong> — 优秀，远超行业均值</li><li>📈 稳定增长 — 6小时播放增长16.5%</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 1,254</span>
+                <span class="s-item">👍 48 (3.83%)</span>
+                <span class="s-item">💰 投币8 (0.64%)</span>
+                <span class="s-item">⭐ 收藏2</span>
+                <span class="s-item">💬 9</span>
+                <span class="s-item">📊 互动率5.26%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:36%;background:#3b82f6"></div></div>
+                    <span class="dim-val">10.8/30</span>
+                    <span class="dim-tag">增长缓慢</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:58%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">8.7/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:78%"></div></div>
+                <span class="score-val">78.5分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">3000-6000元(素人内容性价比高)</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#5</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1GAQmB7Ej8" target="_blank">米粉谴责飙车，花粉谴责乱用智驾，理想车主谴责乱停车，你同意吗</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-medium">可考虑</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 我是饭叔啊  | BV: BV1GAQmB7Ej8</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率5.04%</strong> — 优秀，远超行业均值</li><li>📈 稳定增长 — 6小时播放增长29.1%</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 2,661</span>
+                <span class="s-item">👍 121 (4.55%)</span>
+                <span class="s-item">💰 投币5 (0.19%)</span>
+                <span class="s-item">⭐ 收藏8</span>
+                <span class="s-item">💬 147</span>
+                <span class="s-item">📊 互动率5.04%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:46%;background:#3b82f6"></div></div>
+                    <span class="dim-val">13.9/30</span>
+                    <span class="dim-tag">增长缓慢</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:13%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">2.0/15</span>
+                    <span class="dim-tag">一般</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:75%"></div></div>
+                <span class="score-val">74.9分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">2000-4000元</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#6</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1XYwrzZEP3" target="_blank">全损实战话术：理想L6如何在4S协助下拿到22.5 #理想L6 #推定全损</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-medium">可考虑</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: B站_湖面  | BV: BV1XYwrzZEP3</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率8.66%</strong> — 优秀，远超行业均值</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 7,675</span>
+                <span class="s-item">👍 319 (4.16%)</span>
+                <span class="s-item">💰 投币26 (0.34%)</span>
+                <span class="s-item">⭐ 收藏293</span>
+                <span class="s-item">💬 20</span>
+                <span class="s-item">📊 互动率8.66%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:82%;background:#10b981"></div></div>
+                    <span class="dim-val">33.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:40%;background:#3b82f6"></div></div>
+                    <span class="dim-val">12.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:69%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">10.4/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:74%"></div></div>
+                <span class="score-val">74.4分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">2000-4000元</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#7</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1buPUzLEYN" target="_blank">一腿量万物 今天挑战理想篇</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-medium">可考虑</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 珊珊试车  | BV: BV1buPUzLEYN</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率8.24%</strong> — 优秀，远超行业均值</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 4.9万</span>
+                <span class="s-item">👍 1,972 (4.03%)</span>
+                <span class="s-item">💰 投币60 (0.12%)</span>
+                <span class="s-item">⭐ 收藏1,870</span>
+                <span class="s-item">💬 138</span>
+                <span class="s-item">📊 互动率8.24%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:82%;background:#10b981"></div></div>
+                    <span class="dim-val">33.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:40%;background:#3b82f6"></div></div>
+                    <span class="dim-val">12.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:59%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">8.9/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:73%"></div></div>
+                <span class="score-val">72.9分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">2000-4000元</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#8</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1beXsBDEUC" target="_blank">理想L8怎么样？</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-medium">可考虑</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 车主明  | BV: BV1beXsBDEUC</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>💯 <strong>互动率6.40%</strong> — 优秀，远超行业均值</li><li>📈 稳定增长 — 6小时播放增长6.8%</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li><li>💰 投币率1.16% — 用户认可度高</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 172</span>
+                <span class="s-item">👍 8 (4.65%)</span>
+                <span class="s-item">💰 投币2 (1.16%)</span>
+                <span class="s-item">⭐ 收藏1</span>
+                <span class="s-item">💬 2</span>
+                <span class="s-item">📊 互动率6.40%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#10b981"></div></div>
+                    <span class="dim-val">40.0/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:8%;background:#3b82f6"></div></div>
+                    <span class="dim-val">2.5/30</span>
+                    <span class="dim-tag">增长缓慢</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:68%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">10.2/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:72%"></div></div>
+                <span class="score-val">71.7分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">2000-4000元</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#9</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1e1Q6BvEub" target="_blank">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。</a>
+                <span class="badge badge-positive">正向</span><span class="badge badge-medium">可考虑</span><span class="badge badge-underdog">⭐ 素人+15分</span>
+            </div>
+            <div class="video-meta">UP主: 叶枫有理想  | BV: BV1e1Q6BvEub</div>
+
+            <div class="recommendation-box">
+                <div class="rec-title">💡 推荐理由</div>
+                <ul class="rec-list"><li>👍 互动率7.75% — 良好</li><li>⭐ <strong>素人优质内容</strong> — 投流成本低，ROI更高（+15分）</li></ul>
+            </div>
+
+            <div class="video-stats">
+                <span class="s-item">▶️ 2,027</span>
+                <span class="s-item">👍 34 (1.68%)</span>
+                <span class="s-item">💰 投币17 (0.84%)</span>
+                <span class="s-item">⭐ 收藏97</span>
+                <span class="s-item">💬 9</span>
+                <span class="s-item">📊 互动率7.75%</span>
+            </div>
+
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:78%;background:#10b981"></div></div>
+                    <span class="dim-val">31.2/40</span>
+                    <span class="dim-tag">良好</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:40%;background:#3b82f6"></div></div>
+                    <span class="dim-val">12.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">UP主质量</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#f59e0b"></div></div>
+                    <span class="dim-val">4.0/15</span>
+                    <span class="dim-tag">普通创作者</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:59%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">8.9/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div>
+            </div>
+
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:71%"></div></div>
+                <span class="score-val">71.1分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">💰 建议预算</span>
+                <span class="budget-val">2000-4000元</span>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📊 投放效果追踪</h2>
+  <p class="snote">CPM = 投入费用 ÷ 播放量 × 1000</p>
+  <div class="empty">暂无投放记录 — 投放后运行 track_promotion.py 追踪效果</div>
+</div>
+
+<div class="section">
+  <h2>🔔 最近提醒记录</h2>
+  <div class="alert-list">
+        <div class="alert-item">
+            <div class="alert-title">CIASI 2025年测评车型  理想i6  ⭐素人</div>
+            <div class="alert-meta">UP主: 中保研汽车技术研究院 | 评分: 93.8分 | 3000-6000元(素人内容性价比高) | 03-30 13:56</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0  ⭐素人</div>
+            <div class="alert-meta">UP主: 安磊Antony | 评分: 82.4分 | 3000-6000元(素人内容性价比高) | 03-30 13:00</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">开理想MEGA，一定要内心强大？  ⭐素人</div>
+            <div class="alert-meta">UP主: 百车全说 | 评分: 81.3分 | 3000-6000元(素人内容性价比高) | 03-30 11:25</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">奔驰VLE（2026）：追上中国了吗？深度对比理想MEGA  ⭐素人</div>
+            <div class="alert-meta">UP主: B_Sport | 评分: 80.2分 | 3000-6000元(素人内容性价比高) | 03-30 09:41</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">【J-Trance最强超经典神作推荐/永恒不衰 理想之诗】Idealized Romance -Void 专辑AD: PIANO  ⭐素人</div>
+            <div class="alert-meta">UP主: Umbrella_Shio | 评分: 85.3分 | 3000-6000元(素人内容性价比高) | 03-28 00:48</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">开理想MEGA，一定要内心强大？  ⭐素人</div>
+            <div class="alert-meta">UP主: 百车全说 | 评分: 81.3分 | 3000-6000元(素人内容性价比高) | 03-27 14:19</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">奔驰VLE（2026）：追上中国了吗？深度对比理想MEGA  ⭐素人</div>
+            <div class="alert-meta">UP主: B_Sport | 评分: 81.5分 | 3000-6000元(素人内容性价比高) | 03-27 14:19</div>
+        </div>
+        <div class="alert-item">
+            <div class="alert-title">这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0  ⭐素人</div>
+            <div class="alert-meta">UP主: 安磊Antony | 评分: 82.5分 | 3000-6000元(素人内容性价比高) | 03-27 14:19</div>
+        </div></div>
+</div>
+
+<div class="section">
+  <h2>⚙️ 监控配置</h2>
+  <div class="cfg-grid">
+    <div class="cfg-item"><div class="cfg-l">监控模式</div><div class="cfg-v">混合模式 (持续+定时)</div></div>
+    <div class="cfg-item"><div class="cfg-l">定时推送</div><div class="cfg-v">12:00, 17:00 每30分钟巡检</div></div>
+    <div class="cfg-item"><div class="cfg-l">提醒阈值</div><div class="cfg-v">即时≥80分 | 汇总≥70分</div></div>
+    <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 李想, 理想智驾, 理想AD, 理想新车</div></div>
+  </div>
+</div>
+
+<!-- BV号手动查询 -->
+<div class="bv-section">
+  <h2>🔍 BV号手动查询</h2>
+  <div class="bv-input-row">
+    <input id="bv-input" class="bv-input" type="text" placeholder="输入BV号，例如 BV1d4QXBKEVR" />
+    <button id="bv-btn" class="bv-btn" onclick="queryBV()">查询评分</button>
+  </div>
+  <div id="bv-result"></div>
+</div>
+
+</div>
+
+<script>
+// 页面倒计时
+let cd = 300;
+setInterval(() => {
+  const m = Math.floor(cd/60), s = cd%60;
+  document.title = `⏱ ${m}:${s.toString().padStart(2,'0')} - B站AI加热监测`;
+  cd--; if(cd<0) cd=300;
+}, 1000);
+
+// BV查询
+async function queryBV() {
+  const raw = document.getElementById('bv-input').value.trim();
+  const bvid = raw.match(/BV[a-zA-Z0-9]+/)?.[0];
+  if (!bvid) {
+    document.getElementById('bv-result').innerHTML = '<div class="bv-error">请输入有效的BV号，格式如 BV1d4QXBKEVR</div>';
+    return;
+  }
+
+  const btn = document.getElementById('bv-btn');
+  btn.disabled = true;
+  document.getElementById('bv-result').innerHTML = '<div class="bv-loading">⏳ 正在查询B站数据...</div>';
+
+  try {
+    // 获取视频基础信息
+    const viewRes = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const viewData = await viewRes.json();
+
+    if (viewData.code !== 0 || !viewData.data) {
+      document.getElementById('bv-result').innerHTML = `<div class="bv-error">查询失败：${viewData.message || '视频不存在或无法访问'}</div>`;
+      btn.disabled = false; return;
+    }
+
+    const v = viewData.data;
+    const stat = v.stat;
+    const play = stat.view || 0;
+    const like = stat.like || 0;
+    const coin = stat.coin || 0;
+    const favorite = stat.favorite || 0;
+    const reply = stat.reply || 0;
+    const share = stat.share || 0;
+
+    // 计算互动率
+    const ir = play > 0 ? ((like + coin + favorite + share) / play * 100) : 0;
+    const likeRate = play > 0 ? (like / play * 100) : 0;
+    const coinRate = play > 0 ? (coin / play * 100) : 0;
+    const commentRate = play > 0 ? (reply / play * 100) : 0;
+
+    // 简化评分（客户端版）
+    const irScore = Math.min(ir / 3.0 * 25, 25) + Math.min(likeRate / 3.0 * 8, 8) + Math.min(commentRate / 0.5 * 7, 7);
+    const upScore = Math.min(12, 8); // 无粉丝数据时给默认分
+    const sentimentScore = Math.min((like / Math.max(reply, 1)) / 10 * 8, 8) + Math.min(coinRate / 1.0 * 7, 7);
+    const totalScore = Math.min(irScore, 40) + 12 + Math.min(upScore, 15) + Math.min(sentimentScore, 15);
+
+    let recClass = 'low', recText = '暂不建议投流，继续观察';
+    if (totalScore >= 75) { recClass = 'high'; recText = '✅ 强烈推荐投流！综合评分优秀'; }
+    else if (totalScore >= 55) { recClass = 'medium'; recText = '⚠️ 可考虑小额测试投流'; }
+
+    const fmtNum = n => n >= 10000 ? (n/10000).toFixed(1)+'万' : n.toLocaleString();
+    const pubDate = new Date(v.pubdate * 1000).toLocaleDateString('zh-CN');
+
+    document.getElementById('bv-result').innerHTML = `
+      <div class="bv-card">
+        <div class="bv-card-title">
+          <a href="https://www.bilibili.com/video/${bvid}" target="_blank">${v.title}</a>
+        </div>
+        <div style="font-size:.85em;color:#999;margin-bottom:10px">UP主: ${v.owner.name} | 发布: ${pubDate} | BV: ${bvid}</div>
+        <div class="bv-stats-grid">
+          <div class="bv-stat"><div class="bv-stat-l">播放量</div><div class="bv-stat-v">${fmtNum(play)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">点赞</div><div class="bv-stat-v">${fmtNum(like)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">投币</div><div class="bv-stat-v">${fmtNum(coin)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">收藏</div><div class="bv-stat-v">${fmtNum(favorite)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">评论</div><div class="bv-stat-v">${fmtNum(reply)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">分享</div><div class="bv-stat-v">${fmtNum(share)}</div></div>
+        </div>
+        <div class="bv-ir">
+          互动率 <b>${ir.toFixed(2)}%</b> &nbsp;|&nbsp;
+          点赞率 <b>${likeRate.toFixed(2)}%</b> &nbsp;|&nbsp;
+          投币率 <b>${coinRate.toFixed(2)}%</b> &nbsp;|&nbsp;
+          评论率 <b>${commentRate.toFixed(2)}%</b>
+        </div>
+        <div class="bv-rec ${recClass}">${recText} &nbsp; 估算评分 <b>${totalScore.toFixed(1)}分</b></div>
+        <div style="font-size:.75em;color:#bbb;margin-top:8px">* 客户端估算分（无增长趋势数据），以监控系统完整评分为准</div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('bv-result').innerHTML = `<div class="bv-error">请求失败：${e.message}（B站API可能有跨域限制，建议直接在监控系统中运行查询）</div>`;
+  }
+  btn.disabled = false;
+}
+
+// 回车触发查询
+document.getElementById('bv-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') queryBV();
+});
+</script>
+</body>
+</html>
