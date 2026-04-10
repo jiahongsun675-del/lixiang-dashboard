@@ -4,206 +4,241 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="refresh" content="300">
-<title>B站AI起飞加热监测工具</title>
+<title>理想汽车 · B站内容监测</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;padding:20px}
-.wrap{max-width:1200px;margin:0 auto}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f4f5f7;min-height:100vh;color:#1a1a2e}
+a{color:inherit;text-decoration:none}
+a:hover{color:#3b6eea}
 
-.header{text-align:center;color:#fff;margin-bottom:28px}
-.header h1{font-size:2em;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,0.5)}
-.header .sub{opacity:.75;font-size:.95em}
-.header .ts{opacity:.55;font-size:.82em;margin-top:6px}
+/* ── 顶栏 ── */
+.topbar{background:#fff;border-bottom:1px solid #e8eaed;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:1.05em;font-weight:700;color:#1a1a2e;letter-spacing:.02em}
+.topbar-logo span{color:#3b6eea}
+.topbar-meta{font-size:.8em;color:#aaa}
+.topbar-refresh{font-size:.78em;color:#3b6eea;cursor:pointer;padding:5px 12px;border:1px solid #d0dbf7;border-radius:6px;background:#f0f4ff;transition:background .2s}
+.topbar-refresh:hover{background:#e0eaff}
 
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
-.sc{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:18px;color:#fff;text-align:center}
-.sc .lbl{font-size:.8em;opacity:.7;margin-bottom:6px}
-.sc .val{font-size:2em;font-weight:700}
-.sc .unit{font-size:.45em;opacity:.65;margin-left:2px}
+/* ── 导航 tab ── */
+.nav-tabs{background:#fff;border-bottom:1px solid #e8eaed;padding:0 32px;display:flex;gap:0}
+.nav-tab{padding:14px 22px;font-size:.92em;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:#3b6eea}
+.nav-tab.active{color:#3b6eea;border-bottom-color:#3b6eea;font-weight:600}
 
-.section{background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
-.section h2{font-size:1.3em;color:#1a1a2e;border-bottom:3px solid #667eea;padding-bottom:10px;margin-bottom:18px}
-.snote{font-size:.82em;color:#999;margin-top:-12px;margin-bottom:16px}
+/* ── 页面区域 ── */
+.page{display:none;padding:28px 32px;max-width:1280px;margin:0 auto}
+.page.active{display:block}
 
-.video-list{display:grid;gap:16px}
-.video-item{border:1px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;gap:14px;transition:all .2s}
-.video-item:hover{background:#f9fafb;border-color:#667eea}
-.video-rank{font-size:1.6em;font-weight:700;min-width:38px;text-align:center;color:#667eea;padding-top:2px}
+/* ── 统计卡 ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.sc{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:18px 20px}
+.sc .lbl{font-size:.78em;color:#999;margin-bottom:6px}
+.sc .val{font-size:1.9em;font-weight:700;color:#1a1a2e}
+.sc .val .unit{font-size:.42em;color:#aaa;font-weight:400;margin-left:2px}
+.sc .sub{font-size:.75em;color:#bbb;margin-top:3px}
+
+/* ── 区块 ── */
+.card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:22px;margin-bottom:18px}
+.card-title{font-size:1.05em;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-sub{font-size:.8em;color:#aaa;margin-bottom:18px}
+.section-divider{border:none;border-top:1px solid #e8eaed;margin:18px 0}
+
+/* ── 视频卡片 ── */
+.video-list{display:grid;gap:12px}
+.video-item{border:1px solid #e8eaed;border-radius:8px;padding:14px 16px;display:flex;gap:14px;background:#fff;transition:border-color .2s}
+.video-item:hover{border-color:#a5b8f5}
+.video-item.heated{opacity:.45;border-style:dashed}
+.video-rank{font-size:1.4em;font-weight:700;min-width:32px;text-align:center;color:#c0c8d8;padding-top:2px}
 .video-rank.top1{color:#ef4444}
 .video-rank.top2{color:#f59e0b}
 .video-rank.top3{color:#10b981}
 .video-info{flex:1;min-width:0}
-.video-title{font-size:1em;font-weight:600;color:#1a1a2e;margin-bottom:5px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.video-title a{color:inherit;text-decoration:none;word-break:break-all}
-.video-title a:hover{color:#667eea}
-.video-meta{color:#999;font-size:.82em;margin-bottom:8px}
+.video-title{font-size:.97em;font-weight:600;color:#1a1a2e;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;line-height:1.4}
+.video-title a:hover{color:#3b6eea}
+.video-meta{color:#aaa;font-size:.8em;margin-bottom:8px}
 
-.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.7em;font-weight:600;white-space:nowrap}
-.badge-neutral{background:#f1f5f9;color:#475569}
-.badge-positive{background:#dcfce7;color:#166534}
-.badge-medium{background:#fed7aa;color:#9a3412}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.68em;font-weight:600;white-space:nowrap}
+.badge-positive{background:#e6f9f0;color:#0d7a4e}
+.badge-neutral{background:#f1f5f9;color:#64748b}
+.badge-high{background:#fee2e2;color:#b91c1c}
+.badge-medium{background:#fff3cd;color:#856404}
+.badge-fresh{background:#e0eaff;color:#1d4ed8}
 .badge-underdog{background:#fef3c7;color:#92400e}
-.badge-fresh{background:#dbeafe;color:#1d4ed8}
+.badge-heated{background:#e8eaed;color:#888;font-size:.68em;padding:2px 7px;border-radius:4px}
 
-.recommendation-box{background:#f0f9ff;border-left:4px solid #3b82f6;padding:10px 14px;margin:10px 0;border-radius:4px}
-.rec-title{font-weight:600;color:#1e40af;font-size:.88em;margin-bottom:5px}
-.rec-list{margin:0;padding-left:16px;color:#334155;font-size:.85em}
-.rec-list li{margin-bottom:3px;line-height:1.6}
+.video-stats{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
+.s-item{font-size:.8em;color:#777}
 
-.video-stats{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
-.s-item{font-size:.82em;color:#666;white-space:nowrap}
-
-.dim-grid{margin:10px 0;padding:10px;background:#fafafa;border-radius:6px;display:grid;gap:7px}
-.dim-row{display:grid;grid-template-columns:72px 1fr 50px 70px;align-items:center;gap:8px}
-.dim-lbl{font-size:.78em;color:#888}
-.dim-bar{height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.dim-grid{margin:8px 0;padding:10px 12px;background:#fafbfc;border-radius:6px;display:grid;gap:6px;border:1px solid #f0f0f0}
+.dim-row{display:grid;grid-template-columns:72px 1fr 48px 68px;align-items:center;gap:8px}
+.dim-lbl{font-size:.76em;color:#999}
+.dim-bar{height:4px;background:#eee;border-radius:2px;overflow:hidden}
 .dim-fill{height:100%}
-.dim-val{font-size:.78em;font-weight:600;color:#333;text-align:right}
-.dim-tag{font-size:.72em;color:#888;text-align:right}
+.dim-val{font-size:.76em;font-weight:600;color:#444;text-align:right}
+.dim-tag{font-size:.7em;color:#aaa;text-align:right}
 
-.score-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:.88em;color:#555}
-.score-bar{flex:1;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}
-.score-fill{height:100%;background:linear-gradient(90deg,#10b981,#3b82f6,#667eea)}
-.score-val{font-weight:700;color:#667eea;min-width:52px;text-align:right}
-.budget-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:4px;gap:8px}
-.budget-lbl{font-weight:600;color:#92400e;font-size:.88em}
-.budget-val{font-weight:700;color:#78350f}
-.mark-btn{padding:4px 10px;background:#667eea;color:#fff;border:none;border-radius:5px;font-size:.78em;cursor:pointer;white-space:nowrap;transition:background .2s}
-.mark-btn:hover{background:#4f46e5}
-.mark-btn.done{background:#10b981}
+.score-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:.85em;color:#666}
+.score-bar{flex:1;height:5px;background:#eee;border-radius:3px;overflow:hidden}
+.score-fill{height:100%;background:linear-gradient(90deg,#10b981,#3b6eea)}
+.score-val{font-weight:700;color:#3b6eea;min-width:48px;text-align:right}
+.budget-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:7px 12px;background:#f4f7ff;border-radius:6px;gap:8px}
+.budget-lbl{font-weight:600;color:#3b6eea;font-size:.85em}
+.budget-val{font-weight:700;color:#1a40c8}
 
-/* 投放弹窗 */
-.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:#fff;border-radius:14px;padding:28px;width:90%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
-.modal h3{font-size:1.15em;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #667eea}
-.modal-video-title{font-size:.88em;color:#555;margin-bottom:18px;padding:8px 12px;background:#f0f9ff;border-radius:6px}
-.modal-field{margin-bottom:14px}
-.modal-field label{display:block;font-size:.85em;font-weight:600;color:#374151;margin-bottom:5px}
-.modal-field input{width:100%;padding:9px 12px;border:2px solid #e5e7eb;border-radius:7px;font-size:.95em;outline:none;transition:border-color .2s}
-.modal-field input:focus{border-color:#667eea}
-.modal-actions{display:flex;gap:10px;margin-top:20px}
-.modal-submit{flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:600;cursor:pointer}
-.modal-submit:hover{background:#4f46e5}
-.modal-cancel{padding:10px 20px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:1em;cursor:pointer}
-.modal-cancel:hover{background:#e2e8f0}
-.modal-success{text-align:center;padding:20px;color:#166534;font-size:1.05em}
+.recommendation-box{background:#f8f9ff;border-left:3px solid #3b6eea;padding:9px 13px;margin:8px 0;border-radius:4px}
+.rec-title{font-weight:600;color:#1e40af;font-size:.85em;margin-bottom:4px}
+.rec-list{margin:0;padding-left:15px;color:#444;font-size:.82em}
+.rec-list li{margin-bottom:2px;line-height:1.6}
 
-/* 投放记录手动添加 */
-.promo-add-btn{display:block;width:100%;padding:10px;background:#f0f9ff;border:2px dashed #93c5fd;border-radius:8px;color:#3b82f6;font-size:.9em;font-weight:600;cursor:pointer;text-align:center;margin-top:12px;transition:all .2s}
-.promo-add-btn:hover{background:#dbeafe;border-color:#3b82f6}
+.action-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{padding:6px 14px;border:none;border-radius:6px;font-size:.8em;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-primary{background:#3b6eea;color:#fff}
+.btn-primary:hover{background:#2554d0}
+.btn-secondary{background:#f1f3f9;color:#555;border:1px solid #dde2f0}
+.btn-secondary:hover{background:#e4e8f5}
+.btn-success{background:#e6f9f0;color:#0d7a4e;border:1px solid #b2dfc8}
+.btn-success:hover{background:#d0f0e2}
+.btn-sm{padding:4px 10px;font-size:.75em}
 
-.alert-list{display:grid;gap:8px}
-.alert-item{padding:10px 14px;border-left:3px solid #667eea;background:#f9fafb;border-radius:4px}
-.alert-title{font-weight:600;color:#333;margin-bottom:3px;font-size:.95em}
-.alert-meta{font-size:.8em;color:#999}
+/* ── 历史加热 ── */
+.heated-list{display:grid;gap:10px}
+.heated-item{border:1px solid #e8eaed;border-radius:8px;padding:13px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.heated-item-info{flex:1;min-width:0}
+.heated-item-title{font-size:.93em;font-weight:600;color:#1a1a2e;margin-bottom:3px}
+.heated-item-meta{font-size:.78em;color:#aaa}
+.heated-item-score{text-align:right;flex-shrink:0}
+.heated-score-val{font-size:1.2em;font-weight:700;color:#3b6eea}
+.heated-score-lbl{font-size:.72em;color:#aaa}
 
+/* ── 投放追踪 ── */
 .promo-list{display:grid;gap:16px}
-/* 新版投放卡片 */
-.promo-card-v2{border:1px solid #e5e7eb;border-radius:12px;padding:18px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.promo-card-v2{border:1px solid #e8eaed;border-radius:10px;padding:18px;background:#fff}
 .promo-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
-.promo-card-title{font-size:1em;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.promo-card-title a{color:inherit;text-decoration:none}
-.promo-card-title a:hover{color:#667eea}
-.promo-card-meta{font-size:.8em;color:#999}
+.promo-card-title{font-size:.97em;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.promo-card-title a:hover{color:#3b6eea}
+.promo-card-meta{font-size:.78em;color:#aaa}
 .promo-card-budget{text-align:right;flex-shrink:0}
-.pcb-lbl{font-size:.75em;color:#888;margin-bottom:2px}
-.pcb-val{font-size:1.5em;font-weight:700;color:#7c3aed}
-/* 追踪进度条 */
+.pcb-lbl{font-size:.72em;color:#aaa;margin-bottom:2px}
+.pcb-val{font-size:1.4em;font-weight:700;color:#3b6eea}
 .promo-track-bar{margin-bottom:14px}
-.ptb-label{font-size:.78em;color:#888;margin-bottom:4px}
-.ptb-bar{height:6px;background:#e5e7eb;border-radius:4px;overflow:hidden}
-.ptb-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:4px;transition:width .3s}
-/* 投前/投后对比表格 */
-.promo-compare-table{width:100%;border-collapse:collapse;font-size:.85em;margin-bottom:12px}
-.promo-compare-table th{background:#f8fafc;padding:7px 10px;text-align:left;color:#555;font-weight:600;border-bottom:2px solid #e5e7eb}
-.promo-compare-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}
+.ptb-label{font-size:.76em;color:#aaa;margin-bottom:4px}
+.ptb-bar{height:5px;background:#eee;border-radius:3px;overflow:hidden}
+.ptb-fill{height:100%;background:linear-gradient(90deg,#3b6eea,#10b981);border-radius:3px}
+.promo-compare-table{width:100%;border-collapse:collapse;font-size:.83em;margin-bottom:12px}
+.promo-compare-table th{background:#f8f9fc;padding:7px 10px;text-align:left;color:#666;font-weight:600;border-bottom:1px solid #e8eaed}
+.promo-compare-table td{padding:7px 10px;border-bottom:1px solid #f5f5f5;color:#333}
 .promo-compare-table tr:last-child td{border-bottom:none}
 .promo-compare-table .delta{color:#059669;font-weight:600}
-.promo-compare-table .pct{color:#2563eb;font-size:.82em}
-/* 指标行 */
-.promo-metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:6px}
-.promo-metric{background:#f9fafb;border-radius:8px;padding:10px 12px;text-align:center}
-.pm-lbl{font-size:.75em;color:#888;margin-bottom:4px}
-.pm-val{font-size:1.05em;font-weight:700;color:#1a1a2e}
-/* 等待提示 */
-.promo-waiting{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.88em;text-align:center}
-/* 旧格式兼容 */
-.promo-card{border:1px solid #e5e7eb;border-radius:10px;padding:16px}
-.promo-title{font-weight:600;margin-bottom:12px}
-.promo-title a{color:#1a1a2e;text-decoration:none}
-.promo-title a:hover{color:#667eea}
-.promo-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}
-.ps{background:#f9fafb;border-radius:8px;padding:10px;text-align:center}
-.ps-l{font-size:.75em;color:#999;margin-bottom:4px}
-.ps-v{font-size:1.2em;font-weight:700}
-.invest{color:#7c3aed}.plays{color:#2563eb}.interact{color:#059669}.cpm{color:#dc2626}.cost{color:#d97706}
-.promo-summary{padding:9px 12px;background:linear-gradient(135deg,#667eea18,#764ba218);border-radius:6px;font-size:.88em;margin-bottom:5px}
-.promo-meta{font-size:.78em;color:#bbb}
+.promo-compare-table .pct{color:#3b6eea;font-size:.82em}
+.promo-metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}
+.promo-metric{background:#f8f9fc;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #eee}
+.pm-lbl{font-size:.72em;color:#aaa;margin-bottom:4px}
+.pm-val{font-size:1em;font-weight:700;color:#1a1a2e}
+.promo-waiting{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.85em;text-align:center}
 
-/* BV查询区 */
-.bv-section{background:#fff;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
-.bv-section h2{font-size:1.3em;color:#1a1a2e;border-bottom:3px solid #667eea;padding-bottom:10px;margin-bottom:18px}
-.bv-input-row{display:flex;gap:12px;margin-bottom:16px}
-.bv-input{flex:1;padding:10px 14px;border:2px solid #e5e7eb;border-radius:8px;font-size:1em;outline:none;transition:border-color .2s}
-.bv-input:focus{border-color:#667eea}
-.bv-btn{padding:10px 24px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
-.bv-btn:hover{background:#4f46e5}
+.promo-roi-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#f4f7ff;border-radius:6px;font-size:.85em}
+.roi-lbl{color:#666}
+.roi-val{font-weight:700;color:#3b6eea;font-size:1.05em}
+
+/* ── 投放入口区 ── */
+.promo-add-section{border:2px dashed #dde2f0;border-radius:10px;padding:20px;margin-bottom:20px;background:#fafbff}
+.promo-add-title{font-size:.92em;font-weight:600;color:#555;margin-bottom:14px}
+.promo-add-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.add-tab{padding:6px 16px;border:1px solid #dde2f0;border-radius:20px;font-size:.82em;cursor:pointer;color:#666;background:#fff;transition:all .2s}
+.add-tab.active{background:#3b6eea;color:#fff;border-color:#3b6eea}
+.add-panel{display:none}
+.add-panel.active{display:block}
+.add-form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.add-form-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.add-form-field label{font-size:.78em;font-weight:600;color:#555}
+.add-form-field input{padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.9em;outline:none;transition:border-color .2s}
+.add-form-field input:focus{border-color:#3b6eea}
+
+/* ── BV查询 ── */
+.bv-input-row{display:flex;gap:10px;margin-bottom:14px}
+.bv-input{flex:1;padding:9px 13px;border:1px solid #dde2f0;border-radius:7px;font-size:.93em;outline:none;transition:border-color .2s}
+.bv-input:focus{border-color:#3b6eea}
+.bv-btn{padding:9px 22px;background:#3b6eea;color:#fff;border:none;border-radius:7px;font-size:.93em;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+.bv-btn:hover{background:#2554d0}
 .bv-btn:disabled{background:#aaa;cursor:not-allowed}
-#bv-result{min-height:60px}
-.bv-card{border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin-top:4px}
-.bv-card-title{font-size:1.1em;font-weight:700;margin-bottom:8px}
-.bv-card-title a{color:#1a1a2e;text-decoration:none}
-.bv-card-title a:hover{color:#667eea}
-.bv-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
-.bv-stat{background:#f9fafb;border-radius:8px;padding:10px;text-align:center}
-.bv-stat-l{font-size:.78em;color:#999;margin-bottom:4px}
-.bv-stat-v{font-size:1.3em;font-weight:700;color:#333}
-.bv-ir{font-size:.88em;padding:8px 12px;background:#f0f9ff;border-radius:6px;color:#334155;margin-bottom:8px}
-.bv-rec{padding:10px 14px;border-radius:6px;font-weight:600;text-align:center;margin-top:8px}
-.bv-rec.high{background:#dcfce7;color:#166534}
-.bv-rec.medium{background:#fef9c3;color:#854d0e}
+#bv-result{min-height:50px}
+.bv-card{border:1px solid #e8eaed;border-radius:8px;padding:16px;margin-top:4px}
+.bv-card-title{font-size:1.05em;font-weight:700;margin-bottom:6px}
+.bv-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.bv-stat{background:#f8f9fc;border-radius:7px;padding:10px;text-align:center}
+.bv-stat-l{font-size:.75em;color:#aaa;margin-bottom:3px}
+.bv-stat-v{font-size:1.2em;font-weight:700;color:#333}
+.bv-ir{font-size:.85em;padding:8px 12px;background:#f4f7ff;border-radius:6px;color:#334155;margin-bottom:8px}
+.bv-rec{padding:9px 14px;border-radius:6px;font-weight:600;text-align:center;margin-top:8px;font-size:.9em}
+.bv-rec.high{background:#e6f9f0;color:#0d7a4e}
+.bv-rec.medium{background:#fff3cd;color:#856404}
 .bv-rec.low{background:#f1f5f9;color:#64748b}
-.bv-error{padding:14px;background:#fee2e2;border-radius:8px;color:#991b1b;font-size:.9em}
-.bv-loading{padding:14px;color:#888;font-size:.9em}
-.empty{text-align:center;padding:30px;color:#bbb;font-size:.9em}
+.bv-error{padding:12px;background:#fee2e2;border-radius:7px;color:#991b1b;font-size:.88em}
+.bv-loading{padding:12px;color:#aaa;font-size:.88em}
 
+/* ── 弹窗 ── */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:26px;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:1.05em;color:#1a1a2e;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e8eaed}
+.modal-video-title{font-size:.85em;color:#666;margin-bottom:16px;padding:8px 12px;background:#f4f7ff;border-radius:6px;line-height:1.5}
+.modal-field{margin-bottom:12px}
+.modal-field label{display:block;font-size:.82em;font-weight:600;color:#444;margin-bottom:4px}
+.modal-field input{width:100%;padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.92em;outline:none;transition:border-color .2s}
+.modal-field input:focus{border-color:#3b6eea}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-submit{flex:1;padding:9px;background:#3b6eea;color:#fff;border:none;border-radius:7px;font-size:.95em;font-weight:600;cursor:pointer}
+.modal-submit:hover{background:#2554d0}
+.modal-cancel{padding:9px 18px;background:#f1f3f9;color:#666;border:none;border-radius:7px;font-size:.95em;cursor:pointer}
+.modal-cancel:hover{background:#e4e8f5}
+
+.empty{text-align:center;padding:28px;color:#ccc;font-size:.9em}
 .cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.cfg-item{padding:10px 14px;background:#f9fafb;border-radius:6px}
-.cfg-l{font-size:.8em;color:#888;margin-bottom:3px;font-weight:600}
-.cfg-v{font-size:.9em;color:#333}
+.cfg-item{padding:10px 14px;background:#f8f9fc;border-radius:7px;border:1px solid #f0f0f0}
+.cfg-l{font-size:.76em;color:#aaa;margin-bottom:3px;font-weight:600}
+.cfg-v{font-size:.88em;color:#333;word-break:break-all}
 
-@media(max-width:700px){
-  .promo-stats{grid-template-columns:repeat(2,1fr)}
-  .promo-metrics-row{grid-template-columns:repeat(2,1fr)}
+@media(max-width:720px){
+  .topbar{padding:0 16px}.nav-tabs{padding:0 16px}.page{padding:18px 16px}
   .bv-stats-grid{grid-template-columns:repeat(2,1fr)}
-  .dim-row{grid-template-columns:64px 1fr 44px 58px}
+  .dim-row{grid-template-columns:62px 1fr 40px 56px}
+  .promo-metrics-row{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<div class="header">
-  <h1>🚀 B站AI起飞加热监测工具</h1>
-  <div class="sub">理想汽车全站内容监测 · 互动率+增长趋势智能评分</div>
-  <div class="ts">数据更新: 2026-04-10 10:32:15 &nbsp;|&nbsp; 页面刷新: 2026-04-10 10:32:15 &nbsp;|&nbsp; 每5分钟自动刷新</div>
+<div class="topbar">
+  <div class="topbar-logo">理想汽车 · <span>B站内容监测</span></div>
+  <div class="topbar-meta">数据更新: 2026-04-10 11:26:03</div>
+  <button class="topbar-refresh" onclick="location.reload()">刷新</button>
 </div>
 
-<div class="stats-row">
-  <div class="sc"><div class="lbl">本次分析</div><div class="val">0<span class="unit">个</span></div></div>
-  <div class="sc"><div class="lbl">达标推荐</div><div class="val">97<span class="unit">个</span></div></div>
-  <div class="sc"><div class="lbl">高优先级(≥80分)</div><div class="val">1<span class="unit">个</span></div></div>
-  <div class="sc"><div class="lbl">累计提醒</div><div class="val">112<span class="unit">次</span></div></div>
-  <div class="sc"><div class="lbl">投放记录</div><div class="val">0<span class="unit">条</span></div></div>
+<div class="nav-tabs">
+  <div class="nav-tab active" data-page="page-recommend" onclick="switchPage(this)">推荐榜单</div>
+  <div class="nav-tab" data-page="page-heated" onclick="switchPage(this)">历史加热</div>
+  <div class="nav-tab" data-page="page-promo" onclick="switchPage(this)">投放效果</div>
+  <div class="nav-tab" data-page="page-query" onclick="switchPage(this)">BV查询</div>
+  <div class="nav-tab" data-page="page-config" onclick="switchPage(this)">监控配置</div>
 </div>
 
-<div class="section">
-  <h2>🔥 推荐内容排行 TOP20 (综合评分)</h2>
-  <p class="snote">汇总近20次巡检结果 · 已过滤竞品/负面/无关内容 · 按互动率×增长趋势×口碑综合评分排序</p>
-  <div class="video-list">
-    
-    <div class="video-item">
+<!-- ══ PAGE 1: 推荐榜单 ══ -->
+<div class="page active" id="page-recommend">
+  <div class="stats-row">
+    <div class="sc"><div class="lbl">本次分析</div><div class="val">0<span class="unit">个</span></div><div class="sub">原始候选视频</div></div>
+    <div class="sc"><div class="lbl">达标推荐</div><div class="val">97<span class="unit">个</span></div><div class="sub">通过全部过滤</div></div>
+    <div class="sc"><div class="lbl">高优先级</div><div class="val">1<span class="unit">个</span></div><div class="sub">评分 ≥ 80 分</div></div>
+    <div class="sc"><div class="lbl">累计加热</div><div class="val" id="stat-heated-count">—</div><div class="sub">已标记加热</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      推荐内容 TOP20
+      <span style="font-size:.78em;font-weight:400;color:#aaa">已加热内容自动置灰 · 点击「标记加热」移入历史</span>
+    </div>
+    <div class="card-sub">汇总近 7 天巡检 · 综合互动率 × 增长趋势 × UP主质量评分</div>
+    <div class="video-list">
+      
+    <div class="video-item" data-bvid="BV1HrD6B5EhV">
         <div class="video-rank top1">#1</div>
         <div class="video-info">
             <div class="video-title">
@@ -213,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 非法吸猫王  | BV: BV1HrD6B5EhV | 1天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率15.56%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 1天前发布，正是投流黄金期</li><li>🔥 点赞率15.08% — 内容质量优秀</li></ul>
             </div>
 
@@ -259,13 +294,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">80.0分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥15,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1HrD6B5EhV', '山东理想车主', '非法吸猫王')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥15,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1HrD6B5EhV', '山东理想车主', '非法吸猫王', 80.0, '¥15,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1nTSfB4EZE">
         <div class="video-rank top2">#2</div>
         <div class="video-info">
             <div class="video-title">
@@ -275,7 +310,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 非法吸猫王  | BV: BV1nTSfB4EZE | 3天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率8.61%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 3天前发布，正是投流黄金期</li><li>🔥 点赞率7.94% — 内容质量优秀</li></ul>
             </div>
 
@@ -321,13 +356,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">77.4分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥30,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1nTSfB4EZE', '北京理想车主', '非法吸猫王')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥30,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1nTSfB4EZE', '北京理想车主', '非法吸猫王', 77.4, '¥30,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1N1DcBuEP8">
         <div class="video-rank top3">#3</div>
         <div class="video-info">
             <div class="video-title">
@@ -337,7 +372,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 乌镇之主乌萨奇  | BV: BV1N1DcBuEP8 | 3天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率23.74%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 3天前发布，正是投流黄金期</li><li>🔥 点赞率23.31% — 内容质量优秀</li></ul>
             </div>
 
@@ -383,13 +418,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">77.0分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥15,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1N1DcBuEP8', '人生第二次提车！', '乌镇之主乌萨奇')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥15,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1N1DcBuEP8', '人生第二次提车！', '乌镇之主乌萨奇', 77.0, '¥15,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1ZR9KB7EqC">
         <div class="video-rank ">#4</div>
         <div class="video-info">
             <div class="video-title">
@@ -399,7 +434,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 老外说车  | BV: BV1ZR9KB7EqC | 6天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.89%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 6天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -445,13 +480,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">76.8分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1ZR9KB7EqC', '老外说车：理想 - 好！理想L8 - 好不好？', '老外说车')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1ZR9KB7EqC', '老外说车：理想 - 好！理想L8 - 好不好？', '老外说车', 76.8, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1vkDpBSExk">
         <div class="video-rank ">#5</div>
         <div class="video-info">
             <div class="video-title">
@@ -461,7 +496,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 一秋名山一封禁版  | BV: BV1vkDpBSExk | 0天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率8.75%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 0天前发布，正是投流黄金期</li><li>🔥 点赞率7.58% — 内容质量优秀</li></ul>
             </div>
 
@@ -507,13 +542,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">76.5分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥15,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1vkDpBSExk', '500强智驾大翻车勇闯小河沟估计想洗澡了', '一秋名山一封禁版')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥15,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1vkDpBSExk', '500强智驾大翻车勇闯小河沟估计想洗澡了', '一秋名山一封禁版', 76.5, '¥15,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1u89KBvE73">
         <div class="video-rank ">#6</div>
         <div class="video-info">
             <div class="video-title">
@@ -523,7 +558,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 超哥超车 (139.0万粉丝) | BV: BV1u89KBvE73 | 2天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率4.75%</strong> — 良好(≥3%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 2天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -569,13 +604,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">74.0分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥10,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1u89KBvE73', '租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你', '超哥超车')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥10,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1u89KBvE73', '租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你', '超哥超车', 74.0, '¥10,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1oBAHz2EmN">
         <div class="video-rank ">#7</div>
         <div class="video-info">
             <div class="video-title">
@@ -585,7 +620,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 安磊Antony  | BV: BV1oBAHz2EmN | 20天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率11.52%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>💰 投币率1.68% — 用户认可度高</li></ul>
             </div>
 
@@ -631,13 +666,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">72.4分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1oBAHz2EmN', '这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0', '安磊Antony')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1oBAHz2EmN', '这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0', '安磊Antony', 72.4, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1gMAHzMEQD">
         <div class="video-rank ">#8</div>
         <div class="video-info">
             <div class="video-title">
@@ -647,7 +682,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 路探社路社长  | BV: BV1gMAHzMEQD | 20天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率13.49%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>💰 投币率2.07% — 用户认可度高</li><li>🔥 点赞率9.01% — 内容质量优秀</li></ul>
             </div>
 
@@ -693,13 +728,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">72.0分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1gMAHzMEQD', '理想车主：薛定谔的素质。', '路探社路社长')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1gMAHzMEQD', '理想车主：薛定谔的素质。', '路探社路社长', 72.0, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1HPcQzvE8y">
         <div class="video-rank ">#9</div>
         <div class="video-info">
             <div class="video-title">
@@ -709,7 +744,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 百车全说  | BV: BV1HPcQzvE8y | 27天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.82%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>💰 投币率1.01% — 用户认可度高</li></ul>
             </div>
 
@@ -755,13 +790,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">71.1分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1HPcQzvE8y', '开理想MEGA，一定要内心强大？', '百车全说')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1HPcQzvE8y', '开理想MEGA，一定要内心强大？', '百车全说', 71.1, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1s8DiBKEqx">
         <div class="video-rank ">#10</div>
         <div class="video-info">
             <div class="video-title">
@@ -771,7 +806,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 三星手机非官方  | BV: BV1s8DiBKEqx | 2天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.65%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 2天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -817,13 +852,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">70.9分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1s8DiBKEqx', '逆天理想车主把车开到海水边停车！结局舒服了！直接陷车了', '三星手机非官方')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1s8DiBKEqx', '逆天理想车主把车开到海水边停车！结局舒服了！直接陷车了', '三星手机非官方', 70.9, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1PjDTBpEam">
         <div class="video-rank ">#11</div>
         <div class="video-info">
             <div class="video-title">
@@ -833,7 +868,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 天灵残雪  | BV: BV1PjDTBpEam | 5天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率14.61%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🆕 <strong>新鲜内容</strong> — 5天前发布，正是投流黄金期</li><li>🔥 点赞率13.52% — 内容质量优秀</li></ul>
             </div>
 
@@ -879,13 +914,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">70.9分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1PjDTBpEam', '福瑞画师欠无偿躲小区，理想L9把她车位全占', '天灵残雪')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1PjDTBpEam', '福瑞画师欠无偿躲小区，理想L9把她车位全占', '天灵残雪', 70.9, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1EhAJzyEDZ">
         <div class="video-rank ">#12</div>
         <div class="video-info">
             <div class="video-title">
@@ -895,7 +930,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 蜜欢说  | BV: BV1EhAJzyEDZ | 20天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.76%</strong> — 优秀(≥5%)，超过B站5%起飞线</li><li>🔥 点赞率5.50% — 内容质量优秀</li></ul>
             </div>
 
@@ -941,13 +976,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">70.0分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1EhAJzyEDZ', '增程“真香”背后 是理想7年不被看好的坚持', '蜜欢说')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1EhAJzyEDZ', '增程“真香”背后 是理想7年不被看好的坚持', '蜜欢说', 70.0, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1ZEDvB9E6n">
         <div class="video-rank ">#13</div>
         <div class="video-info">
             <div class="video-title">
@@ -957,7 +992,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 大魔王提莫吖 (8.5万粉丝) | BV: BV1ZEDvB9E6n | 1天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>👍 互动率3.58% — 良好(≥3%)</li><li>🆕 <strong>新鲜内容</strong> — 1天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -1003,13 +1038,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">67.2分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥5,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1ZEDvB9E6n', '我也太倒霉了，刚提车几天就被人剐蹭了，还好对方主责，可是我新车啊', '大魔王提莫吖')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥5,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1ZEDvB9E6n', '我也太倒霉了，刚提车几天就被人剐蹭了，还好对方主责，可是我新车啊', '大魔王提莫吖', 67.2, '¥5,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1bnQyBMERi">
         <div class="video-rank ">#14</div>
         <div class="video-info">
             <div class="video-title">
@@ -1019,7 +1054,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 抽象行为学  | BV: BV1bnQyBMERi | 16天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.61%</strong> — 优秀(≥5%)，超过B站5%起飞线</li></ul>
             </div>
 
@@ -1065,13 +1100,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">66.6分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1bnQyBMERi', '理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！', '抽象行为学')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1bnQyBMERi', '理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！', '抽象行为学', 66.6, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1b195B4EyY">
         <div class="video-rank ">#15</div>
         <div class="video-info">
             <div class="video-title">
@@ -1081,7 +1116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 绿联NAS私有云  | BV: BV1b195B4EyY | 6天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>👍 互动率4.23% — 良好(≥3%)</li><li>🆕 <strong>新鲜内容</strong> — 6天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -1127,13 +1162,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">65.7分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1b195B4EyY', '绿联NAS私有云车机版上线理想汽车', '绿联NAS私有云')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1b195B4EyY', '绿联NAS私有云车机版上线理想汽车', '绿联NAS私有云', 65.7, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1mdAHzNExM">
         <div class="video-rank ">#16</div>
         <div class="video-info">
             <div class="video-title">
@@ -1143,7 +1178,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 汽车工程师板儿姐  | BV: BV1mdAHzNExM | 20天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率5.33%</strong> — 优秀(≥5%)，超过B站5%起飞线</li></ul>
             </div>
 
@@ -1189,13 +1224,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">64.8分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1mdAHzNExM', '增程到底是简单，还是真先进？我花三分钟给你扒的透透的#说车聊车  #增程 #理想高管回应行业踩着理想过河', '汽车工程师板儿姐')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1mdAHzNExM', '增程到底是简单，还是真先进？我花三分钟给你扒的透透的#说车聊车  #增程 #理想高管回应行业踩着理想过河', '汽车工程师板儿姐', 64.8, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1XYwrzZEP3">
         <div class="video-rank ">#17</div>
         <div class="video-info">
             <div class="video-title">
@@ -1205,7 +1240,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: B站_湖面  | BV: BV1XYwrzZEP3 | 21天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>👍 互动率8.44% — 优秀(≥5%)</li></ul>
             </div>
 
@@ -1251,13 +1286,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">63.6分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥3,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1XYwrzZEP3', '全损实战话术：理想L6如何在4S协助下拿到22.5 #理想L6 #推定全损', 'B站_湖面')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1XYwrzZEP3', '全损实战话术：理想L6如何在4S协助下拿到22.5 #理想L6 #推定全损', 'B站_湖面', 63.6, '¥3,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1BkDsBtEn2">
         <div class="video-rank ">#18</div>
         <div class="video-info">
             <div class="video-title">
@@ -1267,7 +1302,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 理想汽车 (7.3万粉丝) | BV: BV1BkDsBtEn2 | 0天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>🚀 <strong>正在爆发</strong> — 6小时播放增长153.5%</li><li>🆕 <strong>新鲜内容</strong> — 0天前发布，正是投流黄金期</li></ul>
             </div>
 
@@ -1313,13 +1348,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">63.6分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥1,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1BkDsBtEn2', '点击查收理想i6史上最“夯”成绩单。', '理想汽车')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥1,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1BkDsBtEn2', '点击查收理想i6史上最“夯”成绩单。', '理想汽车', 63.6, '¥1,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV1e1Q6BvEub">
         <div class="video-rank ">#19</div>
         <div class="video-info">
             <div class="video-title">
@@ -1329,7 +1364,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 叶枫有理想  | BV: BV1e1Q6BvEub | 16天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>👍 互动率7.65% — 优秀(≥5%)</li></ul>
             </div>
 
@@ -1375,13 +1410,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">62.1分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV1e1Q6BvEub', '理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。', '叶枫有理想')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1e1Q6BvEub', '理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。', '叶枫有理想', 62.1, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item">
+    <div class="video-item" data-bvid="BV191crzdEKn">
         <div class="video-rank ">#20</div>
         <div class="video-info">
             <div class="video-title">
@@ -1391,7 +1426,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="video-meta">UP主: 鸡毛i  | BV: BV191crzdEKn | 28天前</div>
 
             <div class="recommendation-box">
-                <div class="rec-title">💡 推荐理由</div>
+                <div class="rec-title">推荐理由</div>
                 <ul class="rec-list"><li>💯 <strong>互动率4.25%</strong> — 良好(≥3%)，超过B站5%起飞线</li></ul>
             </div>
 
@@ -1437,93 +1472,172 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
                 <span class="score-val">60.6分</span>
             </div>
             <div class="budget-row">
-                <span class="budget-lbl">💰 建议加热预算</span>
-                <span class="budget-val budget-high">¥2,000元</span>
-                <button class="mark-btn" onclick="markPromotion('BV191crzdEKn', '分享一个理想车主', '鸡毛i')">📌 标记已投放</button>
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV191crzdEKn', '分享一个理想车主', '鸡毛i', 60.6, '¥2,000元')">标记加热</button>
             </div>
         </div>
     </div>
+    </div>
   </div>
 </div>
 
-<div class="section">
-  <h2>📊 投放效果追踪</h2>
-  <p class="snote">CPM = 投入费用 ÷ 播放量 × 1000</p>
-  <div class="empty">暂无投放记录 — 点击视频右下角「标记已投放」按钮登记，监控系统将自动追踪效果</div>
-  <button class="promo-add-btn" onclick="openAddPromo()">＋ 手动添加投放记录</button>
-</div>
-
-<div class="section">
-  <h2>🔔 最近提醒记录</h2>
-  <div class="alert-list">
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV191crzdEKn" target="_blank">分享一个理想车主</a></div>
-            <div class="alert-meta">UP主: 鸡毛i | 评分: 60.6分 | ¥2,000元 | 04-10 10:32 | <a href="https://www.bilibili.com/video/BV191crzdEKn" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！</a></div>
-            <div class="alert-meta">UP主: 抽象行为学 | 评分: 66.6分 | ¥2,000元 | 04-10 10:32 | <a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1HrD6B5EhV" target="_blank">山东理想车主</a></div>
-            <div class="alert-meta">UP主: 非法吸猫王 | 评分: 80.0分 | ¥15,000元 | 04-10 10:32 | <a href="https://www.bilibili.com/video/BV1HrD6B5EhV" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1vkDpBSExk" target="_blank">500强智驾大翻车勇闯小河沟估计想洗澡了</a></div>
-            <div class="alert-meta">UP主: 一秋名山一封禁版 | 评分: 76.5分 | ¥15,000元 | 04-10 10:03 | <a href="https://www.bilibili.com/video/BV1vkDpBSExk" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1BkDsBtEn2" target="_blank">点击查收理想i6史上最“夯”成绩单。</a></div>
-            <div class="alert-meta">UP主: 理想汽车 | 评分: 59.8分 | ¥1,000元 | 04-09 17:01 | <a href="https://www.bilibili.com/video/BV1BkDsBtEn2" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1itX7BkEPy" target="_blank">【加拿大人疯狂爱上中国车】理想L7，承认中国科技压倒性领先</a></div>
-            <div class="alert-meta">UP主: 喵内゛ | 评分: 40.5分 | ¥2,000元 | 04-09 12:00 | <a href="https://www.bilibili.com/video/BV1itX7BkEPy" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1St97BvEHm" target="_blank">【汽车生活】这么近，那么美，周末到河北！开15万的理想，自驾鸡鸣驿</a></div>
-            <div class="alert-meta">UP主: 车图腾 | 评分: 40.9分 | ¥2,000元 | 04-09 12:00 | <a href="https://www.bilibili.com/video/BV1St97BvEHm" target="_blank">▶ 看视频</a></div>
-        </div>
-        <div class="alert-item">
-            <div class="alert-title"><a href="https://www.bilibili.com/video/BV1qRQUBhE7R" target="_blank">理想L9增程式SUV整车研发全流程详解上篇</a></div>
-            <div class="alert-meta">UP主: 草帽课堂的汽车设计 | 评分: 41.3分 | ¥2,000元 | 04-09 12:00 | <a href="https://www.bilibili.com/video/BV1qRQUBhE7R" target="_blank">▶ 看视频</a></div>
-        </div></div>
-</div>
-
-<div class="section">
-  <h2>⚙️ 监控配置</h2>
-  <div class="cfg-grid">
-    <div class="cfg-item"><div class="cfg-l">监控模式</div><div class="cfg-v">混合模式 (持续+定时)</div></div>
-    <div class="cfg-item"><div class="cfg-l">定时推送</div><div class="cfg-v">12:00, 17:00 每60分钟巡检</div></div>
-    <div class="cfg-item"><div class="cfg-l">提醒阈值</div><div class="cfg-v">即时≥60分 | 汇总≥40分</div></div>
-    <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想MEGA, 理想i6, 理想i8, 理想L6, 理想L7, 理想L8, 理想L9, 理想ONE, 理想新车, 理想增程, 理想试驾, 理想车主, 理想智驾, 李想</div></div>
+<!-- ══ PAGE 2: 历史加热 ══ -->
+<div class="page" id="page-heated">
+  <div class="card">
+    <div class="card-title">历史加热记录</div>
+    <div class="card-sub">已标记加热的内容 · 系统提醒记录也会显示在这里</div>
+    <div class="heated-list" id="heated-list">
+      <div class="empty">暂无历史加热记录</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="card-title">系统提醒记录</div>
+    <div class="card-sub">监控系统自动推送的飞书提醒历史</div>
+    <div class="heated-list" id="alert-list-container">
+      <div class="empty">暂无提醒记录</div>
+    </div>
   </div>
 </div>
 
-<!-- BV号手动查询 -->
-<div class="bv-section">
-  <h2>🔍 BV号手动查询</h2>
-  <div class="bv-input-row">
-    <input id="bv-input" class="bv-input" type="text" placeholder="输入BV号，例如 BV1d4QXBKEVR" />
-    <button id="bv-btn" class="bv-btn" onclick="queryBV()">查询评分</button>
+<!-- ══ PAGE 3: 投放效果 ══ -->
+<div class="page" id="page-promo">
+  <div class="promo-add-section">
+    <div class="promo-add-title">添加投放追踪</div>
+    <div class="promo-add-tabs">
+      <div class="add-tab active" onclick="switchAddTab(this,'add-from-bv')">输入BV号</div>
+      <div class="add-tab" onclick="switchAddTab(this,'add-manual')">手动填写数据</div>
+    </div>
+
+    <!-- 方式1：BV号（自动拉取视频信息） -->
+    <div class="add-panel active" id="add-from-bv">
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:280px">
+          <label>BV号</label>
+          <input id="add-bvid" type="text" placeholder="BV1xxxxxxxxx" oninput="onAddBvInput()" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="add-budget" type="number" placeholder="2000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="add-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="add-note" type="text" placeholder="例：周末测试" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;margin-bottom:0;align-self:flex-end" onclick="submitFromBv()">+ 添加追踪</button>
+      </div>
+      <div id="add-bv-preview" style="font-size:.82em;color:#888;min-height:18px"></div>
+      <div id="add-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
+
+    <!-- 方式2：手动填写全部数据 -->
+    <div class="add-panel" id="add-manual">
+      <div class="add-form-row">
+        <div class="add-form-field">
+          <label>视频标题</label>
+          <input id="man-title" type="text" placeholder="视频标题" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>BV号（选填）</label>
+          <input id="man-bvid" type="text" placeholder="BV1xxxxxxxxx" />
+        </div>
+        <div class="add-form-field" style="max-width:150px">
+          <label>UP主名</label>
+          <input id="man-author" type="text" placeholder="UP主昵称" />
+        </div>
+      </div>
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前播放量</label>
+          <input id="man-play-before" type="number" placeholder="10000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前点赞</label>
+          <input id="man-like-before" type="number" placeholder="500" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="man-budget" type="number" placeholder="2000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="man-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="man-note" type="text" placeholder="" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;align-self:flex-end" onclick="submitManual()">+ 添加</button>
+      </div>
+      <div id="man-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
   </div>
-  <div id="bv-result"></div>
+
+  <div class="card">
+    <div class="card-title">投放效果看板 <span style="font-size:.78em;font-weight:400;color:#aaa">· 每次巡检自动更新数据</span></div>
+    <div class="card-sub">CPM = 投入金额 ÷ 新增播放量 × 1000</div>
+    <div class="promo-list" id="promo-list-container">
+      <div class="empty">暂无投放记录 — 点击视频右下角「标记已投放」按钮登记，监控系统将自动追踪效果</div>
+    </div>
+  </div>
 </div>
 
+<!-- ══ PAGE 4: BV查询 ══ -->
+<div class="page" id="page-query">
+  <div class="card">
+    <div class="card-title">BV号查询 & 评分</div>
+    <div class="card-sub">输入任意BV号，实时拉取B站数据并给出投流评估</div>
+    <div class="bv-input-row">
+      <input id="bv-input" class="bv-input" type="text" placeholder="输入BV号，例如 BV1d4QXBKEVR" />
+      <button id="bv-btn" class="bv-btn" onclick="queryBV()">查询评分</button>
+    </div>
+    <div id="bv-result"></div>
+  </div>
 </div>
 
-<!-- 投放登记弹窗 -->
+<!-- ══ PAGE 5: 监控配置 ══ -->
+<div class="page" id="page-config">
+  <div class="card">
+    <div class="card-title">当前监控配置</div>
+    <div class="card-sub">修改请编辑 config.json 后重启监控程序</div>
+    <div class="cfg-grid">
+      <div class="cfg-item"><div class="cfg-l">监控模式</div><div class="cfg-v">混合模式 (持续 + 定时)</div></div>
+      <div class="cfg-item"><div class="cfg-l">巡检间隔</div><div class="cfg-v">每 60 分钟</div></div>
+      <div class="cfg-item"><div class="cfg-l">定时推送</div><div class="cfg-v">12:00, 17:00</div></div>
+      <div class="cfg-item"><div class="cfg-l">提醒阈值</div><div class="cfg-v">即时 ≥ 60 分 · 汇总 ≥ 40 分</div></div>
+      <div class="cfg-item" style="grid-column:1/-1"><div class="cfg-l">监控关键词 (17 个)</div><div class="cfg-v">理想汽车 · 理想MEGA · 理想i6 · 理想i8 · 理想L6 · 理想L7 · 理想L8 · 理想L9 · 理想ONE · 理想新车 · 理想增程 · 理想试驾 · 理想智驾 · 理想提车 · 理想座舱 · 理想车机 · 李想</div></div>
+    </div>
+    <hr class="section-divider">
+    <div style="font-size:.82em;color:#aaa;margin-top:4px">
+      公开看板: <a href="https://jiahongsun675-del.github.io/lixiang-dashboard/" target="_blank" style="color:#3b6eea">https://jiahongsun675-del.github.io/lixiang-dashboard/</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">GitHub Token 配置</div>
+    <div class="card-sub">Token 存储在浏览器本地，用于投放记录的云端同步</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div id="token-status" style="font-size:.88em;color:#aaa;flex:1">检测中...</div>
+      <button class="btn btn-secondary btn-sm" onclick="resetToken()">重置 Token</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 从推荐榜单「标记加热」弹窗 ── -->
 <div class="modal-overlay" id="promo-modal">
   <div class="modal">
-    <h3>📌 标记投放记录</h3>
+    <h3>标记加热 & 添加投放追踪</h3>
     <div class="modal-video-title" id="modal-video-title"></div>
     <div class="modal-field">
       <label>BV号</label>
-      <input id="modal-bvid" type="text" placeholder="BV1xxxxxxxxx" />
+      <input id="modal-bvid" type="text" placeholder="BV1xxxxxxxxx" readonly style="background:#f8f9fc" />
     </div>
     <div class="modal-field">
-      <label>投放金额（元）</label>
-      <input id="modal-budget" type="number" placeholder="例如 2000" min="0" />
+      <label>投放金额（元，选填）</label>
+      <input id="modal-budget" type="number" placeholder="不填则仅标记加热，不计入投放追踪" min="0" />
     </div>
     <div class="modal-field">
       <label>投放开始时间</label>
@@ -1533,252 +1647,358 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
       <label>备注（选填）</label>
       <input id="modal-note" type="text" placeholder="例如：周末投放测试" />
     </div>
-    <div id="modal-fetch-status" style="font-size:.82em;color:#667eea;min-height:18px;margin-top:4px"></div>
+    <div id="modal-fetch-status" style="font-size:.8em;color:#3b6eea;min-height:16px;margin-top:4px"></div>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">取消</button>
-      <button class="modal-submit" onclick="submitPromotion()">✅ 确认登记</button>
+      <button class="modal-submit" onclick="submitPromotion()">确认</button>
     </div>
   </div>
 </div>
 
-</div>
-
 <script>
-// 页面倒计时
-let cd = 300;
-setInterval(() => {
-  const m = Math.floor(cd/60), s = cd%60;
-  document.title = `⏱ ${m}:${s.toString().padStart(2,'0')} - B站AI加热监测`;
-  cd--; if(cd<0) cd=300;
-}, 1000);
+// ── 页面切换 ──
+function switchPage(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(tab.dataset.page).classList.add('active');
+}
 
-// 投放弹窗
-function markPromotion(bvid, title, author) {
+// ── 加热状态（localStorage） ──
+function getHeatedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem('heated_bvids') || '[]')); }
+  catch { return new Set(); }
+}
+function saveHeatedSet(s) {
+  localStorage.setItem('heated_bvids', JSON.stringify([...s]));
+}
+function markHeated(bvid, title, author, score, budget) {
+  const s = getHeatedSet();
+  s.add(bvid);
+  saveHeatedSet(s);
+
+  // 保存加热记录
+  const records = getLocalHeatedRecords();
+  if (!records.find(r => r.bvid === bvid)) {
+    records.unshift({ bvid, title, author, score, budget, heated_at: new Date().toISOString() });
+    localStorage.setItem('heated_records', JSON.stringify(records));
+  }
+  refreshHeatedUI();
+  // 打开弹窗填写投放信息
+  openPromoModal(bvid, title, author);
+}
+function unmarkHeated(bvid) {
+  const s = getHeatedSet();
+  s.delete(bvid);
+  saveHeatedSet(s);
+  const records = getLocalHeatedRecords().filter(r => r.bvid !== bvid);
+  localStorage.setItem('heated_records', JSON.stringify(records));
+  refreshHeatedUI();
+}
+function getLocalHeatedRecords() {
+  try { return JSON.parse(localStorage.getItem('heated_records') || '[]'); }
+  catch { return []; }
+}
+
+function refreshHeatedUI() {
+  const s = getHeatedSet();
+  // 更新榜单卡片状态
+  document.querySelectorAll('.video-item').forEach(el => {
+    const bvid = el.dataset.bvid;
+    if (!bvid) return;
+    if (s.has(bvid)) {
+      el.classList.add('heated');
+      const btn = el.querySelector('.btn-mark-heat');
+      if (btn) { btn.textContent = '已加热'; btn.classList.remove('btn-secondary'); btn.classList.add('btn-success'); btn.onclick = () => unmarkHeated(bvid); }
+    } else {
+      el.classList.remove('heated');
+      const btn = el.querySelector('.btn-mark-heat');
+      if (btn) { btn.textContent = '标记加热'; btn.classList.add('btn-secondary'); btn.classList.remove('btn-success'); }
+    }
+  });
+  // 更新统计数
+  document.getElementById('stat-heated-count').textContent = s.size;
+  // 渲染历史加热列表
+  renderHeatedList();
+}
+
+function renderHeatedList() {
+  const records = getLocalHeatedRecords();
+  const container = document.getElementById('heated-list');
+  if (!records.length) { container.innerHTML = '<div class="empty">暂无本地标记的加热记录</div>'; return; }
+  const fmtDate = iso => { try { return new Date(iso).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch{ return iso; } };
+  container.innerHTML = records.map(r => `
+    <div class="heated-item">
+      <div class="heated-item-info">
+        <div class="heated-item-title"><a href="https://www.bilibili.com/video/${r.bvid}" target="_blank">${r.title||r.bvid}</a></div>
+        <div class="heated-item-meta">UP主: ${r.author||'—'} &nbsp;|&nbsp; 加热时间: ${fmtDate(r.heated_at)} &nbsp;|&nbsp; BV: ${r.bvid}</div>
+      </div>
+      <div class="heated-item-score">
+        <div class="heated-score-val">${r.score ? r.score.toFixed(1) : '—'}</div>
+        <div class="heated-score-lbl">评分</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="unmarkHeated('${r.bvid}')">取消</button>
+      </div>
+    </div>`).join('');
+}
+
+// 系统提醒记录
+const ALL_ALERTS = [{"bvid": "BV191crzdEKn", "title": "分享一个理想车主", "author": "鸡毛i", "score": 60.6, "alert_time": "2026-04-10T10:32:13.846997", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1bnQyBMERi", "title": "理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！", "author": "抽象行为学", "score": 66.6, "alert_time": "2026-04-10T10:32:13.845543", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1HrD6B5EhV", "title": "山东理想车主", "author": "非法吸猫王", "score": 80.0, "alert_time": "2026-04-10T10:32:13.841755", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "¥15,000元"}, {"bvid": "BV1vkDpBSExk", "title": "500强智驾大翻车勇闯小河沟估计想洗澡了", "author": "一秋名山一封禁版", "score": 76.5, "alert_time": "2026-04-10T10:03:02.616214", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "¥15,000元"}, {"bvid": "BV1BkDsBtEn2", "title": "点击查收理想i6史上最“夯”成绩单。", "author": "理想汽车", "score": 59.8, "alert_time": "2026-04-09T17:01:08.479080", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥1,000元"}, {"bvid": "BV1itX7BkEPy", "title": "【加拿大人疯狂爱上中国车】理想L7，承认中国科技压倒性领先", "author": "喵内゛", "score": 40.5, "alert_time": "2026-04-09T12:00:02.383682", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1St97BvEHm", "title": "【汽车生活】这么近，那么美，周末到河北！开15万的理想，自驾鸡鸣驿", "author": "车图腾", "score": 40.9, "alert_time": "2026-04-09T12:00:02.379172", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1qRQUBhE7R", "title": "理想L9增程式SUV整车研发全流程详解上篇", "author": "草帽课堂的汽车设计", "score": 41.3, "alert_time": "2026-04-09T12:00:02.373814", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1UzAFzqEN5", "title": "2026年2月增程式SUV车型销量TOP20", "author": "汽车数据观察员", "score": 41.7, "alert_time": "2026-04-09T12:00:02.366768", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1Qdw7zRENd", "title": "大众赌上家底的6座增程车，能否让理想L9害怕？", "author": "新车评网", "score": 41.1, "alert_time": "2026-04-08T17:00:02.810358", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "¥2,000元"}, {"bvid": "BV1VhX4BaEpY", "title": "理想车主一定要打开这个设置，用过一次就再也不想喊唤醒词了。很多人开半年都没发现。", "author": "叶枫有理想", "score": 45.0, "alert_time": "2026-04-08T12:00:21.975715", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1SiQDBHEg2", "title": "92年都是记录理想L6提车日常", "author": "四姐的生活", "score": 53.0, "alert_time": "2026-04-08T12:00:21.974043", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1WtDiBqEhP", "title": "很多理想车主还在扫码，真的太out了！30秒教你开启“即插即充”，积分抵扣+免密支付，彻底解放双手，这才是智能车该有的样子！", "author": "叶枫的理想生活", "score": 53.2, "alert_time": "2026-04-08T12:00:21.972497", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV13jDPBdEGr", "title": "假期酒店太贵，我老公非得住车里，花2分钟打造的大床房，你们看怎么样？#理想汽车#自驾游#理想l6#床车生活", "author": "几米几米123", "score": 40.0, "alert_time": "2026-04-08T12:00:21.874905", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1q8XkB7EUg", "title": "理想26年新车上市节奏#理想汽车[话题]#", "author": "登登爸A1den", "score": 40.2, "alert_time": "2026-04-08T12:00:21.795258", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1adAAzpEDA", "title": "理想i6提车验车攻略-必看这7点", "author": "北京贴膜老吕", "score": 64.4, "alert_time": "2026-04-08T10:56:19.095275", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1s8DiBKEqx", "title": "逆天理想车主把车开到海水边停车！结局舒服了！直接陷车了", "author": "三星手机非官方", "score": 65.5, "alert_time": "2026-04-08T02:22:52.383301", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1sxDeBcEBT", "title": "拆开理想i6后真是震惊到我了!表里不一!", "author": "大王驾道", "score": 76.1, "alert_time": "2026-04-08T02:22:52.377916", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1ZEDvB9E6n", "title": "我也太倒霉了，刚提车几天就被人剐蹭了，还好对方主责，可是我新车啊", "author": "大魔王提莫吖", "score": 66.0, "alert_time": "2026-04-07T20:20:10.780080", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1Q2DuBzETg", "title": "可能是最公平的智驾比赛《智驾越级生活》“高光系列”邀请视频 欢迎参与与转发", "author": "中国之神话", "score": 48.4, "alert_time": "2026-04-07T17:00:10.873179", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV18AAKzxEFS", "title": "谨小慎微的人，怎能懂得理想车主的潇酒，他们的理想。#理想与现实 #行车记录仪", "author": "非法吸猫王", "score": 57.2, "alert_time": "2026-04-07T17:00:10.869816", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1fhAJzCEow", "title": "为什么现在的智驾总感觉“慢半拍”？揭秘车企不愿说的“优化税”", "author": "Mr厉害-", "score": 59.0, "alert_time": "2026-04-07T17:00:10.864233", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1yhSXB1E9B", "title": "理想i6被吹成家用天花板？车主才知道的坑，我全说了！", "author": "汽车谢老师", "score": 41.2, "alert_time": "2026-04-07T17:00:10.859962", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV15hS9BvEBt", "title": "【理想i6】美国强者遇到理想i6，羡慕的流口水 ，", "author": "喵内゛", "score": 43.6, "alert_time": "2026-04-07T17:00:10.854051", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1UqDcBCE69", "title": "理想汽车，为什么在俄罗斯爆火？", "author": "电车出海工作室", "score": 64.4, "alert_time": "2026-04-07T14:02:10.449721", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1hX9EBMEF3", "title": "溜背必失空间？理想i6用“平衡艺术”破局！", "author": "颜车纪", "score": 46.5, "alert_time": "2026-04-07T12:00:09.749262", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1p7XMBtEL4", "title": "理想原车音响其实很强，只是你没调对。一个隐藏调音设置，音质直接提升一个档次。试完记得回来告诉我效果。", "author": "叶枫有理想", "score": 46.5, "alert_time": "2026-04-07T12:00:09.747058", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1ZuSoBjE9P", "title": "理想i6官方下沉储物盒买回来了，看看上车效果#理想i6", "author": "登登爸A1den", "score": 48.3, "alert_time": "2026-04-07T12:00:09.744807", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1bQ9TBuE9U", "title": "试驾星途EX7：30英寸大屏 -18℃冰箱 空悬+CDC 理想L6如何应对？", "author": "之家试车", "score": 53.9, "alert_time": "2026-04-07T12:00:09.742533", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1dJX3BXEFh", "title": "理想i6提车，终于让我用上提车小曲了", "author": "CooperGreen", "score": 54.2, "alert_time": "2026-04-07T12:00:09.739438", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1fUSoBSEoM", "title": "今天看个最近有点点火热的理想L9啊 正收着车呢 买车的都来问了", "author": "郑州百川汽车", "score": 64.4, "alert_time": "2026-04-07T10:13:45.912537", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1nTSfB4EZE", "title": "北京理想车主", "author": "非法吸猫王", "score": 77.3, "alert_time": "2026-04-07T10:13:45.907220", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1ZfDcBbECp", "title": "同样开理想，用车体验差距真的很大。这4个隐藏开关，很多车主一年都没打开。学会再说你真的会开理想。", "author": "叶枫的理想生活", "score": 69.0, "alert_time": "2026-04-07T09:41:57.729278", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1N1DcBuEP8", "title": "人生第二次提车！", "author": "乌镇之主乌萨奇", "score": 88.0, "alert_time": "2026-04-07T06:09:15.703733", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1u89KBvE73", "title": "租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你", "author": "超哥超车", "score": 95.0, "alert_time": "2026-04-06T20:19:41.881894", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1L8S9BKEEg", "title": "【理想i6】英国强者遇到理想i6，羡慕的流口水 ，", "author": "喵内゛", "score": 60.4, "alert_time": "2026-04-06T16:35:34.451705", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV12pSDBVELU", "title": "理想车主刻板印象三阶段", "author": "报号村夫", "score": 63.2, "alert_time": "2026-04-06T13:35:50.254685", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1C49uBPEpy", "title": "理想i6专属隐藏式储物盒来了", "author": "若愚_Allen", "score": 47.9, "alert_time": "2026-04-06T12:00:09.619583", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1929uBnEX3", "title": "理想ACC、LCC、NOA到底怎么选？30秒帮你一次讲懂辅助驾驶等级。新手车主建议收藏。", "author": "叶枫的理想生活", "score": 48.5, "alert_time": "2026-04-06T12:00:09.618636", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1c79WBqEgn", "title": "理想L6和理想i6有头枕音响了？", "author": "若愚_Allen", "score": 53.1, "alert_time": "2026-04-06T12:00:09.617745", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1exSSBpEr8", "title": "【1818黄金眼】不满理想服务坐车里13小时 车主反映新情况", "author": "1818黄金眼", "score": 55.1, "alert_time": "2026-04-06T12:00:09.616616", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1AsSUBNEMy", "title": "接下来一个月，建议增程车一个都别碰", "author": "老高你好二手车", "score": 55.8, "alert_time": "2026-04-06T12:00:09.615372", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1RvX9BkErP", "title": "理想车主一定要装的任务大师之一。低速转弯自动开启全景影像，新手直接少刮3次车。分享码已经放视频里了。", "author": "叶枫有理想", "score": 71.6, "alert_time": "2026-04-06T11:31:21.787994", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1PjDTBpEam", "title": "福瑞画师欠无偿躲小区，理想L9把她车位全占", "author": "天灵残雪", "score": 93.9, "alert_time": "2026-04-05T15:37:18.555883", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1F99MBoEFJ", "title": "被理想i8深深折服", "author": "强尼哥", "score": 60.0, "alert_time": "2026-04-04T09:12:53.586849", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1ZR9KB7EqC", "title": "老外说车：理想 - 好！理想L8 - 好不好？", "author": "老外说车", "score": 87.7, "alert_time": "2026-04-04T09:12:53.574854", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1Z3c6zcEbK", "title": "“玛莎Levantte”换“理想L6”--消费降级？", "author": "李冬雪ALi", "score": 61.2, "alert_time": "2026-04-03T18:26:44.683016", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1e99wBYECe", "title": "很多理想车主都以为脚踢尾门不好用，其实只是方法错了。学会这一招，拎再多东西也不用腾手。建议点赞收藏，下次一定用得到。", "author": "叶枫的理想生活", "score": 65.5, "alert_time": "2026-04-03T17:23:25.028325", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1gjX5BWEna", "title": "2026年，理想ONE还值不值得买？", "author": "肥刘不肥哈", "score": 41.9, "alert_time": "2026-04-03T17:00:09.566449", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV18TXkBAETs", "title": "【真实报告】一镜到底实测 理想V13.4辅助驾驶", "author": "凤凰车研所", "score": 42.9, "alert_time": "2026-04-03T17:00:09.565621", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1W3X6BQE9P", "title": "阿联酋迪拜大气黑色理想l7 #理想l7", "author": "中国汽车在国外", "score": 44.4, "alert_time": "2026-04-03T17:00:09.564853", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1n7APzMEx2", "title": "理想i8智驾挑战海口城中村！", "author": "阿梁_ALiang", "score": 47.9, "alert_time": "2026-04-03T17:00:09.564106", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1f5XoB9EJH", "title": "理想i8：理想原生家庭走出来的好学生。", "author": "肉呆大魔王", "score": 52.6, "alert_time": "2026-04-03T17:00:09.563107", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1m59TBeEK6", "title": "理想二手车，全系避坑指南", "author": "老高你好二手车", "score": 81.9, "alert_time": "2026-04-03T15:50:14.213276", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1b195B4EyY", "title": "绿联NAS私有云车机版上线理想汽车", "author": "绿联NAS私有云", "score": 95.0, "alert_time": "2026-04-03T13:13:08.057594", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1HPcQzvE8y", "title": "开理想MEGA，一定要内心强大？", "author": "百车全说", "score": 84.0, "alert_time": "2026-04-03T12:42:16.308187", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1phQ9BpEhj", "title": "理想l7 这真是放手一搏呀 车都卖了", "author": "四哥爱收车", "score": 51.0, "alert_time": "2026-04-03T12:00:02.475307", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1ZSwyzyEmk", "title": "千里油电竞速再出发！理想i8与途观L Pro，谁会先到？", "author": "玩车报告", "score": 51.8, "alert_time": "2026-04-03T12:00:02.474292", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1459jBxEJt", "title": "理想i6 OTA8.4 智驾 车位到车位 0接管一镜到底", "author": "IM1T", "score": 54.4, "alert_time": "2026-04-03T12:00:02.473244", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1yWAcziEs4", "title": "停产暴跌后的理想ONE，二手贬值率赔惨了！现在还值得买吗", "author": "小周周二手车", "score": 56.3, "alert_time": "2026-04-03T12:00:02.472200", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV19wXYByE8K", "title": "20多万的价格理想L6几乎没缺点！车主：纯电300公里以上的增程好#买车 #车主说车 #新能源车 #车主分享", "author": "不一般的小安", "score": 56.3, "alert_time": "2026-04-03T12:00:02.470520", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1gMAHzMEQD", "title": "理想车主：薛定谔的素质。", "author": "路探社路社长", "score": 86.0, "alert_time": "2026-04-03T11:06:15.696002", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1Dc9ABoEZy", "title": "理想i6半年使用心得超详细分享", "author": "38号车评中心官方账号", "score": 92.9, "alert_time": "2026-04-03T11:06:15.692322", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1FVXoBxEWC", "title": "CIASI 2025年测评车型  理想i6", "author": "中保研汽车技术研究院", "score": 64.3, "alert_time": "2026-04-03T10:34:39.410462", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV15iXkBVEvX", "title": "别再说理想的音效一般了，那是你没找对开关！百万级音响调节参数已公开，建议先收藏，回车里对照着调。", "author": "叶枫有理想", "score": 75.2, "alert_time": "2026-04-03T09:30:55.483099", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1vMXjBiEFY", "title": "理想i6提车之后必做的5个设置", "author": "杨老师的理想", "score": 78.3, "alert_time": "2026-04-02T17:53:55.188110", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV16jXfBcEmc", "title": "欢迎@黄圣依 成为理想i8车主！🎊", "author": "理想汽车", "score": 65.6, "alert_time": "2026-04-02T17:22:04.653378", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1fqXZBZE2X", "title": "理想车机体验都藏在细节里，做啥都不用等。开机即巅峰，除了基础功能，娱乐系统等所有都不需要等。这点是其他目前做不到的。", "author": "有理想的小豹子", "score": 71.8, "alert_time": "2026-04-02T17:22:04.650936", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1VU9nBUEJK", "title": "理想8.4已经推送了。很多人更新完，其实不知道自己多了什么功能。我帮你筛了一遍，建议先收藏再更新。", "author": "叶枫有理想", "score": 48.1, "alert_time": "2026-04-02T17:00:10.340996", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV148w9zJEyh", "title": "詹锟GTC2026讲理想下一代自动驾驶基础模型MindVLA-o1(带字幕)", "author": "理想TOP2", "score": 49.1, "alert_time": "2026-04-02T17:00:10.338367", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1CYXzBUEiA", "title": "主流智驾芯片全景汇总对比，城市智驾算力估测", "author": "中国之神话", "score": 49.3, "alert_time": "2026-04-02T17:00:10.335502", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV17Y9jBVE98", "title": "理想i6智驾OTA8.4城区道路表现VLA8.4", "author": "comlinan最爱智驾", "score": 53.0, "alert_time": "2026-04-02T17:00:10.332301", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1KqPmzMEku", "title": "增程理想就懒得拍了，拍一下纯电的，理想i6底盘", "author": "你猫哥呀", "score": 58.7, "alert_time": "2026-04-02T17:00:10.326280", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1XYwrzZEP3", "title": "全损实战话术：理想L6如何在4S协助下拿到22.5 #理想L6 #推定全损", "author": "B站_湖面", "score": 77.5, "alert_time": "2026-04-02T14:32:38.463852", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1GAQmB7Ej8", "title": "米粉谴责飙车，花粉谴责乱用智驾，理想车主谴责乱停车，你同意吗", "author": "我是饭叔啊", "score": 61.0, "alert_time": "2026-04-02T12:59:40.813703", "is_underdog": false, "recommendation": "强烈推荐立即投流", "suggested_budget": "6000-10000元"}, {"bvid": "BV1e1Q6BvEub", "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。", "author": "叶枫有理想", "score": 68.8, "alert_time": "2026-04-02T12:28:37.003165", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1ULPzzJEbh", "title": "大众EA211增程器下线，理想高管为何发文“揶揄”？", "author": "懂车帝视线", "score": 52.3, "alert_time": "2026-04-02T12:00:07.704123", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1M4w9zHELP", "title": "人生第一台奶爸车，理想i6提车～", "author": "键盘车神教", "score": 53.1, "alert_time": "2026-04-02T12:00:07.703096", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1inAnzgEP1", "title": "创事纪 | 独家对话理想汽车唐华寅：增程的终局不是堆料", "author": "创事纪", "score": 54.8, "alert_time": "2026-04-02T12:00:07.702422", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1rMNczeEbE", "title": "一场跨越6年的口水战：大众和理想，究竟谁能定义增程3.0？", "author": "懂车帝视线", "score": 55.3, "alert_time": "2026-04-02T12:00:07.701707", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1aDXqBtE6h", "title": "ID.ERA 9X：增程大众，比理想更值？", "author": "车闻社Carpress", "score": 59.2, "alert_time": "2026-04-02T12:00:07.700668", "is_underdog": false, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1K1XBBDEWB", "title": "理想车机隐藏玩法来了。不开会员也能免费看高清影视。回车上试一次，你就知道有多香。", "author": "叶枫有理想", "score": 74.7, "alert_time": "2026-04-02T11:57:30.690269", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1mdAHzNExM", "title": "增程到底是简单，还是真先进？我花三分钟给你扒的透透的#说车聊车  #增程 #理想高管回应行业踩着理想过河", "author": "汽车工程师板儿姐", "score": 83.9, "alert_time": "2026-04-02T11:57:30.689495", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1EhAJzyEDZ", "title": "增程“真香”背后 是理想7年不被看好的坚持", "author": "蜜欢说", "score": 86.0, "alert_time": "2026-04-02T11:57:30.688321", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1oBAHz2EmN", "title": "这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0", "author": "安磊Antony", "score": 82.9, "alert_time": "2026-04-02T10:28:42.578367", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1e1Q6BvEub", "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。", "author": "叶枫有理想", "score": 71.3, "alert_time": "2026-04-02T09:50:02.496696", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1bcX6BbEqW", "title": "小尺寸，大电池！体验起亚EV2：韩国人把我们理想中的小电车做出来了？", "author": "车之感", "score": 74.6, "alert_time": "2026-03-31T17:00:08.733938", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1aDXqBtE6h", "title": "ID.ERA 9X：增程大众，比理想更值？", "author": "车闻社Carpress", "score": 75.6, "alert_time": "2026-03-31T17:00:08.731794", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1e1Q6BvEub", "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。", "author": "叶枫有理想", "score": 70.8, "alert_time": "2026-03-31T12:00:06.783627", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1HPcQzvE8y", "title": "开理想MEGA，一定要内心强大？", "author": "百车全说", "score": 81.3, "alert_time": "2026-03-31T09:13:19.712181", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1gMAHzMEQD", "title": "理想车主：薛定谔的素质。", "author": "路探社路社长", "score": 81.1, "alert_time": "2026-03-30T17:43:26.601350", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1oBAHz2EmN", "title": "这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0", "author": "安磊Antony", "score": 70.5, "alert_time": "2026-03-30T17:00:08.898511", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1oBAHz2EmN", "title": "这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0", "author": "安磊Antony", "score": 70.4, "alert_time": "2026-03-30T17:00:08.896189", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1FVXoBxEWC", "title": "CIASI 2025年测评车型  理想i6", "author": "中保研汽车技术研究院", "score": 93.8, "alert_time": "2026-03-30T13:56:00.528507", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1oBAHz2EmN", "title": "这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0", "author": "安磊Antony", "score": 82.4, "alert_time": "2026-03-30T13:00:09.569628", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1HPcQzvE8y", "title": "开理想MEGA，一定要内心强大？", "author": "百车全说", "score": 81.3, "alert_time": "2026-03-30T11:25:02.805097", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1d4QXBKEVR", "title": "奔驰VLE（2026）：追上中国了吗？深度对比理想MEGA", "author": "B_Sport", "score": 80.2, "alert_time": "2026-03-30T09:41:45.124072", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1AwwAziEJK", "title": "【J-Trance最强超经典神作推荐/永恒不衰 理想之诗】Idealized Romance -Void 专辑AD: PIANO", "author": "Umbrella_Shio", "score": 85.3, "alert_time": "2026-03-28T00:48:20.062174", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1HPcQzvE8y", "title": "开理想MEGA，一定要内心强大？", "author": "百车全说", "score": 81.3, "alert_time": "2026-03-27T14:19:31.467750", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1d4QXBKEVR", "title": "奔驰VLE（2026）：追上中国了吗？深度对比理想MEGA", "author": "B_Sport", "score": 81.5, "alert_time": "2026-03-27T14:19:31.466216", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1oBAHz2EmN", "title": "这车音响怎么调？- 理想L6 - 铂金音响 / 系统版本8.3.0", "author": "安磊Antony", "score": 82.5, "alert_time": "2026-03-27T14:19:31.464177", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1AwwAziEJK", "title": "【J-Trance最强超经典神作推荐/永恒不衰 理想之诗】Idealized Romance -Void 专辑AD: PIANO", "author": "Umbrella_Shio", "score": 85.4, "alert_time": "2026-03-27T12:26:25.742565", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1beXsBDEUC", "title": "理想L8怎么样？", "author": "车主明", "score": 81.2, "alert_time": "2026-03-27T09:48:09.071684", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV18bXpBjE8p", "title": "“人工智能就是在造人”，理想汽车CEO李想谈L4自动驾驶汽车，是生活中最重要的硅基人", "author": "21世纪经济报道视频", "score": 82.0, "alert_time": "2026-03-26T17:39:23.732945", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1EDXnBWEoq", "title": "理想i6荣获中保研“5G”最高评级", "author": "理想汽车", "score": 83.3, "alert_time": "2026-03-26T17:39:23.730885", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1LZXpB4EfM", "title": "理他干嘛，想走就走", "author": "猪排偶像大师官方", "score": 89.0, "alert_time": "2026-03-26T16:38:52.377524", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1YAQmB7E3n", "title": "汽车报“隐晦”点名，断轴、空簧断裂，铝板腐蚀，辅驾能力不足", "author": "我是饭叔啊", "score": 80.7, "alert_time": "2026-03-26T11:35:38.547736", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1d4QXBKEVR", "title": "奔驰VLE（2026）：追上中国了吗？深度对比理想MEGA", "author": "B_Sport", "score": 92.3, "alert_time": "2026-03-26T11:35:38.545955", "is_underdog": true, "recommendation": "强烈推荐立即投流", "suggested_budget": "3000-6000元(素人内容性价比高)"}, {"bvid": "BV1e1Q6BvEub", "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。", "author": "叶枫有理想", "score": 60.0, "alert_time": "2026-03-25T16:46:58.579464", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1bnQyBMERi", "title": "理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！", "author": "抽象行为学", "score": 60.4, "alert_time": "2026-03-25T16:46:58.578144", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1bnQyBMERi", "title": "理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！", "author": "抽象行为学", "score": 72.0, "alert_time": "2026-03-25T16:40:08.633064", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}, {"bvid": "BV1e1Q6BvEub", "title": "理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。", "author": "叶枫有理想", "score": 71.9, "alert_time": "2026-03-25T16:33:35.043181", "is_underdog": true, "recommendation": "可考虑小额测试投流", "suggested_budget": "2000-4000元"}];
+function renderAlertList() {
+  const container = document.getElementById('alert-list-container');
+  if (!ALL_ALERTS.length) { container.innerHTML = '<div class="empty">暂无提醒记录</div>'; return; }
+  const fmtDate = iso => { try { return new Date(iso).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch{ return iso; } };
+  container.innerHTML = ALL_ALERTS.slice(0,30).map(a => `
+    <div class="heated-item">
+      <div class="heated-item-info">
+        <div class="heated-item-title"><a href="https://www.bilibili.com/video/${a.bvid}" target="_blank">${a.title||a.bvid}</a>${a.is_underdog ? ' <span class="badge badge-underdog">⭐素人</span>' : ''}</div>
+        <div class="heated-item-meta">UP主: ${a.author||'—'} &nbsp;|&nbsp; 建议: ${a.suggested_budget||'—'} &nbsp;|&nbsp; 提醒时间: ${fmtDate(a.alert_time)}</div>
+      </div>
+      <div class="heated-item-score">
+        <div class="heated-score-val">${a.score ? Number(a.score).toFixed(1) : '—'}</div>
+        <div class="heated-score-lbl">评分</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── 投放弹窗（从榜单标记加热时触发） ──
+function openPromoModal(bvid, title, author) {
   document.getElementById('modal-bvid').value = bvid;
-  document.getElementById('modal-video-title').textContent = title + '  UP主: ' + author;
-  // 默认当前时间
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('modal-start-time').value = now.toISOString().slice(0, 16);
+  document.getElementById('modal-video-title').textContent = title + (author ? '  ·  UP主: ' + author : '');
+  const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('modal-start-time').value = now.toISOString().slice(0,16);
   document.getElementById('modal-fetch-status').textContent = '';
   document.getElementById('modal-budget').value = '';
   document.getElementById('modal-note').value = '';
   document.getElementById('promo-modal').classList.add('show');
 }
+function closeModal() { document.getElementById('promo-modal').classList.remove('show'); }
+document.getElementById('promo-modal').addEventListener('click', e => { if(e.target===document.getElementById('promo-modal')) closeModal(); });
 
-function openAddPromo() {
-  document.getElementById('modal-bvid').value = '';
-  document.getElementById('modal-video-title').textContent = '手动添加投放记录';
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('modal-start-time').value = now.toISOString().slice(0, 16);
-  document.getElementById('modal-fetch-status').textContent = '';
-  document.getElementById('modal-budget').value = '';
-  document.getElementById('modal-note').value = '';
-  document.getElementById('promo-modal').classList.add('show');
+// ── GitHub API ──
+function getGhToken() {
+  return localStorage.getItem('lixiang_gh_token') || '';
+}
+async function ghPromoGet() {
+  const token = getGhToken();
+  if (!token) return [[], null];
+  const res = await fetch('https://api.github.com/repos/jiahongsun675-del/lixiang-dashboard/contents/promotions.json', {
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) return [[], null];
+  const d = await res.json();
+  return [JSON.parse(atob(d.content.replace(/\n/g,''))), d.sha];
+}
+async function ghPromoPut(records, sha, message) {
+  const token = getGhToken();
+  if (!token) throw new Error('未配置 GitHub Token');
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(records, null, 2))));
+  const payload = { message: message||'update promotions', content, branch: 'main' };
+  if (sha) payload.sha = sha;
+  const res = await fetch('https://api.github.com/repos/jiahongsun675-del/lixiang-dashboard/contents/promotions.json', {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message||res.statusText); }
 }
 
-function closeModal() {
-  document.getElementById('promo-modal').classList.remove('show');
-}
-
+// ── 从榜单提交投放（弹窗） ──
 async function submitPromotion() {
   const bvid = document.getElementById('modal-bvid').value.trim();
-  const budget = parseFloat(document.getElementById('modal-budget').value);
+  const budget = parseFloat(document.getElementById('modal-budget').value) || 0;
   const startTime = document.getElementById('modal-start-time').value;
   const note = document.getElementById('modal-note').value.trim();
   const status = document.getElementById('modal-fetch-status');
-
-  if (!bvid || !bvid.startsWith('BV')) {
-    status.style.color = '#dc2626';
-    status.textContent = '❌ 请输入有效的BV号';
-    return;
-  }
-  if (!budget || budget <= 0) {
-    status.style.color = '#dc2626';
-    status.textContent = '❌ 请输入有效的投放金额';
-    return;
-  }
-  if (!startTime) {
-    status.style.color = '#dc2626';
-    status.textContent = '❌ 请选择投放开始时间';
-    return;
-  }
-
-  status.style.color = '#667eea';
-  status.textContent = '⏳ 正在登记投放记录...';
-
   const titleEl = document.getElementById('modal-video-title');
   const titleText = titleEl ? titleEl.textContent : '';
   const upMatch = titleText.match(/UP主:\s*(.+)$/);
   const author = upMatch ? upMatch[1].trim() : '';
-  const title = upMatch ? titleText.replace(/\s*UP主:.*$/, '').trim() : titleText.trim();
+  const title = upMatch ? titleText.replace(/\s*·\s*UP主:.*$/,'').trim() : titleText.trim();
 
-  // Token 从 localStorage 读取（首次使用弹窗提示配置）
-  let GITHUB_TOKEN = localStorage.getItem('lixiang_gh_token') || '';
-  if (!GITHUB_TOKEN) {
-    GITHUB_TOKEN = prompt('首次使用：请输入 GitHub Token（仅存储在您的浏览器中，不会上传）：', '');
-    if (!GITHUB_TOKEN) {
-      status.style.color = '#dc2626';
-      status.textContent = '❌ 未提供 GitHub Token，无法保存记录';
-      return;
-    }
-    localStorage.setItem('lixiang_gh_token', GITHUB_TOKEN);
+  if (!getGhToken()) {
+    const t = prompt('请输入 GitHub Token（存储在本地浏览器）：','');
+    if (!t) { status.style.color='#dc2626'; status.textContent='❌ 未提供 Token'; return; }
+    localStorage.setItem('lixiang_gh_token', t);
+    checkTokenStatus();
   }
-  const REPO = 'jiahongsun675-del/lixiang-dashboard';
-  const FILE_PATH = 'promotions.json';
-  const API_BASE = 'https://api.github.com';
 
-  try {
-    // 1. 读取现有 promotions.json
-    status.textContent = '⏳ 读取现有记录...';
-    let existingRecords = [];
-    let fileSha = null;
-    const getRes = await fetch(`${API_BASE}/repos/${REPO}/contents/${FILE_PATH}`, {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-    });
-    if (getRes.ok) {
-      const fileData = await getRes.json();
-      fileSha = fileData.sha;
-      existingRecords = JSON.parse(atob(fileData.content.replace(/
-/g, '')));
+  // 若有投放金额则也写入追踪
+  if (budget > 0) {
+    status.textContent = '⏳ 保存追踪记录...';
+    try {
+      const [records, sha] = await ghPromoGet();
+      const newRec = { bvid, title: title||bvid, author, budget, start_time: startTime, note, created_at: new Date().toISOString(), baseline: null, snapshots: [], status: 'tracking' };
+      const idx = records.findIndex(r => r.bvid === bvid);
+      if (idx >= 0) records[idx] = { ...records[idx], ...newRec, snapshots:[], baseline:null, status:'tracking' };
+      else records.push(newRec);
+      await ghPromoPut(records, sha, `登记投放: ${bvid} ¥${budget}`);
+      status.style.color='#059669'; status.textContent='✅ 已登记！监控系统下次运行时自动采集基线';
+    } catch(e) {
+      status.style.color='#dc2626'; status.textContent='❌ 登记失败：'+e.message; return;
     }
-
-    // 2. 追加或更新记录（同BV号更新）
-    const newRecord = {
-      bvid, title: title || bvid, author, budget,
-      start_time: startTime, note,
-      created_at: new Date().toISOString(),
-      baseline: null, snapshots: [], status: 'tracking'
-    };
-    const idx = existingRecords.findIndex(r => r.bvid === bvid);
-    if (idx >= 0) {
-      existingRecords[idx] = { ...existingRecords[idx], ...newRecord, snapshots: [], baseline: null, status: 'tracking' };
-    } else {
-      existingRecords.push(newRecord);
-    }
-
-    // 3. 写回 GitHub
-    status.textContent = '⏳ 保存记录到云端...';
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(existingRecords, null, 2))));
-    const putPayload = {
-      message: `登记投放: ${bvid} ¥${budget}`,
-      content,
-      branch: 'main',
-    };
-    if (fileSha) putPayload.sha = fileSha;
-
-    const putRes = await fetch(`${API_BASE}/repos/${REPO}/contents/${FILE_PATH}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(putPayload),
-    });
-
-    if (!putRes.ok) {
-      const err = await putRes.json();
-      throw new Error(err.message || putRes.statusText);
-    }
-
-    status.style.color = '#166534';
-    status.textContent = '✅ 已登记！监控系统下次运行时自动采集基线并开始追踪';
-    setTimeout(() => closeModal(), 3000);
-
-  } catch(e) {
-    status.style.color = '#dc2626';
-    status.textContent = '❌ 登记失败：' + e.message;
+  } else {
+    status.style.color='#059669'; status.textContent='✅ 已标记加热（未填金额，不计入投放追踪）';
   }
+  setTimeout(() => closeModal(), 2000);
 }
 
-// 点击遮罩关闭
-document.getElementById('promo-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+// ── 从投放页 BV号添加 ──
+async function onAddBvInput() {
+  const bvid = document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const preview = document.getElementById('add-bv-preview');
+  if (!bvid) { preview.textContent=''; return; }
+  preview.textContent = '⏳ 拉取视频信息...';
+  try {
+    const res = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const d = await res.json();
+    if (d.code===0) {
+      const v = d.data;
+      preview.textContent = `✓ ${v.title} · UP主: ${v.owner.name} · 播放: ${fmtNum(v.stat.view)}`;
+    } else { preview.textContent = '⚠ 视频不存在或无法访问'; }
+  } catch { preview.textContent = ''; }
+}
+async function submitFromBv() {
+  const bvid = document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const budget = parseFloat(document.getElementById('add-budget').value) || 0;
+  const startTime = document.getElementById('add-start-time').value;
+  const note = document.getElementById('add-note').value.trim();
+  const status = document.getElementById('add-status');
+  if (!bvid) { status.style.color='#dc2626'; status.textContent='❌ 请输入有效 BV号'; return; }
+  if (!startTime) { status.style.color='#dc2626'; status.textContent='❌ 请选择投放开始时间'; return; }
+  if (!getGhToken()) {
+    const t = prompt('请输入 GitHub Token：','');
+    if (!t) { status.style.color='#dc2626'; status.textContent='❌ 未提供 Token'; return; }
+    localStorage.setItem('lixiang_gh_token', t); checkTokenStatus();
+  }
+  status.textContent = '⏳ 拉取视频信息并登记...';
+  try {
+    const res = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const d = await res.json();
+    const title = d.code===0 ? d.data.title : bvid;
+    const author = d.code===0 ? d.data.owner.name : '';
+    const [records, sha] = await ghPromoGet();
+    const newRec = { bvid, title, author, budget, start_time: startTime, note, created_at: new Date().toISOString(), baseline: null, snapshots: [], status: 'tracking' };
+    const idx = records.findIndex(r => r.bvid === bvid);
+    if (idx >= 0) records[idx] = { ...records[idx], ...newRec, snapshots:[], baseline:null, status:'tracking' };
+    else records.push(newRec);
+    await ghPromoPut(records, sha, `登记投放: ${bvid} ¥${budget}`);
+    status.style.color='#059669'; status.textContent='✅ 已登记！';
+    document.getElementById('add-bvid').value=''; document.getElementById('add-budget').value=''; document.getElementById('add-bv-preview').textContent='';
+  } catch(e) { status.style.color='#dc2626'; status.textContent='❌ '+e.message; }
+}
 
-// BV查询
+// ── 手动填写添加 ──
+async function submitManual() {
+  const title = document.getElementById('man-title').value.trim();
+  const bvid = document.getElementById('man-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0] || ('MANUAL_'+Date.now());
+  const author = document.getElementById('man-author').value.trim();
+  const playBefore = parseInt(document.getElementById('man-play-before').value) || 0;
+  const likeBefore = parseInt(document.getElementById('man-like-before').value) || 0;
+  const budget = parseFloat(document.getElementById('man-budget').value) || 0;
+  const startTime = document.getElementById('man-start-time').value;
+  const note = document.getElementById('man-note').value.trim();
+  const status = document.getElementById('man-status');
+  if (!title) { status.style.color='#dc2626'; status.textContent='❌ 请填写视频标题'; return; }
+  if (!startTime) { status.style.color='#dc2626'; status.textContent='❌ 请选择投放开始时间'; return; }
+  if (!getGhToken()) {
+    const t = prompt('请输入 GitHub Token：','');
+    if (!t) { status.style.color='#dc2626'; status.textContent='❌ 未提供 Token'; return; }
+    localStorage.setItem('lixiang_gh_token', t); checkTokenStatus();
+  }
+  status.textContent = '⏳ 保存...';
+  const baseline = playBefore > 0 ? { time: startTime, play: playBefore, like: likeBefore, coin:0, favorite:0, reply:0, share:0 } : null;
+  try {
+    const [records, sha] = await ghPromoGet();
+    records.push({ bvid, title, author, budget, start_time: startTime, note, created_at: new Date().toISOString(), baseline, snapshots: [], status: 'tracking', manual: true });
+    await ghPromoPut(records, sha, `手动登记: ${title}`);
+    status.style.color='#059669'; status.textContent='✅ 已登记！';
+    ['man-title','man-bvid','man-author','man-play-before','man-like-before','man-budget','man-note'].forEach(id => document.getElementById(id).value='');
+  } catch(e) { status.style.color='#dc2626'; status.textContent='❌ '+e.message; }
+}
+
+// ── 投放入口 tab 切换 ──
+function switchAddTab(tab, panelId) {
+  document.querySelectorAll('.add-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.add-panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── BV查询 ──
+const fmtNum = n => n >= 10000 ? (n/10000).toFixed(1)+'万' : Number(n).toLocaleString();
 async function queryBV() {
   const raw = document.getElementById('bv-input').value.trim();
   const bvid = raw.match(/BV[a-zA-Z0-9]+/)?.[0];
-  if (!bvid) {
-    document.getElementById('bv-result').innerHTML = '<div class="bv-error">请输入有效的BV号，格式如 BV1d4QXBKEVR</div>';
-    return;
-  }
-
+  if (!bvid) { document.getElementById('bv-result').innerHTML='<div class="bv-error">请输入有效的BV号，格式如 BV1d4QXBKEVR</div>'; return; }
   const btn = document.getElementById('bv-btn');
   btn.disabled = true;
-  document.getElementById('bv-result').innerHTML = '<div class="bv-loading">⏳ 正在查询B站数据...</div>';
-
+  document.getElementById('bv-result').innerHTML = '<div class="bv-loading">⏳ 正在查询...</div>';
   try {
-    const viewRes = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
-    const viewData = await viewRes.json();
-
-    if (viewData.code !== 0 || !viewData.data) {
-      document.getElementById('bv-result').innerHTML = `<div class="bv-error">查询失败：${viewData.message || '视频不存在或无法访问'}</div>`;
-      btn.disabled = false; return;
-    }
-
-    const v = viewData.data;
-    const stat = v.stat;
-    const play = stat.view || 0;
-    const like = stat.like || 0;
-    const coin = stat.coin || 0;
-    const favorite = stat.favorite || 0;
-    const reply = stat.reply || 0;
-    const share = stat.share || 0;
-
-    const ir = play > 0 ? ((like + coin + favorite + share) / play * 100) : 0;
-    const likeRate = play > 0 ? (like / play * 100) : 0;
-    const coinRate = play > 0 ? (coin / play * 100) : 0;
-    const commentRate = play > 0 ? (reply / play * 100) : 0;
-
-    const irScore = Math.min(ir / 3.0 * 25, 25) + Math.min(likeRate / 3.0 * 8, 8) + Math.min(commentRate / 0.5 * 7, 7);
-    const upScore = Math.min(12, 8);
-    const sentimentScore = Math.min((like / Math.max(reply, 1)) / 10 * 8, 8) + Math.min(coinRate / 1.0 * 7, 7);
-    const totalScore = Math.min(irScore, 40) + 12 + Math.min(upScore, 15) + Math.min(sentimentScore, 15);
-
-    let recClass = 'low', recText = '暂不建议投流，继续观察';
-    if (totalScore >= 75) { recClass = 'high'; recText = '✅ 强烈推荐投流！综合评分优秀'; }
-    else if (totalScore >= 55) { recClass = 'medium'; recText = '⚠️ 可考虑小额测试投流'; }
-
-    const fmtNum = n => n >= 10000 ? (n/10000).toFixed(1)+'万' : n.toLocaleString();
-    const pubDate = new Date(v.pubdate * 1000).toLocaleDateString('zh-CN');
-
+    const res = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const d = await res.json();
+    if (d.code!==0||!d.data) { document.getElementById('bv-result').innerHTML=`<div class="bv-error">查询失败：${d.message||'视频不存在'}</div>`; btn.disabled=false; return; }
+    const v=d.data, stat=v.stat;
+    const play=stat.view||0, like=stat.like||0, coin=stat.coin||0, fav=stat.favorite||0, reply=stat.reply||0, share=stat.share||0;
+    const ir = play>0 ? ((like+coin+fav+share)/play*100) : 0;
+    const likeRate = play>0 ? like/play*100 : 0;
+    const coinRate = play>0 ? coin/play*100 : 0;
+    const commentRate = play>0 ? reply/play*100 : 0;
+    const irScore = Math.min(ir/3.0*25,25)+Math.min(likeRate/3.0*8,8)+Math.min(commentRate/0.5*7,7);
+    const totalScore = Math.min(irScore,40)+12+8+Math.min((like/Math.max(reply,1))/10*8,8)+Math.min(coinRate/1.0*7,7);
+    let recClass='low', recText='暂不建议投流，继续观察';
+    if (totalScore>=75) { recClass='high'; recText='✅ 强烈推荐投流！综合评分优秀'; }
+    else if (totalScore>=55) { recClass='medium'; recText='⚠️ 可考虑小额测试'; }
+    const pubDate = new Date(v.pubdate*1000).toLocaleDateString('zh-CN');
     document.getElementById('bv-result').innerHTML = `
       <div class="bv-card">
-        <div class="bv-card-title">
-          <a href="https://www.bilibili.com/video/${bvid}" target="_blank">${v.title}</a>
-        </div>
-        <div style="font-size:.85em;color:#999;margin-bottom:10px">UP主: ${v.owner.name} | 发布: ${pubDate} | BV: ${bvid}</div>
+        <div class="bv-card-title"><a href="https://www.bilibili.com/video/${bvid}" target="_blank">${v.title}</a></div>
+        <div style="font-size:.82em;color:#aaa;margin-bottom:10px">UP主: ${v.owner.name} · 发布: ${pubDate} · BV: ${bvid}</div>
         <div class="bv-stats-grid">
-          <div class="bv-stat"><div class="bv-stat-l">播放量</div><div class="bv-stat-v">${fmtNum(play)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">播放</div><div class="bv-stat-v">${fmtNum(play)}</div></div>
           <div class="bv-stat"><div class="bv-stat-l">点赞</div><div class="bv-stat-v">${fmtNum(like)}</div></div>
           <div class="bv-stat"><div class="bv-stat-l">投币</div><div class="bv-stat-v">${fmtNum(coin)}</div></div>
-          <div class="bv-stat"><div class="bv-stat-l">收藏</div><div class="bv-stat-v">${fmtNum(favorite)}</div></div>
+          <div class="bv-stat"><div class="bv-stat-l">收藏</div><div class="bv-stat-v">${fmtNum(fav)}</div></div>
           <div class="bv-stat"><div class="bv-stat-l">评论</div><div class="bv-stat-v">${fmtNum(reply)}</div></div>
           <div class="bv-stat"><div class="bv-stat-l">分享</div><div class="bv-stat-v">${fmtNum(share)}</div></div>
         </div>
-        <div class="bv-ir">
-          互动率 <b>${ir.toFixed(2)}%</b> &nbsp;|&nbsp;
-          点赞率 <b>${likeRate.toFixed(2)}%</b> &nbsp;|&nbsp;
-          投币率 <b>${coinRate.toFixed(2)}%</b> &nbsp;|&nbsp;
-          评论率 <b>${commentRate.toFixed(2)}%</b>
+        <div class="bv-ir">互动率 <b>${ir.toFixed(2)}%</b> &nbsp;·&nbsp; 点赞率 <b>${likeRate.toFixed(2)}%</b> &nbsp;·&nbsp; 投币率 <b>${coinRate.toFixed(2)}%</b> &nbsp;·&nbsp; 评论率 <b>${commentRate.toFixed(2)}%</b></div>
+        <div class="bv-rec ${recClass}">${recText} &nbsp; 估算评分 <b>${totalScore.toFixed(1)} 分</b></div>
+        <div style="font-size:.73em;color:#ccc;margin-top:6px">* 客户端估算（无增长趋势），以监控系统完整评分为准</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-primary" style="flex:1" onclick="openPromoModal('${bvid}','${v.title.replace(/'/g,'')}','${v.owner.name}')">📌 标记加热 & 投放</button>
         </div>
-        <div class="bv-rec ${recClass}">${recText} &nbsp; 估算评分 <b>${totalScore.toFixed(1)}分</b></div>
-        <div style="font-size:.75em;color:#bbb;margin-top:8px">* 客户端估算分（无增长趋势数据），以监控系统完整评分为准</div>
-        <button class="mark-btn" style="margin-top:10px;width:100%;padding:8px" onclick="markPromotion('${bvid}', '${v.title.replace(/'/g,'')}', '${v.owner.name}')">📌 标记为已投放</button>
       </div>`;
-  } catch(e) {
-    document.getElementById('bv-result').innerHTML = `<div class="bv-error">请求失败：${e.message}</div>`;
-  }
+  } catch(e) { document.getElementById('bv-result').innerHTML=`<div class="bv-error">请求失败：${e.message}</div>`; }
   btn.disabled = false;
 }
+document.getElementById('bv-input').addEventListener('keydown', e => { if(e.key==='Enter') queryBV(); });
 
-document.getElementById('bv-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') queryBV();
-});
+// ── Token 状态 ──
+function checkTokenStatus() {
+  const t = getGhToken();
+  const el = document.getElementById('token-status');
+  if (t) { el.style.color='#059669'; el.textContent='✅ Token 已配置（'+t.slice(0,8)+'...）'; }
+  else { el.style.color='#aaa'; el.textContent='未配置，首次使用投放功能时会提示输入'; }
+}
+function resetToken() {
+  if (confirm('确认清除已保存的 GitHub Token？')) {
+    localStorage.removeItem('lixiang_gh_token');
+    checkTokenStatus();
+  }
+}
+
+// ── 初始化 ──
+(function init() {
+  // 初始化时间默认值
+  const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const nowStr = now.toISOString().slice(0,16);
+  document.getElementById('add-start-time').value = nowStr;
+  document.getElementById('man-start-time').value = nowStr;
+
+  refreshHeatedUI();
+  renderAlertList();
+  checkTokenStatus();
+})();
 </script>
 </body>
 </html>
