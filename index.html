@@ -65,9 +65,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 .score-bar{flex:1;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}
 .score-fill{height:100%;background:linear-gradient(90deg,#10b981,#3b82f6,#667eea)}
 .score-val{font-weight:700;color:#667eea;min-width:52px;text-align:right}
-.budget-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:4px}
+.budget-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:4px;gap:8px}
 .budget-lbl{font-weight:600;color:#92400e;font-size:.88em}
 .budget-val{font-weight:700;color:#78350f}
+.mark-btn{padding:4px 10px;background:#667eea;color:#fff;border:none;border-radius:5px;font-size:.78em;cursor:pointer;white-space:nowrap;transition:background .2s}
+.mark-btn:hover{background:#4f46e5}
+.mark-btn.done{background:#10b981}
+
+/* 投放弹窗 */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;width:90%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal h3{font-size:1.15em;color:#1a1a2e;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #667eea}
+.modal-video-title{font-size:.88em;color:#555;margin-bottom:18px;padding:8px 12px;background:#f0f9ff;border-radius:6px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:.85em;font-weight:600;color:#374151;margin-bottom:5px}
+.modal-field input{width:100%;padding:9px 12px;border:2px solid #e5e7eb;border-radius:7px;font-size:.95em;outline:none;transition:border-color .2s}
+.modal-field input:focus{border-color:#667eea}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-submit{flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:1em;font-weight:600;cursor:pointer}
+.modal-submit:hover{background:#4f46e5}
+.modal-cancel{padding:10px 20px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:1em;cursor:pointer}
+.modal-cancel:hover{background:#e2e8f0}
+.modal-success{text-align:center;padding:20px;color:#166534;font-size:1.05em}
+
+/* 投放记录手动添加 */
+.promo-add-btn{display:block;width:100%;padding:10px;background:#f0f9ff;border:2px dashed #93c5fd;border-radius:8px;color:#3b82f6;font-size:.9em;font-weight:600;cursor:pointer;text-align:center;margin-top:12px;transition:all .2s}
+.promo-add-btn:hover{background:#dbeafe;border-color:#3b82f6}
 
 .alert-list{display:grid;gap:8px}
 .alert-item{padding:10px 14px;border-left:3px solid #667eea;background:#f9fafb;border-radius:4px}
@@ -132,7 +156,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 <div class="header">
   <h1>🚀 B站AI起飞加热监测工具</h1>
   <div class="sub">理想汽车全站内容监测 · 互动率+增长趋势智能评分</div>
-  <div class="ts">数据更新: 2026-04-10 09:31:12 &nbsp;|&nbsp; 页面刷新: 2026-04-10 09:31:12 &nbsp;|&nbsp; 每5分钟自动刷新</div>
+  <div class="ts">数据更新: 2026-04-10 09:43:26 &nbsp;|&nbsp; 页面刷新: 2026-04-10 09:43:26 &nbsp;|&nbsp; 每5分钟自动刷新</div>
 </div>
 
 <div class="stats-row">
@@ -206,6 +230,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-high">¥10,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1u89KBvE73', '租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你', '超哥超车')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -267,6 +292,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-high">¥5,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1ZEDvB9E6n', '我也太倒霉了，刚提车几天就被人剐蹭了，还好对方主责，可是我新车啊', '大魔王提莫吖')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -328,6 +354,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-high">¥1,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1BkDsBtEn2', '点击查收理想i6史上最“夯”成绩单。', '理想汽车')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -389,6 +416,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥8,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1M4w9zHELP', '人生第一台奶爸车，理想i6提车～', '键盘车神教')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -450,6 +478,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥8,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1Dc9ABoEZy', '理想i6半年使用心得超详细分享', '38号车评中心官方账号')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -511,6 +540,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥1,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1fhAJzCEow', '为什么现在的智驾总感觉“慢半拍”？揭秘车企不愿说的“优化税”', 'Mr厉害-')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -572,6 +602,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥5,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1FVXoBxEWC', 'CIASI 2025年测评车型  理想i6', '中保研汽车技术研究院')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -633,6 +664,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥1,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1rMNczeEbE', '一场跨越6年的口水战：大众和理想，究竟谁能定义增程3.0？', '懂车帝视线')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -694,6 +726,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1ZSwyzyEmk', '千里油电竞速再出发！理想i8与途观L Pro，谁会先到？', '玩车报告')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -755,6 +788,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1exSSBpEr8', '【1818黄金眼】不满理想服务坐车里13小时 车主反映新情况', '1818黄金眼')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -816,6 +850,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV15hS9BvEBt', '【理想i6】美国强者遇到理想i6，羡慕的流口水 ，', '喵内゛')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -877,6 +912,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥10,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1f5XoB9EJH', '理想i8：理想原生家庭走出来的好学生。', '肉呆大魔王')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -938,6 +974,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1L8S9BKEEg', '【理想i6】英国强者遇到理想i6，羡慕的流口水 ，', '喵内゛')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -999,6 +1036,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1UzAFzqEN5', '2026年2月增程式SUV车型销量TOP20', '汽车数据观察员')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1060,6 +1098,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1qRQUBhE7R', '理想L9增程式SUV整车研发全流程详解上篇', '草帽课堂的汽车设计')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1121,6 +1160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1Qdw7zRENd', '大众赌上家底的6座增程车，能否让理想L9害怕？', '新车评网')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1182,6 +1222,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1St97BvEHm', '【汽车生活】这么近，那么美，周末到河北！开15万的理想，自驾鸡鸣驿', '车图腾')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1243,6 +1284,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥8,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV16jXfBcEmc', '欢迎@黄圣依 成为理想i8车主！🎊', '理想汽车')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1304,6 +1346,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
             <div class="budget-row">
                 <span class="budget-lbl">💰 建议加热预算</span>
                 <span class="budget-val budget-mid">¥2,000元</span>
+                <button class="mark-btn" onclick="markPromotion('BV1itX7BkEPy', '【加拿大人疯狂爱上中国车】理想L7，承认中国科技压倒性领先', '喵内゛')">📌 标记已投放</button>
             </div>
         </div>
     </div>
@@ -1314,6 +1357,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
   <h2>📊 投放效果追踪</h2>
   <p class="snote">CPM = 投入费用 ÷ 播放量 × 1000</p>
   <div class="empty">暂无投放记录 — 投放后运行 track_promotion.py 追踪效果</div>
+  <button class="promo-add-btn" onclick="openAddPromo()">＋ 手动添加投放记录</button>
 </div>
 
 <div class="section">
@@ -1357,7 +1401,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
   <h2>⚙️ 监控配置</h2>
   <div class="cfg-grid">
     <div class="cfg-item"><div class="cfg-l">监控模式</div><div class="cfg-v">混合模式 (持续+定时)</div></div>
-    <div class="cfg-item"><div class="cfg-l">定时推送</div><div class="cfg-v">12:00, 17:00 每30分钟巡检</div></div>
+    <div class="cfg-item"><div class="cfg-l">定时推送</div><div class="cfg-v">12:00, 17:00 每60分钟巡检</div></div>
     <div class="cfg-item"><div class="cfg-l">提醒阈值</div><div class="cfg-v">即时≥60分 | 汇总≥40分</div></div>
     <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想MEGA, 理想i6, 理想i8, 理想L6, 理想L7, 理想L8, 理想L9, 理想ONE, 理想新车, 理想增程, 理想试驾, 理想车主, 理想智驾, 李想</div></div>
   </div>
@@ -1375,6 +1419,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 
 </div>
 
+<!-- 投放登记弹窗 -->
+<div class="modal-overlay" id="promo-modal">
+  <div class="modal">
+    <h3>📌 标记投放记录</h3>
+    <div class="modal-video-title" id="modal-video-title"></div>
+    <div class="modal-field">
+      <label>BV号</label>
+      <input id="modal-bvid" type="text" placeholder="BV1xxxxxxxxx" />
+    </div>
+    <div class="modal-field">
+      <label>投放金额（元）</label>
+      <input id="modal-budget" type="number" placeholder="例如 2000" min="0" />
+    </div>
+    <div class="modal-field">
+      <label>投放开始时间</label>
+      <input id="modal-start-time" type="datetime-local" />
+    </div>
+    <div class="modal-field">
+      <label>备注（选填）</label>
+      <input id="modal-note" type="text" placeholder="例如：周末投放测试" />
+    </div>
+    <div id="modal-fetch-status" style="font-size:.82em;color:#667eea;min-height:18px;margin-top:4px"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">取消</button>
+      <button class="modal-submit" onclick="submitPromotion()">✅ 确认登记</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
 <script>
 // 页面倒计时
 let cd = 300;
@@ -1383,6 +1458,119 @@ setInterval(() => {
   document.title = `⏱ ${m}:${s.toString().padStart(2,'0')} - B站AI加热监测`;
   cd--; if(cd<0) cd=300;
 }, 1000);
+
+// 投放弹窗
+function markPromotion(bvid, title, author) {
+  document.getElementById('modal-bvid').value = bvid;
+  document.getElementById('modal-video-title').textContent = title + '  UP主: ' + author;
+  // 默认当前时间
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('modal-start-time').value = now.toISOString().slice(0, 16);
+  document.getElementById('modal-fetch-status').textContent = '';
+  document.getElementById('modal-budget').value = '';
+  document.getElementById('modal-note').value = '';
+  document.getElementById('promo-modal').classList.add('show');
+}
+
+function openAddPromo() {
+  document.getElementById('modal-bvid').value = '';
+  document.getElementById('modal-video-title').textContent = '手动添加投放记录';
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('modal-start-time').value = now.toISOString().slice(0, 16);
+  document.getElementById('modal-fetch-status').textContent = '';
+  document.getElementById('modal-budget').value = '';
+  document.getElementById('modal-note').value = '';
+  document.getElementById('promo-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('promo-modal').classList.remove('show');
+}
+
+async function submitPromotion() {
+  const bvid = document.getElementById('modal-bvid').value.trim();
+  const budget = parseFloat(document.getElementById('modal-budget').value);
+  const startTime = document.getElementById('modal-start-time').value;
+  const note = document.getElementById('modal-note').value.trim();
+  const status = document.getElementById('modal-fetch-status');
+
+  if (!bvid || !bvid.startsWith('BV')) {
+    status.style.color = '#dc2626';
+    status.textContent = '❌ 请输入有效的BV号';
+    return;
+  }
+  if (!budget || budget <= 0) {
+    status.style.color = '#dc2626';
+    status.textContent = '❌ 请输入有效的投放金额';
+    return;
+  }
+  if (!startTime) {
+    status.style.color = '#dc2626';
+    status.textContent = '❌ 请选择投放开始时间';
+    return;
+  }
+
+  status.style.color = '#667eea';
+  status.textContent = '⏳ 正在获取视频基线数据...';
+
+  try {
+    const res = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const data = await res.json();
+    if (data.code !== 0 || !data.data) {
+      status.style.color = '#dc2626';
+      status.textContent = '❌ 获取视频数据失败：' + (data.message || '视频不存在');
+      return;
+    }
+    const v = data.data;
+    const stat = v.stat;
+
+    const record = {
+      bvid: bvid,
+      title: v.title,
+      author: v.owner.name,
+      investment: budget,
+      start_time: startTime,
+      note: note,
+      track_time: new Date().toISOString(),
+      plays_before: stat.view || 0,
+      likes_before: stat.like || 0,
+      coins_before: stat.coin || 0,
+      favorites_before: stat.favorite || 0,
+      replies_before: stat.reply || 0,
+      plays_after: stat.view || 0,
+      interactions_before: (stat.like||0) + (stat.coin||0) + (stat.favorite||0) + (stat.share||0),
+      interactions_after: (stat.like||0) + (stat.coin||0) + (stat.favorite||0) + (stat.share||0),
+    };
+
+    // 下载JSON文件
+    const jsonStr = JSON.stringify(record, null, 2);
+    const blob = new Blob([jsonStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `promo_${bvid}_${startTime.replace(/[: ]/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    status.style.color = '#166534';
+    status.textContent = `✅ 基线数据已保存！请将下载的JSON文件发给运营同学导入系统。`;
+
+    // 同时复制命令到剪贴板
+    const cmd = `python3 scripts/track_promotion.py --bvid ${bvid} --budget ${budget} --start-time "${startTime}:00"`;
+    try { await navigator.clipboard.writeText(cmd); } catch(e) {}
+
+  } catch(e) {
+    status.style.color = '#dc2626';
+    status.textContent = '❌ 请求失败：' + e.message;
+  }
+}
+
+// 点击遮罩关闭
+document.getElementById('promo-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
 
 // BV查询
 async function queryBV() {
@@ -1398,7 +1586,6 @@ async function queryBV() {
   document.getElementById('bv-result').innerHTML = '<div class="bv-loading">⏳ 正在查询B站数据...</div>';
 
   try {
-    // 获取视频基础信息
     const viewRes = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
     const viewData = await viewRes.json();
 
@@ -1416,15 +1603,13 @@ async function queryBV() {
     const reply = stat.reply || 0;
     const share = stat.share || 0;
 
-    // 计算互动率
     const ir = play > 0 ? ((like + coin + favorite + share) / play * 100) : 0;
     const likeRate = play > 0 ? (like / play * 100) : 0;
     const coinRate = play > 0 ? (coin / play * 100) : 0;
     const commentRate = play > 0 ? (reply / play * 100) : 0;
 
-    // 简化评分（客户端版）
     const irScore = Math.min(ir / 3.0 * 25, 25) + Math.min(likeRate / 3.0 * 8, 8) + Math.min(commentRate / 0.5 * 7, 7);
-    const upScore = Math.min(12, 8); // 无粉丝数据时给默认分
+    const upScore = Math.min(12, 8);
     const sentimentScore = Math.min((like / Math.max(reply, 1)) / 10 * 8, 8) + Math.min(coinRate / 1.0 * 7, 7);
     const totalScore = Math.min(irScore, 40) + 12 + Math.min(upScore, 15) + Math.min(sentimentScore, 15);
 
@@ -1457,14 +1642,14 @@ async function queryBV() {
         </div>
         <div class="bv-rec ${recClass}">${recText} &nbsp; 估算评分 <b>${totalScore.toFixed(1)}分</b></div>
         <div style="font-size:.75em;color:#bbb;margin-top:8px">* 客户端估算分（无增长趋势数据），以监控系统完整评分为准</div>
+        <button class="mark-btn" style="margin-top:10px;width:100%;padding:8px" onclick="markPromotion('${bvid}', '${v.title.replace(/'/g,'')}', '${v.owner.name}')">📌 标记为已投放</button>
       </div>`;
   } catch(e) {
-    document.getElementById('bv-result').innerHTML = `<div class="bv-error">请求失败：${e.message}（B站API可能有跨域限制，建议直接在监控系统中运行查询）</div>`;
+    document.getElementById('bv-result').innerHTML = `<div class="bv-error">请求失败：${e.message}</div>`;
   }
   btn.disabled = false;
 }
 
-// 回车触发查询
 document.getElementById('bv-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') queryBV();
 });
