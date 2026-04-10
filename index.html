@@ -187,7 +187,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 <div class="header">
   <h1>🚀 B站AI起飞加热监测工具</h1>
   <div class="sub">理想汽车全站内容监测 · 互动率+增长趋势智能评分</div>
-  <div class="ts">数据更新: 2026-04-10 10:10:20 &nbsp;|&nbsp; 页面刷新: 2026-04-10 10:10:20 &nbsp;|&nbsp; 每5分钟自动刷新</div>
+  <div class="ts">数据更新: 2026-04-10 10:24:48 &nbsp;|&nbsp; 页面刷新: 2026-04-10 10:24:48 &nbsp;|&nbsp; 每5分钟自动刷新</div>
 </div>
 
 <div class="stats-row">
@@ -1608,45 +1608,88 @@ async function submitPromotion() {
   status.style.color = '#667eea';
   status.textContent = '⏳ 正在登记投放记录...';
 
-  // 从弹窗标题区获取视频信息（已由 markPromotion 填入）
   const titleEl = document.getElementById('modal-video-title');
   const titleText = titleEl ? titleEl.textContent : '';
-  // 尝试拆分 "视频标题  UP主: xxx" 格式
   const upMatch = titleText.match(/UP主:\s*(.+)$/);
   const author = upMatch ? upMatch[1].trim() : '';
   const title = upMatch ? titleText.replace(/\s*UP主:.*$/, '').trim() : titleText.trim();
 
-  const payload = {
-    bvid: bvid,
-    title: title || bvid,
-    author: author,
-    budget: budget,
-    start_time: startTime,
-    note: note,
-  };
+  // Token 从 localStorage 读取（首次使用弹窗提示配置）
+  let GITHUB_TOKEN = localStorage.getItem('lixiang_gh_token') || '';
+  if (!GITHUB_TOKEN) {
+    GITHUB_TOKEN = prompt('首次使用：请输入 GitHub Token（仅存储在您的浏览器中，不会上传）：', '');
+    if (!GITHUB_TOKEN) {
+      status.style.color = '#dc2626';
+      status.textContent = '❌ 未提供 GitHub Token，无法保存记录';
+      return;
+    }
+    localStorage.setItem('lixiang_gh_token', GITHUB_TOKEN);
+  }
+  const REPO = 'jiahongsun675-del/lixiang-dashboard';
+  const FILE_PATH = 'promotions.json';
+  const API_BASE = 'https://api.github.com';
 
   try {
-    const res = await fetch('http://localhost:8900/api/add_promotion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    // 1. 读取现有 promotions.json
+    status.textContent = '⏳ 读取现有记录...';
+    let existingRecords = [];
+    let fileSha = null;
+    const getRes = await fetch(`${API_BASE}/repos/${REPO}/contents/${FILE_PATH}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (getRes.ok) {
+      const fileData = await getRes.json();
+      fileSha = fileData.sha;
+      existingRecords = JSON.parse(atob(fileData.content.replace(/
+/g, '')));
+    }
+
+    // 2. 追加或更新记录（同BV号更新）
+    const newRecord = {
+      bvid, title: title || bvid, author, budget,
+      start_time: startTime, note,
+      created_at: new Date().toISOString(),
+      baseline: null, snapshots: [], status: 'tracking'
+    };
+    const idx = existingRecords.findIndex(r => r.bvid === bvid);
+    if (idx >= 0) {
+      existingRecords[idx] = { ...existingRecords[idx], ...newRecord, snapshots: [], baseline: null, status: 'tracking' };
+    } else {
+      existingRecords.push(newRecord);
+    }
+
+    // 3. 写回 GitHub
+    status.textContent = '⏳ 保存记录到云端...';
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(existingRecords, null, 2))));
+    const putPayload = {
+      message: `登记投放: ${bvid} ¥${budget}`,
+      content,
+      branch: 'main',
+    };
+    if (fileSha) putPayload.sha = fileSha;
+
+    const putRes = await fetch(`${API_BASE}/repos/${REPO}/contents/${FILE_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(putPayload),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      status.style.color = '#166534';
-      status.textContent = '✅ 已登记，监控系统将自动追踪效果';
-      // 3秒后关闭弹窗
-      setTimeout(() => closeModal(), 3000);
-    } else {
-      const err = await res.json().catch(() => ({}));
-      status.style.color = '#dc2626';
-      status.textContent = '❌ 登记失败：' + (err.error || res.statusText);
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      throw new Error(err.message || putRes.statusText);
     }
+
+    status.style.color = '#166534';
+    status.textContent = '✅ 已登记！监控系统下次运行时自动采集基线并开始追踪';
+    setTimeout(() => closeModal(), 3000);
+
   } catch(e) {
-    // 本地API未运行时给出友好提示
-    status.style.color = '#d97706';
-    status.textContent = '⚠️ 本地API服务未运行。请先执行：python3 scripts/local_api.py（或通过 start_monitor.sh 启动）';
+    status.style.color = '#dc2626';
+    status.textContent = '❌ 登记失败：' + e.message;
   }
 }
 
