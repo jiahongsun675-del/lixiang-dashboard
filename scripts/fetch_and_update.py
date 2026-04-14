@@ -1632,6 +1632,131 @@ def git_push(token, message):
 # 7. 主流程
 # ══════════════════════════════════════════════
 
+async def deep_crawl_main(minutes: int = 30):
+    """
+    深度采集模式：持续运行指定分钟数，最大化覆盖内容。
+    策略：
+      - 首轮：全量深扫（5轮 × 15页）
+      - 后续：每60s抓一次新发布 + 热门，捕获期间新上传的内容
+      - 每5分钟推送一次 GitHub，实时更新看板
+    """
+    deadline  = time.time() + minutes * 60
+    push_every = 300  # 每5分钟推送一次
+    last_push  = 0
+
+    conn_db = init_db()
+    all_seen: dict = {}  # bvid → video_dict（全局去重）
+    token = GITHUB_TOKEN or os.environ.get("GITHUB_TOKEN", "")
+
+    print(f"\n{'='*60}")
+    print(f"深度采集模式：持续 {minutes} 分钟")
+    print(f"截止时间: {datetime.fromtimestamp(deadline):%H:%M:%S}")
+    print(f"{'='*60}")
+
+    # ── 首轮：全量深扫 ──
+    print(f"\n[{datetime.now():%H:%M:%S}] 首轮全量深扫...")
+    full_videos = await collect_all_videos()
+    for v in full_videos:
+        bvid = v.get("bvid", "")
+        if bvid and bvid not in all_seen:
+            all_seen[bvid] = v
+    print(f"  首轮完成，累计 {len(all_seen)} 个视频")
+
+    # ── 生成并推送第一版 ──
+    await _score_and_push(all_seen, conn_db, token, "首轮全量扫描")
+    last_push = time.time()
+
+    batch_num = 1
+    # ── 持续循环：抓新内容 ──
+    while time.time() < deadline:
+        remaining = int(deadline - time.time())
+        wait = min(60, remaining)
+        if wait <= 0:
+            break
+        print(f"\n[{datetime.now():%H:%M:%S}] 等待 {wait}s 后第 {batch_num+1} 批...（剩余 {remaining}s）")
+        await asyncio.sleep(wait)
+
+        batch_num += 1
+        connector = aiohttp.TCPConnector(limit=15, ssl=False)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            tasks = []
+            # 重点：pubdate 最新内容（捕获新上传）
+            for kw in KEYWORDS:
+                tasks.append(search_videos(session, kw, order="pubdate", page=1))
+                tasks.append(search_videos(session, kw, order="pubdate", page=2))
+            # totalrank 综合榜（排名可能变化）
+            for kw in KEYWORDS[:5]:
+                tasks.append(search_videos(session, kw, order="totalrank", page=1))
+            # 汽车分区最新
+            tasks.append(fetch_newlist(session, rid=17, ps=50, pn=1))
+            # UP主频道新投稿
+            for mid in TOP_CREATOR_MIDS:
+                tasks.append(fetch_up_videos(session, mid, ps=10))
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            new_count = 0
+            for batch in results:
+                if isinstance(batch, Exception) or not batch:
+                    continue
+                for v in batch:
+                    bvid = v.get("bvid", "")
+                    if bvid and bvid not in all_seen:
+                        all_seen[bvid] = v
+                        new_count += 1
+                    elif bvid and all_seen.get(bvid, {}).get("play", 0) < v.get("play", 0):
+                        all_seen[bvid].update(v)
+
+        print(f"  第{batch_num}批 +{new_count} 新视频，累计 {len(all_seen)} 个")
+
+        # 每5分钟推送一次
+        if time.time() - last_push >= push_every:
+            await _score_and_push(all_seen, conn_db, token, f"第{batch_num}批更新")
+            last_push = time.time()
+
+    # ── 最终推送 ──
+    print(f"\n[{datetime.now():%H:%M:%S}] 时间到，生成最终版本...")
+    await _score_and_push(all_seen, conn_db, token, f"深度采集完成 {minutes}min")
+    conn_db.close()
+    print(f"\n深度采集结束！共 {len(all_seen)} 个视频，{batch_num} 批次")
+    print(f"{'='*60}\n")
+
+
+async def _score_and_push(all_seen: dict, conn_db, token: str, label: str):
+    """对已采集视频评分、过滤、生成 HTML 并推送"""
+    raw_list = list(all_seen.values())
+
+    # 过滤
+    filtered = [v for v in raw_list
+                if not is_blacklisted(v.get("title", ""))
+                and v.get("play", 0) >= MIN_PLAY
+                and (v.get("fans", -1) == -1 or v.get("fans", 0) >= MIN_FANS)]
+
+    # 评分
+    scored = []
+    for v in filtered:
+        prev_play = get_prev_play(conn_db, v["bvid"])
+        sv = score_video(v, prev_play)
+        save_snapshot(conn_db, sv)
+        scored.append(sv)
+
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    recommend_cnt = sum(1 for v in scored if v["total_score"] >= SCORE_THRESHOLD)
+
+    if len(scored) < 3:
+        print(f"  [{label}] 视频数不足，跳过")
+        return
+
+    html = generate_html(scored, now_str)
+    with open(HTML_PATH, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"  [{label}] 生成 index.html ({len(html)//1024}KB)，推荐榜 {recommend_cnt} 条")
+
+    if token:
+        git_push(token, f"Deep crawl [{label}] {now_str} ({len(scored)} videos)")
+    if token:
+        await auto_update_promo_snapshots(token)
+
+
 async def main():
     start = time.time()
     print(f"\n{'='*60}")
@@ -1692,4 +1817,13 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import sys
+    # 检查是否传入 --deep <分钟数>
+    args = sys.argv[1:]
+    if "--deep" in args:
+        idx = args.index("--deep")
+        minutes = int(args[idx + 1]) if idx + 1 < len(args) else 30
+        asyncio.run(deep_crawl_main(minutes))
+    else:
+        asyncio.run(main())
+
