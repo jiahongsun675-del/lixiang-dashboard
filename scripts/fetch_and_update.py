@@ -41,15 +41,19 @@ KEYWORDS = [
 TITLE_BLACKLIST = ["停车", "剐蹭", "刮蹭", "车位", "乱停", "陷车", "停车场", "停车位"]
 
 # ── 标题相关性：必须包含至少一个理想/李想汽车相关词 ──
-TITLE_MUST_CONTAIN = [
-    "理想", "李想",
+TITLE_MUST_CONTAIN = ["理想", "李想"]
+
+# ── 竞品品牌词（用于识别竞品主内容视频）──
+COMPETITOR_BRANDS = [
+    "极氪", "智己", "问界", "蔚来", "小鹏", "阿维塔", "腾势", "岚图",
+    "仰望", "深蓝", "银河", "零跑", "哪吒", "飞凡", "享界", "尊界",
+    "小米YU7", "小米SU7", "小米汽车", "智界S7", "智界R7",
+    "华为问界", "鸿蒙智行", "奥迪Q6", "宝马X5", "奔驰GLE",
 ]
 
-# ── 纯竞品过滤：标题只含竞品词、不含理想时排除 ──
-COMPETITOR_ONLY_KEYWORDS = [
-    "小米SU7", "问界M", "鸿蒙智行", "阿维塔", "岚图", "深蓝汽车",
-    "智界", "极氪", "腾势", "比亚迪汉", "比亚迪唐",
-]
+# ── 对比词（有这些词时允许提及竞品）──
+COMPARE_WORDS = ["vs", "VS", "对比", "PK", "pk", "哪个好", "选哪个", "怎么选",
+                 "谁更", "谁强", "谁好", "谁胜", "谁划算", "还是", "区别"]
 
 # ── 过滤阈值 ──
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
@@ -313,17 +317,56 @@ async def collect_all_videos():
 # 3. 过滤 + 评分
 # ══════════════════════════════════════════════
 
+def is_competitor_focused(title):
+    """
+    判断是否以竞品为主要内容。规则：
+    1. 标题以竞品名开头（竞品是主语）
+    2. 竞品名出现次数 > 理想/李想出现次数，且无对比词
+    3. 竞品在标题最前且与理想相距>10字（竞品先出场，理想只是配角）
+    """
+    # 竞品在标题中出现的所有 brand 及其位置
+    comp_hits = [(b, title.find(b)) for b in COMPETITOR_BRANDS if b in title]
+    if not comp_hits:
+        return False  # 没有竞品词，不过滤
+
+    lixiang_pos = min(
+        (title.find(kw) for kw in TITLE_MUST_CONTAIN if kw in title),
+        default=9999
+    )
+
+    # 规则1：标题开头就是竞品（前5字内出现竞品且在理想之前）
+    earliest_comp_pos = min(pos for _, pos in comp_hits)
+    if earliest_comp_pos < 5 and earliest_comp_pos < lixiang_pos:
+        return True
+
+    # 规则2：竞品词数量 > 理想词数量，且无对比词
+    comp_count = sum(title.count(b) for b in COMPETITOR_BRANDS)
+    lixiang_count = sum(title.count(kw) for kw in TITLE_MUST_CONTAIN)
+    has_compare = any(kw in title for kw in COMPARE_WORDS)
+    if comp_count > lixiang_count and not has_compare:
+        return True
+
+    # 规则3：竞品排在理想前面超过8个字，且有竞品专属词（型号/测评/体验）
+    COMP_EXCLUSIVE = ["实测", "评测", "体验", "试驾", "上市", "发布", "详解",
+                      "怎么样", "好不好", "值得买", "深度", "全面"]
+    if (earliest_comp_pos < lixiang_pos - 8
+            and any(w in title for w in COMP_EXCLUSIVE)
+            and not has_compare):
+        return True
+
+    return False
+
+
 def is_blacklisted(title):
-    """黑名单词 / 无相关词 / 纯竞品 → 过滤"""
+    """黑名单词 / 无相关词 / 竞品主内容 → 过滤"""
     if not title:
         return True
-    # 黑名单
     if any(kw in title for kw in TITLE_BLACKLIST):
         return True
-    # 标题必须含「理想」或「李想」
     if not any(kw in title for kw in TITLE_MUST_CONTAIN):
         return True
-    # 纯竞品（不含任何 TITLE_MUST_CONTAIN 词 — 上面已拦，双重保险）
+    if is_competitor_focused(title):
+        return True
     return False
 
 
