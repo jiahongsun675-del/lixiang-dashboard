@@ -110,7 +110,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 
 <div class="topbar">
   <div class="topbar-logo">理想汽车 · <span>B站内容监测</span></div>
-  <div class="topbar-meta">数据更新: 2026-04-14 14:41:03 &nbsp;|&nbsp; 含0个视频</div>
+  <div class="topbar-meta">数据更新: 2026-04-14 14:46:13 &nbsp;|&nbsp; 含0个视频</div>
   <button class="topbar-refresh" onclick="location.reload()">刷新</button>
 </div>
 
@@ -204,9 +204,10 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
       <div class="cfg-item"><div class="cfg-l">上榜最低分</div><div class="cfg-v">40分</div></div>
       <div class="cfg-item"><div class="cfg-l">停滞降权</div><div class="cfg-v">发布>12h 且增长<0.5% → -12分</div></div>
       <div class="cfg-item"><div class="cfg-l">黑名单关键词</div><div class="cfg-v">停车、剐蹭、刮蹭、车位、乱停、陷车</div></div>
+      <div class="cfg-item"><div class="cfg-l">标题相关性</div><div class="cfg-v">必须含「理想」或「李想」，排除竞品/无关视频</div></div>
       <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想i6, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 理想i8, 理想智驾, 李想</div></div>
       <div class="cfg-item"><div class="cfg-l">增量存储</div><div class="cfg-v">仅保存变化字段，data/history.db</div></div>
-      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 14:41:03</div></div>
+      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 14:46:13</div></div>
     </div>
   </div>
 </div>
@@ -226,11 +227,15 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 </div>
 
 <script>
-const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车'];
+const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位'];
+const TITLE_MUST_CONTAIN = ['理想','李想'];
 function applyBlacklistFilter(){
   document.querySelectorAll('.video-item').forEach(el=>{
     const t=el.querySelector('.video-title a');
-    if(t && TITLE_BLACKLIST.some(kw=>t.textContent.includes(kw))) el.style.display='none';
+    if(!t) return;
+    const txt=t.textContent;
+    const blocked=TITLE_BLACKLIST.some(kw=>txt.includes(kw)) || !TITLE_MUST_CONTAIN.some(kw=>txt.includes(kw));
+    if(blocked) el.style.display='none';
   });
 }
 function switchPage(tab){
@@ -283,7 +288,7 @@ function submitPromotion(){closeModal();}
 const ALL_ALERTS=[];
 function renderAlertList(){
   const container=document.getElementById('alert-list-container');if(!container)return;
-  const filtered=ALL_ALERTS.filter(a=>!TITLE_BLACKLIST.some(kw=>(a.title||'').includes(kw)));
+  const filtered=ALL_ALERTS.filter(a=>!TITLE_BLACKLIST.some(kw=>(a.title||'').includes(kw)) && TITLE_MUST_CONTAIN.some(kw=>(a.title||'').includes(kw)));
   if(!filtered.length){container.innerHTML='<div class="empty">暂无提醒记录</div>';return;}
   const fmt=iso=>{try{return new Date(iso).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}catch{return iso;}};
   container.innerHTML=filtered.slice(0,30).map(a=>`<div class="heated-item"><div class="heated-item-info"><div class="heated-item-title"><a href="https://www.bilibili.com/video/${a.bvid}" target="_blank">${a.title||a.bvid}</a>${a.is_underdog?' <span class="badge badge-underdog">⭐素人</span>':''}</div><div class="heated-item-meta">UP主: ${a.author||'—'} | 建议: ${a.suggested_budget||'—'} | 提醒时间: ${fmt(a.alert_time)}</div></div><div class="heated-item-score"><div class="heated-score-val">${a.score?a.score.toFixed(1):'—'}</div><div class="heated-score-lbl">评分</div></div></div>`).join('');
