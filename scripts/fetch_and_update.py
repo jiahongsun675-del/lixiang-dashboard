@@ -91,7 +91,7 @@ TOP_CREATOR_MIDS = [
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
-SCORE_THRESHOLD    = 25      # 上榜最低分（25分入榜，保证数量）
+SCORE_THRESHOLD    = 20      # 上榜最低分（去掉素人加分后调低保证数量）
 MAX_VIDEOS         = 30       # 推荐榜最多显示
 SEARCH_ROUNDS      = 5        # 搜索轮数（每轮3页，共覆盖15页）
 HIGH_VALUE_THRESHOLD = 65     # 高价值内容实时推送阈值
@@ -556,14 +556,11 @@ def score_video(v, prev_play=None):
     # 口碑评价
     sentiment_score = min(15, max(4.0, like * 0.15 + coin * 0.4 + fav * 0.08 + 2))
 
-    # 素人加成
-    underdog_bonus = 15.0 if fans < 500_000 else 0.0  # 50万粉以下都算素人
-
-    # 停滞降权
+    # 停滞降权（不再有素人加分）
     is_stale = (age_h > 12 and growth_pct < 0.5 and play > 50)
     stagnation_penalty = -12.0 if is_stale else 0.0
 
-    total = interaction_score + growth_score + freshness_score + sentiment_score + underdog_bonus + stagnation_penalty
+    total = interaction_score + growth_score + freshness_score + sentiment_score + stagnation_penalty
 
     # 优先级
     if total >= 65:
@@ -593,7 +590,6 @@ def score_video(v, prev_play=None):
         "freshness_score": round(freshness_score, 1),
         "sentiment_score": round(sentiment_score, 1),
         "freshness_rank": freshness_rank,
-        "underdog_bonus": underdog_bonus,
         "stagnation_penalty": stagnation_penalty,
         "total_score": round(total, 1),
         "priority": priority,
@@ -793,9 +789,7 @@ def stale_badge(v):
     return ""
 
 def underdog_badge(v):
-    if v.get("underdog_bonus", 0) > 0:
-        return '<span class="badge badge-underdog">⭐ 素人 +15</span>'
-    return ""
+    return ""  # 素人加分逻辑已移除
 
 def dim_bar_html(label, score, max_score, fill_color, eval_text):
     pct = min(100, score / max_score * 100)
@@ -843,7 +837,7 @@ def video_card_full(v, rank):
     if h < 72: reasons.append(f'🆕 <strong>新鲜内容</strong> — {age_str}发布，正是投流黄金期')
     if growth >= 5: reasons.append(f'🚀 快速增长 +{growth:.1f}%')
     elif v.get("is_stale"): reasons.append(f'🥶 内容停滞，已停滞降权')
-    if fans < 100_000: reasons.append('⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)')
+    if fans < 100_000: reasons.append(f'👥 {fmt_fans(fans)} · 中小创作者')
     reasons_li = "".join(f"<li>{r}</li>" for r in reasons)
 
     # 评分维度
@@ -2315,13 +2309,13 @@ async def main():
             SELECT bvid, MAX(snapshot_time) mt FROM video_snapshots GROUP BY bvid
         ) latest ON latest.bvid = m.bvid
         LEFT JOIN video_snapshots s ON s.bvid = m.bvid AND s.snapshot_time = latest.mt
-        WHERE m.fans >= ? AND m.last_score >= ?
+        WHERE m.fans >= ?
           AND m.pubdate >= ?
           AND m.bvid NOT IN ({})
-        ORDER BY m.last_score DESC
-        LIMIT 200
+        ORDER BY m.pubdate DESC
+        LIMIT 500
     """.format(','.join('?' * len(this_run_bvids)) if this_run_bvids else '""'),
-    [MIN_FANS, SCORE_THRESHOLD, int(cutoff_30d)] + list(this_run_bvids))
+    [MIN_FANS, int(cutoff_30d)] + list(this_run_bvids))
     db_rows = c.fetchall()
     conn.close()
 
