@@ -89,6 +89,10 @@ TOP_CREATOR_MIDS = [
     283310205,        # 韩路有点意思
 ]
 
+# ── 永久屏蔽的 UP 主 MID（二手车/无关内容账号）──
+BLOCKED_MIDS = {
+    346802311,    # 老高你好二手车
+}
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
@@ -416,7 +420,7 @@ async def collect_all_videos():
 
     # 先做基础过滤（不含粉丝数），缩小需要查粉丝的候选集
     basic_filtered = [v for v in seen.values()
-                      if not is_blacklisted(v.get("title", ""))
+                      if not is_blacklisted(v.get("title", ""), v.get("mid", 0))
                       and v.get("play", 0) >= MIN_PLAY]
     print(f"  基础过滤后 {len(basic_filtered)} 个候选，开始查粉丝数...")
 
@@ -513,9 +517,11 @@ def is_competitor_focused(title):
     return False
 
 
-def is_blacklisted(title):
-    """黑名单词 / 无相关词 / 竞品主内容 → 过滤"""
+def is_blacklisted(title, mid=0):
+    """标题黑名单 / 账号黑名单 / 无相关词 / 竞品主内容 → 过滤"""
     if not title:
+        return True
+    if mid and int(mid) in BLOCKED_MIDS:
         return True
     if any(kw in title for kw in TITLE_BLACKLIST):
         return True
@@ -2078,7 +2084,7 @@ async def feishu_push_main():
     raw_videos = await collect_all_videos()
     conn = init_db()
     filtered = [v for v in raw_videos
-                if not is_blacklisted(v.get("title", ""))
+                if not is_blacklisted(v.get("title", ""), v.get("mid", 0))
                 and v.get("play", 0) >= MIN_PLAY
                 and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
     scored = []
@@ -2196,7 +2202,7 @@ async def _score_and_push(all_seen: dict, conn_db, token: str, label: str):
 
     # 过滤
     filtered = [v for v in raw_list
-                if not is_blacklisted(v.get("title", ""))
+                if not is_blacklisted(v.get("title", ""), v.get("mid", 0))
                 and v.get("play", 0) >= MIN_PLAY
                 and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
 
@@ -2280,7 +2286,7 @@ async def main():
     # Step 2: 过滤（黑名单 + 播放量 + 粉丝数）
     # 严格模式：粉丝数未知(0)视为不达标，一律过滤
     filtered = [v for v in raw_videos
-                if not is_blacklisted(v.get("title", ""))
+                if not is_blacklisted(v.get("title", ""), v.get("mid", 0))
                 and v.get("play", 0) >= MIN_PLAY
                 and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
     print(f"过滤后: {len(filtered)} 个视频 (黑名单/低播放/低粉丝已排除)")
@@ -2312,6 +2318,7 @@ async def main():
         LEFT JOIN video_snapshots s ON s.bvid = m.bvid AND s.snapshot_time = latest.mt
         WHERE m.fans >= ?
           AND m.pubdate >= ?
+          AND (m.mid IS NULL OR m.mid NOT IN (346802311))
           AND m.bvid NOT IN ({})
         ORDER BY m.pubdate DESC
         LIMIT 500
