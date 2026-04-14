@@ -103,6 +103,41 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 .modal-field input{width:100%;padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.92em;outline:none}
 .modal-actions{display:flex;gap:10px;margin-top:18px}.modal-submit{flex:1;padding:9px;background:#3b6eea;color:#fff;border:none;border-radius:7px;font-size:.95em;font-weight:600;cursor:pointer}
 .modal-cancel{padding:9px 18px;background:#f1f3f9;color:#666;border:none;border-radius:7px;font-size:.95em;cursor:pointer}
+/* ── 投放追踪 ── */
+.promo-add-section{border:2px dashed #dde2f0;border-radius:10px;padding:20px;margin-bottom:20px;background:#fafbff}
+.promo-add-title{font-size:.92em;font-weight:600;color:#555;margin-bottom:14px}
+.promo-add-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.add-tab{padding:6px 16px;border:1px solid #dde2f0;border-radius:20px;font-size:.82em;cursor:pointer;color:#666;background:#fff;transition:all .2s}
+.add-tab.active{background:#3b6eea;color:#fff;border-color:#3b6eea}
+.add-panel{display:none}.add-panel.active{display:block}
+.add-form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.add-form-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.add-form-field label{font-size:.78em;font-weight:600;color:#555}
+.add-form-field input{padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.9em;outline:none;transition:border-color .2s}
+.add-form-field input:focus{border-color:#3b6eea}
+.promo-list{display:grid;gap:16px}
+.promo-card-v2{border:1px solid #e8eaed;border-radius:10px;padding:18px;background:#fff}
+.promo-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.promo-card-title{font-size:.97em;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.promo-card-title a:hover{color:#3b6eea}.promo-card-meta{font-size:.78em;color:#aaa}
+.promo-card-budget{text-align:right;flex-shrink:0}
+.pcb-lbl{font-size:.72em;color:#aaa;margin-bottom:2px}.pcb-val{font-size:1.4em;font-weight:700;color:#3b6eea}
+.promo-track-bar{margin-bottom:14px}
+.ptb-label{font-size:.76em;color:#aaa;margin-bottom:4px}
+.ptb-bar{height:5px;background:#eee;border-radius:3px;overflow:hidden}
+.ptb-fill{height:100%;background:linear-gradient(90deg,#3b6eea,#10b981);border-radius:3px}
+.promo-compare-table{width:100%;border-collapse:collapse;font-size:.83em;margin-bottom:12px}
+.promo-compare-table th{background:#f8f9fc;padding:7px 10px;text-align:left;color:#666;font-weight:600;border-bottom:1px solid #e8eaed}
+.promo-compare-table td{padding:7px 10px;border-bottom:1px solid #f5f5f5;color:#333}
+.promo-compare-table tr:last-child td{border-bottom:none}
+.promo-compare-table .delta{color:#059669;font-weight:600}
+.promo-compare-table .pct{color:#3b6eea;font-size:.82em}
+.promo-metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}
+.promo-metric{background:#f8f9fc;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #eee}
+.pm-lbl{font-size:.72em;color:#aaa;margin-bottom:4px}.pm-val{font-size:1em;font-weight:700;color:#1a1a2e}
+.promo-waiting{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.85em;text-align:center}
+.promo-roi-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#f4f7ff;border-radius:6px;font-size:.85em}
+.roi-lbl{color:#666}.roi-val{font-weight:700;color:#3b6eea;font-size:1.05em}
 @media(max-width:720px){.topbar{padding:0 16px}.nav-tabs{padding:0 16px}.page{padding:18px 16px}.dim-row{grid-template-columns:62px 1fr 40px 56px}}
 </style>
 </head>
@@ -110,7 +145,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 
 <div class="topbar">
   <div class="topbar-logo">理想汽车 · <span>B站内容监测</span></div>
-  <div class="topbar-meta">数据更新: 2026-04-14 15:08:50 &nbsp;|&nbsp; 含71个视频</div>
+  <div class="topbar-meta">数据更新: 2026-04-14 15:22:28 &nbsp;|&nbsp; 含76个视频</div>
   <button class="topbar-refresh" onclick="location.reload()">刷新</button>
 </div>
 
@@ -119,6 +154,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
   <div class="nav-tab" data-page="page-history" onclick="switchPage(this)">历史上榜</div>
   <div class="nav-tab" data-page="page-sustained" onclick="switchPage(this)">持续热度</div>
   <div class="nav-tab" data-page="page-heated" onclick="switchPage(this)">历史加热</div>
+  <div class="nav-tab" data-page="page-promo" onclick="switchPage(this)">投放效果</div>
   <div class="nav-tab" data-page="page-query" onclick="switchPage(this)">BV查询</div>
   <div class="nav-tab" data-page="page-config" onclick="switchPage(this)">监控配置</div>
 </div>
@@ -126,14 +162,14 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 <!-- PAGE 1: 推荐榜单 -->
 <div class="page active" id="page-recommend">
   <div class="stats-row">
-    <div class="sc"><div class="lbl">本次分析</div><div class="val">71<span class="unit">个</span></div><div class="sub">去重后候选视频</div></div>
-    <div class="sc"><div class="lbl">达标推荐</div><div class="val">4<span class="unit">个</span></div><div class="sub">评分≥40分</div></div>
-    <div class="sc"><div class="lbl">高优先级</div><div class="val">1<span class="unit">个</span></div><div class="sub">评分≥65分</div></div>
+    <div class="sc"><div class="lbl">本次分析</div><div class="val">76<span class="unit">个</span></div><div class="sub">去重后候选视频</div></div>
+    <div class="sc"><div class="lbl">达标推荐</div><div class="val">5<span class="unit">个</span></div><div class="sub">评分≥40分</div></div>
+    <div class="sc"><div class="lbl">高优先级</div><div class="val">2<span class="unit">个</span></div><div class="sub">评分≥65分</div></div>
     <div class="sc"><div class="lbl">累计加热</div><div class="val" id="stat-heated-count">—</div><div class="sub">已标记加热</div></div>
   </div>
   <div class="card">
     <div class="card-title">
-      推荐内容 TOP4
+      推荐内容 TOP5
       <span style="font-size:.78em;font-weight:400;color:#aaa">已加热内容自动置灰 · 点击「标记加热」移入历史</span>
     </div>
     <div class="card-sub">多源异步采集 · 粉丝≥5万 · 互动率×增长趋势×发布时效×口碑评价 · 🆕新内容优先 · 🔥高热度标注 · 🥶停滞降权</div>
@@ -149,16 +185,16 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
             <div class="video-meta">UP主: <a href="https://space.bilibili.com/590869570" target="_blank" style="color:#3b6eea;text-decoration:none">李益斌</a> &nbsp;<span class="fans-tag" style="color:#22c55e">6.5万粉</span> | BV: BV1HWQiBPEYg | 2小时前</div>
             <div class="recommendation-box">
                 <div class="rec-title">推荐理由 </div>
-                <ul class="rec-list"><li>📊 互动率1.80%</li><li>🆕 <strong>新鲜内容</strong> — 2小时前发布，正是投流黄金期</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+                <ul class="rec-list"><li>📊 互动率1.81%</li><li>🆕 <strong>新鲜内容</strong> — 2小时前发布，正是投流黄金期</li><li>🚀 快速增长 +7.4%</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 891</span>
-                <span class="s-item">👍 16 (1.80%)</span>
+                <span class="s-item">▶️ 940</span>
+                <span class="s-item">👍 17 (1.81%)</span>
                 <span class="s-item">💰 投币0</span>
                 <span class="s-item">⭐ 收藏0</span>
                 <span class="s-item">💬 2</span>
-                <span class="s-item">📊 互动率1.80%</span>
-                <span class="s-item">📈 增长+3.8%</span>
+                <span class="s-item">📊 互动率1.81%</span>
+                <span class="s-item">📈 增长+7.4%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
@@ -169,9 +205,9 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:64%;background:#3b82f6"></div></div>
-                    <span class="dim-val">19.2/30</span>
-                    <span class="dim-tag">+3.8%</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#3b82f6"></div></div>
+                    <span class="dim-val">30.0/30</span>
+                    <span class="dim-tag">+7.4%</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
@@ -181,19 +217,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:29%;background:#8b5cf6"></div></div>
-                    <span class="dim-val">4.4/15</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:30%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">4.5/15</span>
                     <span class="dim-tag">正向反馈</span>
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:65.7%;background:linear-gradient(90deg,#10b981,#ef4444)"></div></div>
-                <span class="score-val" style="color:#ef4444">65.7分</span>
+                <div class="score-bar"><div class="score-fill" style="width:76.7%;background:linear-gradient(90deg,#10b981,#ef4444)"></div></div>
+                <span class="score-val" style="color:#ef4444">76.7分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
                 <span class="budget-val">¥6,000–10,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1HWQiBPEYg',"\u7406\u60f3 v13.4 \u667a\u9a7e\u5b9e\u6d4b\uff0c\u5230\u5e95\u7a33\u4e0d\u7a33\uff1f",'李益斌',65.7,'¥6,000–10,000元')">标记加热</button>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1HWQiBPEYg',"\u7406\u60f3 v13.4 \u667a\u9a7e\u5b9e\u6d4b\uff0c\u5230\u5e95\u7a33\u4e0d\u7a33\uff1f",'李益斌',76.7,'¥6,000–10,000元')">标记加热</button>
             </div>
         </div>
     </div>
@@ -202,34 +238,34 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         <div class="video-info">
             <div class="video-title">
                 <a href="https://www.bilibili.com/video/BV1xfQ4BEEGr" target="_blank">北京车展提前看，理想新L8、小鹏新SUV都来了！</a>
-                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+                <span class="badge badge-high">💎 强烈推荐</span><span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-underdog">⭐ 素人 +15</span>
             </div>
             <div class="video-meta">UP主: <a href="https://space.bilibili.com/3546814473046548" target="_blank" style="color:#3b6eea;text-decoration:none">智能车研究所</a> &nbsp;<span class="fans-tag" style="color:#22c55e">7.7万粉</span> | BV: BV1xfQ4BEEGr | 21小时前</div>
             <div class="recommendation-box">
-                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
-                <ul class="rec-list"><li>👍 互动率4.48% — 良好(≥3%)</li><li>🆕 <strong>新鲜内容</strong> — 21小时前发布，正是投流黄金期</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+                <div class="rec-title">推荐理由 </div>
+                <ul class="rec-list"><li>👍 互动率4.49% — 良好(≥3%)</li><li>🆕 <strong>新鲜内容</strong> — 21小时前发布，正是投流黄金期</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
             </div>
             <div class="video-stats">
                 <span class="s-item">▶️ 1.4万</span>
-                <span class="s-item">👍 394 (4.48%)</span>
+                <span class="s-item">👍 397 (4.49%)</span>
                 <span class="s-item">💰 投币0</span>
-                <span class="s-item">⭐ 收藏46</span>
-                <span class="s-item">💬 34</span>
-                <span class="s-item">📊 互动率4.48%</span>
-                <span class="s-item">📈 增长+0.2%</span>
+                <span class="s-item">⭐ 收藏45</span>
+                <span class="s-item">💬 35</span>
+                <span class="s-item">📊 互动率4.49%</span>
+                <span class="s-item">📈 增长+0.5%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
                     <div class="dim-bar"><div class="dim-fill" style="width:45%;background:#10b981"></div></div>
-                    <span class="dim-val">17.9/40</span>
+                    <span class="dim-val">18.0/40</span>
                     <span class="dim-tag">良好</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:4%;background:#3b82f6"></div></div>
-                    <span class="dim-val">1.2/30</span>
-                    <span class="dim-tag">+0.2%</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:9%;background:#3b82f6"></div></div>
+                    <span class="dim-val">2.7/30</span>
+                    <span class="dim-tag">+0.5%</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
@@ -245,13 +281,13 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:56.5%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
-                <span class="score-val" style="color:#f59e0b">56.5分</span>
+                <div class="score-bar"><div class="score-fill" style="width:70.1%;background:linear-gradient(90deg,#10b981,#ef4444)"></div></div>
+                <span class="score-val" style="color:#ef4444">70.1分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
-                <span class="budget-val">¥3,000–6,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1xfQ4BEEGr',"\u5317\u4eac\u8f66\u5c55\u63d0\u524d\u770b\uff0c\u7406\u60f3\u65b0L8\u3001\u5c0f\u9e4f\u65b0SUV\u90fd\u6765\u4e86\uff01",'智能车研究所',56.5,'¥3,000–6,000元')">标记加热</button>
+                <span class="budget-val">¥6,000–10,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1xfQ4BEEGr',"\u5317\u4eac\u8f66\u5c55\u63d0\u524d\u770b\uff0c\u7406\u60f3\u65b0L8\u3001\u5c0f\u9e4f\u65b0SUV\u90fd\u6765\u4e86\uff01",'智能车研究所',70.1,'¥6,000–10,000元')">标记加热</button>
             </div>
         </div>
     </div>
@@ -262,38 +298,38 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 <a href="https://www.bilibili.com/video/BV1K8QYBYExa" target="_blank">和王勉一起，过最舒服的理想生活。</a>
                 <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-fresh">🆕 新内容</span><span class="badge badge-underdog">⭐ 素人 +15</span>
             </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/2054075556" target="_blank" style="color:#3b6eea;text-decoration:none">理想汽车</a> &nbsp;<span class="fans-tag" style="color:#22c55e">7.3万粉</span> | BV: BV1K8QYBYExa | 3小时前</div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/2054075556" target="_blank" style="color:#3b6eea;text-decoration:none">理想汽车</a> &nbsp;<span class="fans-tag" style="color:#22c55e">7.3万粉</span> | BV: BV1K8QYBYExa | 4小时前</div>
             <div class="recommendation-box">
                 <div class="rec-title">推荐理由 </div>
-                <ul class="rec-list"><li>📊 互动率1.77%</li><li>🆕 <strong>新鲜内容</strong> — 3小时前发布，正是投流黄金期</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+                <ul class="rec-list"><li>📊 互动率1.73%</li><li>🆕 <strong>新鲜内容</strong> — 4小时前发布，正是投流黄金期</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 906</span>
-                <span class="s-item">👍 16 (1.77%)</span>
+                <span class="s-item">▶️ 926</span>
+                <span class="s-item">👍 16 (1.73%)</span>
                 <span class="s-item">💰 投币0</span>
                 <span class="s-item">⭐ 收藏1</span>
                 <span class="s-item">💬 2</span>
-                <span class="s-item">📊 互动率1.77%</span>
-                <span class="s-item">📈 增长+1.1%</span>
+                <span class="s-item">📊 互动率1.73%</span>
+                <span class="s-item">📈 增长+2.9%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:18%;background:#10b981"></div></div>
-                    <span class="dim-val">7.1/40</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:17%;background:#10b981"></div></div>
+                    <span class="dim-val">6.9/40</span>
                     <span class="dim-tag">一般</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:19%;background:#3b82f6"></div></div>
-                    <span class="dim-val">5.6/30</span>
-                    <span class="dim-tag">+1.1%</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:48%;background:#3b82f6"></div></div>
+                    <span class="dim-val">14.4/30</span>
+                    <span class="dim-tag">+2.9%</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
                     <div class="dim-bar"><div class="dim-fill" style="width:99%;background:#f59e0b"></div></div>
                     <span class="dim-val">19.9/20</span>
-                    <span class="dim-tag">3小时前</span>
+                    <span class="dim-tag">4小时前</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
@@ -303,18 +339,76 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:52.0%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
-                <span class="score-val" style="color:#f59e0b">52.0分</span>
+                <div class="score-bar"><div class="score-fill" style="width:60.7%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
+                <span class="score-val" style="color:#f59e0b">60.7分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
                 <span class="budget-val">¥3,000–6,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1K8QYBYExa',"\u548c\u738b\u52c9\u4e00\u8d77\uff0c\u8fc7\u6700\u8212\u670d\u7684\u7406\u60f3\u751f\u6d3b\u3002",'理想汽车',52.0,'¥3,000–6,000元')">标记加热</button>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1K8QYBYExa',"\u548c\u738b\u52c9\u4e00\u8d77\uff0c\u8fc7\u6700\u8212\u670d\u7684\u7406\u60f3\u751f\u6d3b\u3002",'理想汽车',60.7,'¥3,000–6,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV16iQhBSEjA" data-mid="346802311">
+        <div class="video-rank ">#4</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV16iQhBSEjA" target="_blank">理想新款马上更新，怎么入手更划算</a>
+                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-fresh">🆕 新稿</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/346802311" target="_blank" style="color:#3b6eea;text-decoration:none">老高你好二手车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">18.0万粉</span> | BV: BV16iQhBSEjA | 15小时前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 </div>
+                <ul class="rec-list"><li>📊 互动率2.68%</li><li>🆕 <strong>新鲜内容</strong> — 15小时前发布，正是投流黄金期</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 2,725</span>
+                <span class="s-item">👍 73 (2.68%)</span>
+                <span class="s-item">💰 投币0</span>
+                <span class="s-item">⭐ 收藏9</span>
+                <span class="s-item">💬 2</span>
+                <span class="s-item">📊 互动率2.68%</span>
+                <span class="s-item">📈 增长+0.7%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#10b981"></div></div>
+                    <span class="dim-val">10.7/40</span>
+                    <span class="dim-tag">一般</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:12%;background:#3b82f6"></div></div>
+                    <span class="dim-val">3.7/30</span>
+                    <span class="dim-tag">+0.7%</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:98%;background:#f59e0b"></div></div>
+                    <span class="dim-val">19.6/20</span>
+                    <span class="dim-tag">15小时前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:91%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">13.7/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:47.6%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
+                <span class="score-val" style="color:#f59e0b">47.6分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000–4,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV16iQhBSEjA',"\u7406\u60f3\u65b0\u6b3e\u9a6c\u4e0a\u66f4\u65b0\uff0c\u600e\u4e48\u5165\u624b\u66f4\u5212\u7b97",'老高你好二手车',47.6,'¥2,000–4,000元')">标记加热</button>
             </div>
         </div>
     </div>
     <div class="video-item" data-bvid="BV1d2zXBuEgW" data-mid="549367169">
-        <div class="video-rank ">#4</div>
+        <div class="video-rank ">#5</div>
         <div class="video-info">
             <div class="video-title">
                 <a href="https://www.bilibili.com/video/BV1d2zXBuEgW" target="_blank">喧嚣之后，带你重新认识理想MEGA</a>
@@ -397,6 +491,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1UgHUzxEkT" target="_blank">B站新同学！新人李想前来报到！</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">李想 | ▶️ 189.2万 | 216天前 | 评分 26.7</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">26.7</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1Uj5qzTESi" target="_blank">理想MEGA Home 全网最细！新款MEGA 升级了啥？Home版有啥不同？</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -466,7 +573,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
               <span class='badge badge-stale'>🥶 停滞</span>
               
             </div>
-            <div class="history-item-meta">先看评测 | ▶️ 110.6万 | 133天前 | 评分 8.4</div>
+            <div class="history-item-meta">先看评测 | ▶️ 110.7万 | 133天前 | 评分 8.4</div>
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">8.4</div>
@@ -553,6 +660,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1zFdsYLEzd" target="_blank">智能辅助驾驶大比拼！理想VS问界！</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">玩车日志CarsJournal | ▶️ 63.9万 | 370天前 | 评分 11.4</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">11.4</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1aE421M7YN" target="_blank">详细分析理想L6值不值</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -561,6 +681,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">7.4</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1bXnMzrEKH" target="_blank">理想i6：谁也别想平替我！！</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">大鹏快开车 | ▶️ 58.8万 | 199天前 | 评分 20.5</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">20.5</div>
             <div class="heated-score-lbl">评分</div>
           </div>
         </div>
@@ -592,53 +725,14 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1rB4y1s7U9" target="_blank">理想L9新车首发，50万内最拿得出手的家用SUV【理想L9】</a>
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1k49TB4EB3" target="_blank">理想进行曲，理他们作甚，我想停哪就停哪！</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
             </div>
-            <div class="history-item-meta">大家车-YYP | ▶️ 45.7万 | 1392天前 | 评分 14.5</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">14.5</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1WfrfBGEyf" target="_blank">理想i6值不值25万？3700公里长途体验【BB Time第498期】</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">TESTV官方频道 | ▶️ 45.6万 | 88天前 | 评分 20.2</div>
+            <div class="history-item-meta">德皮剪辑Sir | ▶️ 46.0万 | 11天前 | 评分 20.2</div>
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">20.2</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1f5XoB9EJH" target="_blank">理想i8：理想原生家庭走出来的好学生。</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">肉呆大魔王 | ▶️ 40.7万 | 14天前 | 评分 32.6</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">32.6</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1zg9EY4E86" target="_blank">完美谢幕还是狼狈离场？ 理想L7十万公里长测拆解汇报</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">易车横评 | ▶️ 38.1万 | 405天前 | 评分 20.5</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">20.5</div>
             <div class="heated-score-lbl">评分</div>
           </div>
         </div>
@@ -660,33 +754,33 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           <div class="si-rank">#1</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1HWQiBPEYg" target="_blank">理想 v13.4 智驾实测，到底稳不稳？</a> <span class="badge badge-fresh">🆕 新内容</span></div>
-            <div class="si-meta">李益斌 · ▶️891 · 互动1.8% · 增长+3.8%</div>
+            <div class="si-meta">李益斌 · ▶️940 · 互动1.8% · 增长+7.4%</div>
           </div>
-          <div class="si-score" style="color:#ef4444">65.7</div>
+          <div class="si-score" style="color:#ef4444">76.7</div>
         </div>
         <div class="sustained-item">
           <div class="si-rank">#2</div>
           <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1xfQ4BEEGr" target="_blank">北京车展提前看，理想新L8、小鹏新SUV都来了！</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">智能车研究所 · ▶️1.4万 · 互动4.5% · 增长+0.2%</div>
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV1xfQ4BEEGr" target="_blank">北京车展提前看，理想新L8、小鹏新SUV都来了！</a> <span class="badge badge-fresh">🆕 新稿</span></div>
+            <div class="si-meta">智能车研究所 · ▶️1.4万 · 互动4.5% · 增长+0.5%</div>
           </div>
-          <div class="si-score" style="color:#f59e0b">56.5</div>
+          <div class="si-score" style="color:#ef4444">70.1</div>
         </div>
         <div class="sustained-item">
           <div class="si-rank">#3</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1K8QYBYExa" target="_blank">和王勉一起，过最舒服的理想生活。</a> <span class="badge badge-fresh">🆕 新内容</span></div>
-            <div class="si-meta">理想汽车 · ▶️906 · 互动1.8% · 增长+1.1%</div>
+            <div class="si-meta">理想汽车 · ▶️926 · 互动1.7% · 增长+2.9%</div>
           </div>
-          <div class="si-score" style="color:#f59e0b">52.0</div>
+          <div class="si-score" style="color:#f59e0b">60.7</div>
         </div>
         <div class="sustained-item">
           <div class="si-rank">#4</div>
           <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV16iQhBSEjA" target="_blank">理想新款马上更新，怎么入手更划算</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">老高你好二手车 · ▶️2,710 · 互动2.7% · 增长+0.2%</div>
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV16iQhBSEjA" target="_blank">理想新款马上更新，怎么入手更划算</a> <span class="badge badge-fresh">🆕 新稿</span></div>
+            <div class="si-meta">老高你好二手车 · ▶️2,725 · 互动2.7% · 增长+0.7%</div>
           </div>
-          <div class="si-score" style="color:#667eea">32.8</div>
+          <div class="si-score" style="color:#f59e0b">47.6</div>
         </div>
         <div class="sustained-item">
           <div class="si-rank">#5</div>
@@ -711,13 +805,21 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         <div class="sustained-item">
           <div class="si-rank">#2</div>
           <div class="si-info">
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV1UgHUzxEkT" target="_blank">B站新同学！新人李想前来报到！</a> <span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">李想 · ▶️189.2万 · 互动2.2% · 增长0.0%</div>
+          </div>
+          <div class="si-score" style="color:#9ca3af">26.7</div>
+        </div>
+        <div class="sustained-item">
+          <div class="si-rank">#3</div>
+          <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1Uj5qzTESi" target="_blank">理想MEGA Home 全网最细！新款MEGA 升级了啥？Home版有啥不同？</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">李大锤同学 · ▶️183.1万 · 互动0.3% · 增长0.0%</div>
           </div>
           <div class="si-score" style="color:#9ca3af">4.1</div>
         </div>
         <div class="sustained-item">
-          <div class="si-rank">#3</div>
+          <div class="si-rank">#4</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1xT411n76r" target="_blank">哪有理想L7这样造车的？</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">铁秀IRONSHOW · ▶️159.2万 · 互动3.6% · 增长0.0%</div>
@@ -725,7 +827,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           <div class="si-score" style="color:#9ca3af">17.3</div>
         </div>
         <div class="sustained-item">
-          <div class="si-rank">#4</div>
+          <div class="si-rank">#5</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1pD421j7Jm" target="_blank">理想MEGA！续航尴尬？！</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">大鹏快开车 · ▶️146.5万 · 互动5.7% · 增长0.0%</div>
@@ -733,20 +835,12 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           <div class="si-score" style="color:#9ca3af">25.8</div>
         </div>
         <div class="sustained-item">
-          <div class="si-rank">#5</div>
+          <div class="si-rank">#6</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1PAb7zjEz6" target="_blank">理想i8：别开！你得坐！！</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">大鹏快开车 · ▶️121.6万 · 互动2.5% · 增长0.0%</div>
           </div>
           <div class="si-score" style="color:#9ca3af">12.9</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#6</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1VM4m1R7Qx" target="_blank">56万！理想MEGA怎么敢的？</a> <span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">铁秀IRONSHOW · ▶️117.5万 · 互动5.0% · 增长0.0%</div>
-          </div>
-          <div class="si-score" style="color:#9ca3af">23.0</div>
         </div>
       </div>
     </div>
@@ -761,7 +855,93 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
   </div>
 </div>
 
-<!-- PAGE 5: BV查询 -->
+<!-- PAGE 5: 投放效果 -->
+<div class="page" id="page-promo">
+  <!-- 添加投放追踪 -->
+  <div class="promo-add-section">
+    <div class="promo-add-title">添加投放追踪</div>
+    <div class="promo-add-tabs">
+      <div class="add-tab active" onclick="switchAddTab(this,'add-from-bv')">输入BV号（自动拉取）</div>
+      <div class="add-tab" onclick="switchAddTab(this,'add-manual')">手动填写数据</div>
+    </div>
+    <div class="add-panel active" id="add-from-bv">
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:280px">
+          <label>BV号</label>
+          <input id="add-bvid" type="text" placeholder="BV1xxxxxxxxx" oninput="onAddBvInput()" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="add-budget" type="number" placeholder="3000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="add-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="add-note" type="text" placeholder="例：周末测试" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;align-self:flex-end" onclick="submitFromBv()">+ 添加追踪</button>
+      </div>
+      <div id="add-bv-preview" style="font-size:.82em;color:#888;min-height:18px"></div>
+      <div id="add-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
+    <div class="add-panel" id="add-manual">
+      <div class="add-form-row">
+        <div class="add-form-field">
+          <label>视频标题</label>
+          <input id="man-title" type="text" placeholder="视频标题" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>BV号（选填）</label>
+          <input id="man-bvid" type="text" placeholder="BV1xxxxxxxxx" />
+        </div>
+        <div class="add-form-field" style="max-width:150px">
+          <label>UP主名</label>
+          <input id="man-author" type="text" placeholder="UP主昵称" />
+        </div>
+      </div>
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前播放量</label>
+          <input id="man-play-before" type="number" placeholder="10000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前点赞</label>
+          <input id="man-like-before" type="number" placeholder="500" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="man-budget" type="number" placeholder="3000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="man-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="man-note" type="text" placeholder="" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;align-self:flex-end" onclick="submitManual()">+ 添加</button>
+      </div>
+      <div id="man-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
+  </div>
+  <!-- 投放效果看板 -->
+  <div class="card">
+    <div class="card-title">
+      投放效果看板
+      <span style="font-size:.78em;font-weight:400;color:#aaa">每次巡检自动更新 · CPM = 投入 ÷ 新增播放 × 1000</span>
+    </div>
+    <div class="card-sub">记录存储于 GitHub promotions.json · 自动追踪播放/点赞/互动增量</div>
+    <div class="promo-list" id="promo-list-container">
+      <div class="empty">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: BV查询 -->
 <div class="page" id="page-query">
   <div class="card">
     <div class="card-title">BV查询</div>
@@ -787,21 +967,33 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
       <div class="cfg-item"><div class="cfg-l">标题相关性</div><div class="cfg-v">必须含「理想」或「李想」，排除竞品/无关视频</div></div>
       <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想i6, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 理想i8, 理想智驾, 李想</div></div>
       <div class="cfg-item"><div class="cfg-l">增量存储</div><div class="cfg-v">仅保存变化字段，data/history.db</div></div>
-      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 15:08:50</div></div>
+      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 15:22:28</div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">GitHub Token 配置</div>
+    <div class="card-sub">Token 存于浏览器本地，用于投放记录的云端同步</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <div id="token-status" style="font-size:.88em;color:#aaa;flex:1">检测中...</div>
+      <button class="btn btn-secondary btn-sm" onclick="resetToken()">重置 Token</button>
+    </div>
+    <div style="font-size:.78em;color:#aaa;margin-top:8px">
+      看板地址: <a href="https://jiahongsun675-del.github.io/lixiang-dashboard/" target="_blank" style="color:#3b6eea">https://jiahongsun675-del.github.io/lixiang-dashboard/</a>
     </div>
   </div>
 </div>
-
-<!-- 投流弹窗 -->
 <div class="modal-overlay" id="promo-modal">
   <div class="modal">
-    <h3>📋 记录投流信息</h3>
+    <h3>标记加热 & 添加投放追踪</h3>
     <div class="modal-video-title" id="modal-video-title"></div>
-    <div class="modal-field"><label>投流预算 (元)</label><input id="modal-budget" type="number" placeholder="例如 3000"></div>
-    <div class="modal-field"><label>备注</label><input id="modal-note" placeholder="投流平台、时段等备注"></div>
+    <div class="modal-field"><label>BV号</label><input id="modal-bvid" type="text" readonly style="background:#f8f9fc"/></div>
+    <div class="modal-field"><label>投放金额（元，选填）</label><input id="modal-budget" type="number" placeholder="不填则仅标记加热，不计入投放追踪" min="0"></div>
+    <div class="modal-field"><label>投放开始时间</label><input id="modal-start-time" type="datetime-local"/></div>
+    <div class="modal-field"><label>备注（选填）</label><input id="modal-note" placeholder="例如：周末投放测试"></div>
+    <div id="modal-fetch-status" style="font-size:.8em;color:#3b6eea;min-height:16px;margin-top:4px"></div>
     <div class="modal-actions">
-      <button class="modal-submit" onclick="submitPromotion()">确认加热</button>
       <button class="modal-cancel" onclick="closeModal()">取消</button>
+      <button class="modal-submit" onclick="submitPromotion()">确认</button>
     </div>
   </div>
 </div>
@@ -826,17 +1018,6 @@ function switchPage(tab){
 }
 function getHeatedSet(){try{return new Set(JSON.parse(localStorage.getItem('heated_bvids')||'[]'));}catch{return new Set();}}
 function saveHeatedSet(s){localStorage.setItem('heated_bvids',JSON.stringify([...s]));}
-let _pendingHeat=null;
-function markHeated(bvid,title,author,score,budget){
-  const s=getHeatedSet();s.add(bvid);saveHeatedSet(s);
-  const records=getLocalHeatedRecords();
-  if(!records.find(r=>r.bvid===bvid)){records.unshift({bvid,title,author,score,budget,heated_at:new Date().toISOString()});localStorage.setItem('heated_records',JSON.stringify(records));}
-  refreshHeatedUI();
-  _pendingHeat={bvid,title};
-  document.getElementById('modal-video-title').textContent=title;
-  document.getElementById('modal-budget').value=budget.replace(/[^0-9]/g,'');
-  document.getElementById('promo-modal').classList.add('show');
-}
 function unmarkHeated(bvid){
   const s=getHeatedSet();s.delete(bvid);saveHeatedSet(s);
   const records=getLocalHeatedRecords().filter(r=>r.bvid!==bvid);
@@ -864,8 +1045,223 @@ function renderHeatedList(){
   container.innerHTML=records.map(r=>`<div class="heated-item"><div class="heated-item-info"><div class="heated-item-title"><a href="https://www.bilibili.com/video/${r.bvid}" target="_blank">${r.title||r.bvid}</a></div><div class="heated-item-meta">UP主: ${r.author||'—'} | 加热时间: ${fmt(r.heated_at)} | BV: ${r.bvid}</div></div><div class="heated-item-score"><div class="heated-score-val">${r.score?r.score.toFixed(1):'—'}</div><div class="heated-score-lbl">评分</div><button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="unmarkHeated('${r.bvid}')">取消</button></div></div>`).join('');
 }
 function closeModal(){document.getElementById('promo-modal').classList.remove('show');}
-function submitPromotion(){closeModal();}
-const ALL_ALERTS=[{"bvid": "BV1HWQiBPEYg", "title": "理想 v13.4 智驾实测，到底稳不稳？", "author": "李益斌", "score": 65.7, "alert_time": "2026-04-14T15:08:50.094647", "is_underdog": true, "recommendation": "💎 强烈推荐", "suggested_budget": "3000-6000元"}, {"bvid": "BV1xfQ4BEEGr", "title": "北京车展提前看，理想新L8、小鹏新SUV都来了！", "author": "智能车研究所", "score": 56.5, "alert_time": "2026-04-14T15:08:50.094650", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1K8QYBYExa", "title": "和王勉一起，过最舒服的理想生活。", "author": "理想汽车", "score": 52.0, "alert_time": "2026-04-14T15:08:50.094652", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1d2zXBuEgW", "title": "喧嚣之后，带你重新认识理想MEGA", "author": "类星频道", "score": 41.6, "alert_time": "2026-04-14T15:08:50.094654", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}];
+document.getElementById('promo-modal').addEventListener('click',e=>{if(e.target===document.getElementById('promo-modal'))closeModal();});
+
+// ── GitHub API ──
+const GH_OWNER='jiahongsun675-del', GH_REPO='lixiang-dashboard', GH_BRANCH='main';
+function getGhToken(){return localStorage.getItem('lixiang_gh_token')||'';}
+function setGhToken(t){localStorage.setItem('lixiang_gh_token',t);checkTokenStatus();}
+async function ghPromoGet(){
+  const t=getGhToken(); if(!t)return[[], null];
+  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/promotions.json?ref=${GH_BRANCH}`,{headers:{'Authorization':`token ${t}`,'Accept':'application/vnd.github.v3+json'}});
+  if(!r.ok)return[[], null];
+  const d=await r.json();
+  try{return[JSON.parse(atob(d.content.replace(/
+/g,''))), d.sha];}catch{return[[],d.sha];}
+}
+async function ghPromoPut(records, sha, message){
+  const t=getGhToken(); if(!t)throw new Error('未配置 GitHub Token');
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(records,null,2))));
+  const payload={message:message||'update promotions',content,branch:GH_BRANCH};
+  if(sha)payload.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/promotions.json`,{method:'PUT',headers:{'Authorization':`token ${t}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(!r.ok){const e=await r.json();throw new Error(e.message||r.statusText);}
+}
+
+// ── 投放效果看板渲染 ──
+const fmtNum = n => n>=10000?(n/10000).toFixed(1)+'万':Number(n||0).toLocaleString();
+const fmtDate = iso => {try{return new Date(iso).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}catch{return iso;}};
+
+async function renderPromoList(){
+  const container=document.getElementById('promo-list-container');
+  if(!container)return;
+  if(!getGhToken()){container.innerHTML='<div class="empty">请先在「监控配置」页配置 GitHub Token，才能加载投放记录</div>';return;}
+  container.innerHTML='<div class="empty">⏳ 加载中...</div>';
+  try{
+    const[records]=await ghPromoGet();
+    if(!records||!records.length){container.innerHTML='<div class="empty">暂无投放记录 — 点击视频卡片右下角「标记加热」按钮登记</div>';return;}
+    // 并发拉取最新数据
+    const active=records.filter(r=>r.status==='tracking'&&r.bvid&&!r.bvid.startsWith('MANUAL_'));
+    const latestMap={};
+    await Promise.all(active.map(async r=>{
+      try{
+        const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${r.bvid}`);
+        const d=await res.json();
+        if(d.code===0)latestMap[r.bvid]=d.data.stat;
+      }catch{}
+    }));
+    container.innerHTML=records.map(r=>renderPromoCard(r,latestMap[r.bvid])).join('');
+  }catch(e){container.innerHTML=`<div class="empty">加载失败：${e.message}</div>`;}
+}
+
+function renderPromoCard(r, latest){
+  const bl=r.baseline; const latest_play=latest?latest.view:null;
+  const delta_play=bl&&latest_play?latest_play-bl.play:null;
+  const delta_like=bl&&latest?(latest.like-bl.like):null;
+  const cpm=delta_play&&r.budget&&delta_play>0?(r.budget/delta_play*1000).toFixed(2):null;
+  const progress=bl&&latest_play?Math.min(100,(delta_play/Math.max(bl.play*0.1,1)*100)):0;
+  const statusBadge=r.status==='done'?'<span class="badge badge-heated">已完成</span>':'<span class="badge badge-growing">追踪中</span>';
+  const deltaTxt=delta_play!=null?`+${fmtNum(delta_play)}`:'—';
+  const rows=[
+    ['播放量', bl?fmtNum(bl.play):'—', latest_play?fmtNum(latest_play):'—', delta_play!=null?`<span class="delta">${deltaTxt}</span>`:'—'],
+    ['点赞', bl?fmtNum(bl.like):'—', latest&&latest.like?fmtNum(latest.like):'—', delta_like!=null?`<span class="delta">+${fmtNum(delta_like)}</span>`:'—'],
+  ].map(([l,b,a,d])=>`<tr><td>${l}</td><td>${b}</td><td>${a}</td><td>${d}</td></tr>`).join('');
+  return `<div class="promo-card-v2">
+    <div class="promo-card-header">
+      <div>
+        <div class="promo-card-title"><a href="https://www.bilibili.com/video/${r.bvid||''}" target="_blank">${r.title||r.bvid||'—'}</a> ${statusBadge}</div>
+        <div class="promo-card-meta">UP主: ${r.author||'—'} | BV: ${r.bvid||'手动'} | 投放时间: ${fmtDate(r.start_time)}${r.note?' | '+r.note:''}</div>
+      </div>
+      <div class="promo-card-budget"><div class="pcb-lbl">投放预算</div><div class="pcb-val">¥${(r.budget||0).toLocaleString()}</div></div>
+    </div>
+    ${bl?`<div class="promo-track-bar"><div class="ptb-label">播放增量进度（相较投前基线）</div><div class="ptb-bar"><div class="ptb-fill" style="width:${progress}%"></div></div></div>`:'<div class="promo-waiting">⏳ 等待系统采集基线数据（下次巡检时自动记录）</div>'}
+    <table class="promo-compare-table"><thead><tr><th>指标</th><th>投放前</th><th>当前</th><th>增量</th></tr></thead><tbody>${rows}</tbody></table>
+    ${cpm?`<div class="promo-roi-row"><span class="roi-lbl">CPM（千次播放成本）</span><span class="roi-val">¥${cpm}</span><span style="font-size:.78em;color:#aaa;margin-left:8px">= ¥${(r.budget||0).toLocaleString()} / ${delta_play?fmtNum(delta_play):'—'} × 1000</span></div>`:''}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="stopPromo('${r.bvid||''}')">${r.status==='done'?'重新追踪':'停止追踪'}</button>
+    </div>
+  </div>`;
+}
+
+async function stopPromo(bvid){
+  if(!bvid)return;
+  const[records,sha]=await ghPromoGet();
+  const idx=records.findIndex(r=>r.bvid===bvid);
+  if(idx>=0){records[idx].status=records[idx].status==='done'?'tracking':'done';}
+  await ghPromoPut(records,sha,'更新追踪状态: '+bvid);
+  renderPromoList();
+}
+
+// ── 从榜单「标记加热」弹窗 ──
+function markHeated(bvid,title,author,score,budget){
+  const s=getHeatedSet();s.add(bvid);saveHeatedSet(s);
+  const records=getLocalHeatedRecords();
+  if(!records.find(r=>r.bvid===bvid)){records.unshift({bvid,title,author,score,budget,heated_at:new Date().toISOString()});localStorage.setItem('heated_records',JSON.stringify(records));}
+  refreshHeatedUI();
+  // 打开弹窗
+  document.getElementById('modal-bvid').value=bvid;
+  document.getElementById('modal-video-title').textContent=title+' · UP主: '+author;
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  document.getElementById('modal-start-time').value=now.toISOString().slice(0,16);
+  document.getElementById('modal-budget').value='';
+  document.getElementById('modal-note').value='';
+  document.getElementById('modal-fetch-status').textContent='';
+  document.getElementById('promo-modal').classList.add('show');
+}
+
+async function submitPromotion(){
+  const bvid=document.getElementById('modal-bvid').value.trim();
+  const budget=parseFloat(document.getElementById('modal-budget').value)||0;
+  const startTime=document.getElementById('modal-start-time').value;
+  const note=document.getElementById('modal-note').value.trim();
+  const status=document.getElementById('modal-fetch-status');
+  const titleText=document.getElementById('modal-video-title').textContent;
+  const upMatch=titleText.match(/UP主:\s*(.+)$/);
+  const author=upMatch?upMatch[1].trim():'';
+  const title=upMatch?titleText.replace(/\s*·\s*UP主:.*$/,'').trim():titleText.trim();
+  if(budget>0){
+    if(!getGhToken()){const t=prompt('请输入 GitHub Token：','');if(!t){status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}setGhToken(t);}
+    status.textContent='⏳ 保存追踪记录...';
+    try{
+      const[records,sha]=await ghPromoGet();
+      // 抓取当前数据作为基线
+      let baseline=null;
+      try{const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);const d=await res.json();if(d.code===0){const st=d.data.stat;baseline={time:startTime,play:st.view,like:st.like,coin:st.coin,favorite:st.favorite,reply:st.reply,share:st.share};}}catch{}
+      const newRec={bvid,title:title||bvid,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking'};
+      const idx=records.findIndex(r=>r.bvid===bvid);
+      if(idx>=0)records[idx]={...records[idx],...newRec,baseline,snapshots:[],status:'tracking'};
+      else records.push(newRec);
+      await ghPromoPut(records,sha,`登记投放: ${bvid} ¥${budget}`);
+      status.style.color='#059669';status.textContent='✅ 已登记！基线数据已采集，监控自动追踪中';
+    }catch(e){status.style.color='#dc2626';status.textContent='❌ 登记失败：'+e.message;return;}
+  }else{
+    status.style.color='#059669';status.textContent='✅ 已标记加热（未填金额，不计入投放追踪）';
+  }
+  setTimeout(()=>closeModal(),2000);
+}
+
+async function onAddBvInput(){
+  const bvid=document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const preview=document.getElementById('add-bv-preview');
+  if(!bvid){preview.textContent='';return;}
+  preview.textContent='⏳ 拉取视频信息...';
+  try{
+    const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const d=await res.json();
+    if(d.code===0){const v=d.data;preview.textContent=`✓ ${v.title} · UP主: ${v.owner.name} · 播放: ${fmtNum(v.stat.view)}`;}
+    else{preview.textContent='⚠ 视频不存在或无法访问';}
+  }catch{preview.textContent='';}
+}
+
+async function submitFromBv(){
+  const bvid=document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const budget=parseFloat(document.getElementById('add-budget').value)||0;
+  const startTime=document.getElementById('add-start-time').value;
+  const note=document.getElementById('add-note').value.trim();
+  const status=document.getElementById('add-status');
+  if(!bvid){status.style.color='#dc2626';status.textContent='❌ 请输入有效BV号';return;}
+  if(!startTime){status.style.color='#dc2626';status.textContent='❌ 请选择投放开始时间';return;}
+  if(!getGhToken()){const t=prompt('请输入 GitHub Token：','');if(!t){status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}setGhToken(t);}
+  status.textContent='⏳ 拉取视频信息并登记...';
+  try{
+    const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`);
+    const d=await res.json();
+    const title=d.code===0?d.data.title:bvid;
+    const author=d.code===0?d.data.owner.name:'';
+    let baseline=null;
+    if(d.code===0){const st=d.data.stat;baseline={time:startTime,play:st.view,like:st.like,coin:st.coin,favorite:st.favorite,reply:st.reply,share:st.share};}
+    const[records,sha]=await ghPromoGet();
+    const newRec={bvid,title,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking'};
+    const idx=records.findIndex(r=>r.bvid===bvid);
+    if(idx>=0)records[idx]={...records[idx],...newRec,baseline,snapshots:[],status:'tracking'};
+    else records.push(newRec);
+    await ghPromoPut(records,sha,`登记投放: ${bvid} ¥${budget}`);
+    status.style.color='#059669';status.textContent='✅ 已登记！';
+    document.getElementById('add-bvid').value='';document.getElementById('add-budget').value='';document.getElementById('add-bv-preview').textContent='';
+    renderPromoList();
+  }catch(e){status.style.color='#dc2626';status.textContent='❌ '+e.message;}
+}
+
+async function submitManual(){
+  const title=document.getElementById('man-title').value.trim();
+  const bvid=document.getElementById('man-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0]||('MANUAL_'+Date.now());
+  const author=document.getElementById('man-author').value.trim();
+  const playBefore=parseInt(document.getElementById('man-play-before').value)||0;
+  const likeBefore=parseInt(document.getElementById('man-like-before').value)||0;
+  const budget=parseFloat(document.getElementById('man-budget').value)||0;
+  const startTime=document.getElementById('man-start-time').value;
+  const note=document.getElementById('man-note').value.trim();
+  const status=document.getElementById('man-status');
+  if(!title){status.style.color='#dc2626';status.textContent='❌ 请填写视频标题';return;}
+  if(!startTime){status.style.color='#dc2626';status.textContent='❌ 请选择投放开始时间';return;}
+  if(!getGhToken()){const t=prompt('请输入 GitHub Token：','');if(!t){status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}setGhToken(t);}
+  status.textContent='⏳ 保存...';
+  const baseline=playBefore>0?{time:startTime,play:playBefore,like:likeBefore,coin:0,favorite:0,reply:0,share:0}:null;
+  try{
+    const[records,sha]=await ghPromoGet();
+    records.push({bvid,title,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking',manual:true});
+    await ghPromoPut(records,sha,`手动登记: ${title}`);
+    status.style.color='#059669';status.textContent='✅ 已登记！';
+    ['man-title','man-bvid','man-author','man-play-before','man-like-before','man-budget','man-note'].forEach(id=>document.getElementById(id).value='');
+    renderPromoList();
+  }catch(e){status.style.color='#dc2626';status.textContent='❌ '+e.message;}
+}
+
+function switchAddTab(tab,panelId){
+  document.querySelectorAll('.add-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.add-panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');document.getElementById(panelId).classList.add('active');
+}
+
+function checkTokenStatus(){
+  const t=getGhToken();const el=document.getElementById('token-status');
+  if(!el)return;
+  if(t){el.style.color='#059669';el.textContent='✅ Token 已配置（'+t.slice(0,8)+'...）';}
+  else{el.style.color='#aaa';el.textContent='未配置，首次使用投放功能时会提示输入';}
+}
+function resetToken(){if(confirm('确认清除已保存的 GitHub Token？')){localStorage.removeItem('lixiang_gh_token');checkTokenStatus();}}
+
+const ALL_ALERTS=[{"bvid": "BV1HWQiBPEYg", "title": "理想 v13.4 智驾实测，到底稳不稳？", "author": "李益斌", "score": 76.7, "alert_time": "2026-04-14T15:22:28.028317", "is_underdog": true, "recommendation": "💎 强烈推荐", "suggested_budget": "3000-6000元"}, {"bvid": "BV1xfQ4BEEGr", "title": "北京车展提前看，理想新L8、小鹏新SUV都来了！", "author": "智能车研究所", "score": 70.1, "alert_time": "2026-04-14T15:22:28.028335", "is_underdog": true, "recommendation": "💎 强烈推荐", "suggested_budget": "3000-6000元"}, {"bvid": "BV1K8QYBYExa", "title": "和王勉一起，过最舒服的理想生活。", "author": "理想汽车", "score": 60.7, "alert_time": "2026-04-14T15:22:28.028340", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "3000-6000元"}, {"bvid": "BV16iQhBSEjA", "title": "理想新款马上更新，怎么入手更划算", "author": "老高你好二手车", "score": 47.6, "alert_time": "2026-04-14T15:22:28.028345", "is_underdog": false, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1d2zXBuEgW", "title": "喧嚣之后，带你重新认识理想MEGA", "author": "类星频道", "score": 41.6, "alert_time": "2026-04-14T15:22:28.028349", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}];
 function renderAlertList(){
   const container=document.getElementById('alert-list-container');if(!container)return;
   const filtered=ALL_ALERTS.filter(a=>!TITLE_BLACKLIST.some(kw=>(a.title||'').includes(kw)) && TITLE_MUST_CONTAIN.some(kw=>(a.title||'').includes(kw)));
@@ -893,8 +1289,14 @@ async function queryBV(){
   btn.disabled=false;btn.textContent='查询';
 }
 (function init(){
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const nowStr=now.toISOString().slice(0,16);
+  const addStart=document.getElementById('add-start-time');if(addStart)addStart.value=nowStr;
+  const manStart=document.getElementById('man-start-time');if(manStart)manStart.value=nowStr;
   applyBlacklistFilter();
   refreshHeatedUI();
+  checkTokenStatus();
+  renderPromoList();
 })();
 </script>
 </body>
