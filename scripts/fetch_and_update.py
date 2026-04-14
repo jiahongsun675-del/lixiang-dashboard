@@ -71,9 +71,10 @@ TOP_CREATOR_MIDS = [
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
-SCORE_THRESHOLD = 30      # 上榜最低分
-MAX_VIDEOS     = 20       # 推荐榜最多显示
-SEARCH_ROUNDS  = 5        # 搜索轮数（每轮3页，共覆盖15页）
+SCORE_THRESHOLD    = 30      # 上榜最低分
+MAX_VIDEOS         = 20       # 推荐榜最多显示
+SEARCH_ROUNDS      = 5        # 搜索轮数（每轮3页，共覆盖15页）
+HIGH_VALUE_THRESHOLD = 65     # 高价值内容实时推送阈值
 
 # ── GitHub 配置（自动 push） ──
 _token_file = BASE_DIR / "data" / ".github_token"
@@ -83,8 +84,9 @@ GITHUB_REMOTE = "https://jiahongsun675-del:{token}@github.com/jiahongsun675-del/
 GIT_BRANCH = "gh-pages:main"
 
 # ── 飞书 Webhook ──
-FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149"
-DASHBOARD_URL  = "https://jiahongsun675-del.github.io/lixiang-dashboard/"
+FEISHU_WEBHOOK    = "https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149"
+DASHBOARD_URL     = "https://jiahongsun675-del.github.io/lixiang-dashboard/"
+PUSHED_ALERTS_FILE = BASE_DIR / "data" / "pushed_alerts.json"  # 已推送记录
 
 
 # ══════════════════════════════════════════════
@@ -1636,6 +1638,107 @@ def git_push(token, message):
 # 6b. 飞书定时推送
 # ══════════════════════════════════════════════
 
+def get_pushed_alerts() -> dict:
+    """读取已推送记录（bvid → push_time）"""
+    try:
+        if PUSHED_ALERTS_FILE.exists():
+            return json.loads(PUSHED_ALERTS_FILE.read_text())
+    except Exception:
+        pass
+    return {}
+
+
+def mark_pushed(bvid: str):
+    """标记已推送"""
+    records = get_pushed_alerts()
+    records[bvid] = datetime.now().isoformat()
+    # 只保留最近7天的记录
+    cutoff = time.time() - 7 * 86400
+    records = {k: v for k, v in records.items()
+               if datetime.fromisoformat(v).timestamp() > cutoff}
+    records[bvid] = datetime.now().isoformat()
+    PUSHED_ALERTS_FILE.write_text(json.dumps(records, ensure_ascii=False))
+
+
+def send_feishu_realtime(v: dict):
+    """高价值内容实时推送（单条视频）"""
+    import urllib.request, json as _json
+
+    score  = v.get("total_score", 0)
+    title  = v.get("title", "")
+    author = v.get("author", "")
+    fans   = v.get("fans", 0)
+    play   = v.get("play", 0)
+    ir     = v.get("interaction_rate", 0)
+    bvid   = v.get("bvid", "")
+    url    = f"https://www.bilibili.com/video/{bvid}"
+    fans_s = f"{fans/10000:.1f}万粉" if fans > 0 else "粉丝未知"
+    play_s = f"{play/10000:.1f}万" if play >= 10000 else str(play)
+
+    if score >= 80:    priority, budget = "🔴 极高价值", "¥6,000~10,000"
+    elif score >= 65:  priority, budget = "🟠 高价值",   "¥3,000~6,000"
+    else:              priority, budget = "🟡 较高价值", "¥2,000~4,000"
+
+    tags = []
+    if v.get("age_h", 999) < 72: tags.append("🆕新内容")
+    if play >= 50000:             tags.append("🔥高热度")
+    if v.get("underdog_bonus"):   tags.append("⭐素人")
+
+    payload = {
+        "msg_type": "interactive",
+        "card": {
+            "config": {"wide_screen_mode": True},
+            "header": {
+                "title": {"tag": "plain_text", "content": f"⚡ 高价值内容预警 · 评分 {score}分"},
+                "template": "red" if score >= 80 else "orange"
+            },
+            "elements": [
+                {
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": (
+                            f"**{title}**\n\n"
+                            f"UP主：{author}（{fans_s}） | {priority} {' '.join(tags)}\n"
+                            f"播放：{play_s} | 互动率：{ir:.1f}% | 综合评分：**{score}分**\n"
+                            f"建议预算：**{budget}**\n\n"
+                            f"[→ 立即查看视频]({url})"
+                        )
+                    }
+                },
+                {"tag": "hr"},
+                {
+                    "tag": "action",
+                    "actions": [{
+                        "tag": "button",
+                        "text": {"tag": "plain_text", "content": "查看完整看板"},
+                        "url": DASHBOARD_URL,
+                        "type": "primary"
+                    }]
+                }
+            ]
+        }
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode()
+    try:
+        req = urllib.request.Request(
+            FEISHU_WEBHOOK, data=data,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = _json.loads(resp.read())
+        if result.get("code") == 0 or result.get("StatusCode") == 0:
+            mark_pushed(bvid)
+            print(f"[飞书实时] 已推送: {title[:30]} ({score}分)")
+        else:
+            print(f"[飞书实时] 推送失败: {result}")
+    except Exception as e:
+        print(f"[飞书实时] 推送异常: {e}")
+
+
+
 def send_feishu_push(scored_videos: list, now_str: str):
     """向飞书机器人推送今日推荐内容"""
     import urllib.request, json as _json
@@ -1948,6 +2051,18 @@ async def main():
     else:
         print("[INFO] 未设置 GITHUB_TOKEN，跳过自动推送")
         print("[INFO] 手动推送: cd lixiang-dashboard && git add index.html && git push")
+
+    # Step 5b: 高价值内容实时飞书推送
+    pushed = get_pushed_alerts()
+    new_high = [v for v in scored
+                if v.get("total_score", 0) >= HIGH_VALUE_THRESHOLD
+                and v.get("bvid") not in pushed]
+    if new_high:
+        print(f"[飞书实时] 发现 {len(new_high)} 条高价值内容（≥{HIGH_VALUE_THRESHOLD}分），逐条推送...")
+        for v in new_high:
+            send_feishu_realtime(v)
+    else:
+        print(f"[飞书实时] 无新高价值内容（阈值 {HIGH_VALUE_THRESHOLD}分）")
 
     # Step 6: 自动更新投放追踪快照
     if token:
