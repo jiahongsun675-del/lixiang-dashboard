@@ -50,13 +50,15 @@ TITLE_BLACKLIST = [
 
 # ── 标题相关性：必须包含汽车品牌/车型/车主等明确车辆上下文 ──
 TITLE_MUST_CONTAIN = [
-    # 车型
+    # 车型（精确）
     "理想L6", "理想L7", "理想L8", "理想L9",
     "理想i6", "理想i8", "理想MEGA", "理想ONE",
     # 品牌/车主/功能
     "理想汽车", "理想车", "理想车主", "理想智驾", "理想AD",
     "理想OTA", "理想v",    # OTA版本如 v13.4
     "理想音响", "理想座舱", "理想增程",
+    # 兜底：标题中出现「理想」（用于食贫道等宽泛标题，配合黑名单+竞品过滤）
+    "理想",
     # CEO 相关
     "李想",
 ]
@@ -864,22 +866,25 @@ def video_compact(v, rank):
 
 
 def generate_html(scored_videos, now_str):
+    # ── 过滤：只展示1个月内的内容 ──
+    monthly = [v for v in scored_videos if v.get("age_h", 999) <= 720]  # ≤30天
+
     # ── 分组 ──
-    # 新发现：24小时内发布，按新鲜度排名
+    # 新榜单：7天内，按新鲜度排名
     fresh = sorted(
-        [v for v in scored_videos if v.get("age_h", 999) <= 24 and v["total_score"] >= SCORE_THRESHOLD],
+        [v for v in monthly if v.get("age_h", 999) <= 168 and v["total_score"] >= SCORE_THRESHOLD],
         key=lambda v: v.get("freshness_rank", 0), reverse=True
     )
-    # 历史监控：24小时以上，按综合评分
+    # 历史榜单：7-30天，按综合评分
     history_rec = sorted(
-        [v for v in scored_videos if v.get("age_h", 999) > 24 and v["total_score"] >= SCORE_THRESHOLD],
+        [v for v in monthly if v.get("age_h", 999) > 168 and v["total_score"] >= SCORE_THRESHOLD],
         key=lambda v: v["total_score"], reverse=True
     )
-    # 全部综合排名（备用）
-    by_score  = sorted([v for v in scored_videos if v["total_score"] >= SCORE_THRESHOLD], key=lambda v: v["total_score"], reverse=True)
-    by_play   = sorted(scored_videos, key=lambda v: v.get("play", 0), reverse=True)
-    new_vids  = sorted([v for v in scored_videos if v.get("age_h", 999) <= 72], key=lambda v: v.get("freshness_rank",0), reverse=True)
-    hot_vids  = sorted([v for v in scored_videos if v.get("play", 0) >= 30000], key=lambda v: v.get("play", 0), reverse=True)
+    # 全部综合（用于其他 tab）
+    by_score  = sorted([v for v in monthly if v["total_score"] >= SCORE_THRESHOLD], key=lambda v: v["total_score"], reverse=True)
+    by_play   = sorted(monthly, key=lambda v: v.get("play", 0), reverse=True)
+    new_vids  = sorted([v for v in monthly if v.get("age_h", 999) <= 168], key=lambda v: v.get("freshness_rank",0), reverse=True)
+    hot_vids  = sorted([v for v in monthly if v.get("play", 0) >= 30000], key=lambda v: v.get("play", 0), reverse=True)
 
     total_cnt     = len(scored_videos)
     recommend_cnt = len(by_score)
@@ -1110,34 +1115,34 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
       推荐内容
       <span style="font-size:.78em;font-weight:400;color:#aaa">已加热自动置灰 · 点击「标记加热」移入历史</span>
     </div>
-    <div class="card-sub">粉丝≥5万严格过滤 · 🆕新发现按新鲜度排序 · 📚历史监控按综合评分 · 🥶停滞降权</div>
+    <div class="card-sub">粉丝≥5万严格过滤 · 🆕新榜单按新鲜度排序（7天内） · 📚历史榜单按综合评分（7-30天） · 🥶停滞降权</div>
 
     <!-- 时效筛选按钮 -->
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="filter-btn active" onclick="setTimeFilter(this,'all')">不限时间</button>
-      <button class="filter-btn" onclick="setTimeFilter(this,'12h')">12小时内</button>
-      <button class="filter-btn" onclick="setTimeFilter(this,'6h')">6小时内</button>
+      <button class="filter-btn active" onclick="setTimeFilter(this,'all')">不限时间（1月内）</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'7d')">7天内</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'3d')">3天内</button>
       <span style="font-size:.78em;color:#aaa;align-self:center;margin-left:4px">按发布时间筛选</span>
     </div>
 
-    <!-- 🆕 新发现 -->
+    <!-- 🆕 新榜单 -->
     <div class="group-header" id="group-fresh-header">
-      🆕 新发现 · 24小时内
+      🆕 新榜单 · 7天内
       <span class="group-count">{fresh_cnt} 条</span>
-      <span style="font-size:.74em;font-weight:400;color:#aaa">按「新鲜度 = 互动率÷(发布天数+2)^1.5」排序，新视频自动顶升</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按新鲜度排序：互动率÷(发布天数+2)^1.5，新视频自动顶升</span>
     </div>
     <div class="video-list" id="group-fresh" style="margin-bottom:20px">
-{fresh_cards if fresh_cards else '<div class="empty" style="padding:16px">暂无24小时内新发布视频</div>'}
+{fresh_cards if fresh_cards else '<div class="empty" style="padding:16px">暂无7天内新发布视频</div>'}
     </div>
 
-    <!-- 📚 历史监控 -->
+    <!-- 📚 历史榜单 -->
     <div class="group-header" id="group-history-header" style="border-color:#f59e0b">
-      📚 历史监控 · 24小时以上
+      📚 历史榜单 · 7-30天
       <span class="group-count" style="background:#fef3c7;color:#92400e">{len(history_rec)} 条</span>
-      <span style="font-size:.74em;font-weight:400;color:#aaa">按综合评分排序</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按综合评分排序 · 稳定内容持续追踪</span>
     </div>
     <div class="video-list" id="group-history">
-{history_cards if history_cards else '<div class="empty" style="padding:16px">暂无历史监控视频</div>'}
+{history_cards if history_cards else '<div class="empty" style="padding:16px">暂无7-30天历史视频</div>'}
     </div>
   </div>
 </div>
@@ -1325,7 +1330,7 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 
 <script>
 const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车','offer','求职','招聘','应届','算法岗','大厂','字节'];
-const TITLE_MUST_CONTAIN = ['理想L6','理想L7','理想L8','理想L9','理想i6','理想i8','理想MEGA','理想ONE','理想汽车','理想车','理想车主','理想智驾','理想OTA','理想音响','理想座舱','李想'];
+const TITLE_MUST_CONTAIN = ['理想','李想'];
 function applyBlacklistFilter(){{
   document.querySelectorAll('.video-item').forEach(el=>{{
     const t=el.querySelector('.video-title a');
@@ -1344,7 +1349,7 @@ function switchPage(tab){{
 function setTimeFilter(btn, mode){{
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const maxH = mode==='6h'?6 : mode==='12h'?12 : 99999;
+  const maxH = mode==='3d'?72 : mode==='7d'?168 : 99999;
   document.querySelectorAll('.video-item[data-age-h]').forEach(el=>{{
     const ageH = parseFloat(el.dataset.ageH||99999);
     if(ageH <= maxH) el.classList.remove('time-hidden');
@@ -1865,16 +1870,26 @@ def send_feishu_realtime(v: dict):
 
 
 def send_feishu_push(scored_videos: list, now_str: str):
-    """向飞书机器人推送今日推荐内容"""
+    """向飞书机器人推送今日推荐内容（自动排除前一天已推送的视频）"""
     import urllib.request, json as _json
 
+    # 过滤掉24小时内已推送过的视频
+    pushed = get_pushed_alerts()
+    cutoff_24h = time.time() - 86400
+    recently_pushed = {
+        bvid for bvid, push_time in pushed.items()
+        if datetime.fromisoformat(push_time).timestamp() > cutoff_24h
+    }
+
     top = sorted(
-        [v for v in scored_videos if v.get("total_score", 0) >= SCORE_THRESHOLD],
+        [v for v in scored_videos
+         if v.get("total_score", 0) >= SCORE_THRESHOLD
+         and v.get("bvid") not in recently_pushed],
         key=lambda v: v["total_score"], reverse=True
     )[:10]
 
     if not top:
-        print("[飞书] 无达标视频，跳过推送")
+        print("[飞书] 无新视频可推（近24小时内已推过所有达标视频）")
         return
 
     def fmt_n(n):
@@ -1966,7 +1981,10 @@ def send_feishu_push(scored_videos: list, now_str: str):
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = _json.loads(resp.read())
         if result.get("code") == 0 or result.get("StatusCode") == 0:
-            print(f"[飞书] 推送成功，共 {recommend_cnt} 条推荐")
+            # 标记已推送，避免下次重复
+            for v in top:
+                mark_pushed(v.get("bvid", ""))
+            print(f"[飞书] 推送成功，共 {recommend_cnt} 条新推荐（已记录，明天不重复）")
         else:
             print(f"[飞书] 推送失败: {result}")
     except Exception as e:
@@ -2186,18 +2204,57 @@ async def main():
                 and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
     print(f"过滤后: {len(filtered)} 个视频 (黑名单/低播放/低粉丝已排除)")
 
-    # Step 3: 增量存储 + 评分
+    # Step 3: 增量存储 + 评分（本次抓取）
     conn = init_db()
-    scored = []
+    scored_this_run = []
     changed_count = 0
+    this_run_bvids = set()
     for v in filtered:
         prev_play = get_prev_play(conn, v["bvid"])
         sv = score_video(v, prev_play)
         if save_snapshot(conn, sv):
             changed_count += 1
-        scored.append(sv)
-    conn.close()
+        scored_this_run.append(sv)
+        this_run_bvids.add(v["bvid"])
     print(f"数据变化: {changed_count}/{len(filtered)} 个视频有更新")
+
+    # Step 3b: 从 DB 补入30天内历史高质量视频（让榜单保持丰富）
+    cutoff_30d = (datetime.now().timestamp() - 30 * 86400)
+    c = conn.cursor()
+    c.execute("""
+        SELECT m.bvid, m.title, m.author, m.mid, m.fans, m.pubdate, m.last_score,
+               s.play, s.like_count, s.coin, s.favorite, s.reply, s.danmaku
+        FROM video_meta m
+        LEFT JOIN (
+            SELECT bvid, MAX(snapshot_time) mt FROM video_snapshots GROUP BY bvid
+        ) latest ON latest.bvid = m.bvid
+        LEFT JOIN video_snapshots s ON s.bvid = m.bvid AND s.snapshot_time = latest.mt
+        WHERE m.fans >= ? AND m.last_score >= ?
+          AND m.pubdate >= ?
+          AND m.bvid NOT IN ({})
+        ORDER BY m.last_score DESC
+        LIMIT 200
+    """.format(','.join('?' * len(this_run_bvids)) if this_run_bvids else '""'),
+    [MIN_FANS, SCORE_THRESHOLD, int(cutoff_30d)] + list(this_run_bvids))
+    db_rows = c.fetchall()
+    conn.close()
+
+    db_videos = []
+    for row in db_rows:
+        bvid, title, author, mid, fans, pubdate, last_score, play, like, coin, fav, reply, danmaku = row
+        if not title or is_blacklisted(title):
+            continue
+        v = {
+            "bvid": bvid, "title": title, "author": author, "mid": mid or 0,
+            "fans": fans or 0, "pubdate": pubdate or 0,
+            "play": play or 0, "like": like or 0, "coin": coin or 0,
+            "favorite": fav or 0, "reply": reply or 0, "danmaku": danmaku or 0,
+        }
+        sv = score_video(v, None)
+        db_videos.append(sv)
+
+    scored = scored_this_run + db_videos
+    print(f"合并DB历史: 本次 {len(scored_this_run)} + DB补充 {len(db_videos)} = {len(scored)} 个视频")
 
     # Step 4: 生成 HTML（仅在有足够视频时才覆盖）
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
