@@ -38,7 +38,10 @@ KEYWORDS = [
 ]
 
 # ── 黑名单（标题含这些词的视频直接过滤）──
-TITLE_BLACKLIST = ["停车", "剐蹭", "刮蹭", "车位", "乱停", "陷车", "停车场", "停车位"]
+TITLE_BLACKLIST = [
+    "停车", "剐蹭", "刮蹭", "车位", "乱停", "陷车", "停车场", "停车位",  # 停车/剐蹭
+    "火车", "理想进行曲", "铁路", "高铁", "动车",                          # 无关内容
+]
 
 # ── 标题相关性：必须包含至少一个理想/李想汽车相关词 ──
 TITLE_MUST_CONTAIN = ["理想", "李想"]
@@ -302,13 +305,30 @@ async def fetch_video_detail(session, bvid):
 
 
 async def fetch_fan_count(session, mid):
-    """获取 UP 主粉丝数（失败返回 -1 表示未知，不过滤）"""
-    url = "https://api.bilibili.com/x/relation/stat"
-    data = await fetch_json(session, url, {"vmid": mid})
-    if data and data.get("code") == 0:
-        f = data.get("data", {}).get("follower", 0)
-        return f if f > 0 else -1
-    return -1  # -1 = 未知，跳过粉丝过滤
+    """
+    获取 UP 主粉丝数（多接口备用，失败返回 0）
+    优先 space/acc/info（更稳定），备用 relation/stat
+    """
+    endpoints = [
+        ("https://api.bilibili.com/x/space/acc/info", {"mid": mid}),
+        ("https://api.bilibili.com/x/relation/stat",  {"vmid": mid}),
+    ]
+    for url, params in endpoints:
+        try:
+            await asyncio.sleep(random.uniform(0.05, 0.2))
+            async with session.get(url, params=params, headers=make_headers(),
+                                   timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                if resp.status == 200:
+                    d = await resp.json(content_type=None)
+                    if d and d.get("code") == 0:
+                        data = d.get("data", {})
+                        # space/acc/info 返回 follower 字段
+                        fans = data.get("follower") or data.get("fans") or 0
+                        if fans > 0:
+                            return fans
+        except Exception:
+            pass
+    return 0  # 获取失败
 
 
 async def collect_all_videos():
@@ -363,7 +383,7 @@ async def collect_all_videos():
         if rnd < SEARCH_ROUNDS:
             await asyncio.sleep(1.5)  # 轮间小延迟防限速
 
-    # 获取详细数据
+    # 获取详细数据（并发）
     connector = aiohttp.TCPConnector(limit=20, ssl=False)
     async with aiohttp.ClientSession(connector=connector) as session:
         bvids = list(seen.keys())
@@ -375,31 +395,54 @@ async def collect_all_videos():
             if isinstance(d, dict) and d.get("bvid"):
                 seen[d["bvid"]].update(d)
 
-        # 粉丝数：缓存优先
-        mid_set = {v.get("mid", 0) for v in seen.values() if v.get("mid")}
-        uncached, mid_fans_map = [], {}
-        for mid in mid_set:
-            c = get_cached_fans(conn, mid)
-            if c is not None:
-                mid_fans_map[mid] = c
-            else:
-                uncached.append(mid)
-        if uncached:
-            print(f"  获取 {len(uncached)} 个粉丝数（{len(mid_fans_map)} 缓存命中）...")
-            fan_results = await asyncio.gather(
-                *[fetch_fan_count(session, m) for m in uncached],
-                return_exceptions=True
-            )
-            for mid, f in zip(uncached, fan_results):
-                fans = f if isinstance(f, int) else -1
-                mid_fans_map[mid] = fans
-                if fans > 0:
-                    save_fan_cache(conn, mid, fans)
-        else:
-            print(f"  粉丝数全部命中缓存（{len(mid_fans_map)} 个）")
+    # 先做基础过滤（不含粉丝数），缩小需要查粉丝的候选集
+    basic_filtered = [v for v in seen.values()
+                      if not is_blacklisted(v.get("title", ""))
+                      and v.get("play", 0) >= MIN_PLAY]
+    print(f"  基础过滤后 {len(basic_filtered)} 个候选，开始查粉丝数...")
 
-        for v in seen.values():
-            v["fans"] = mid_fans_map.get(v.get("mid", 0), -1)
+    # 只对候选视频查粉丝数（大幅减少 API 调用量）
+    candidate_mids = list({v.get("mid", 0) for v in basic_filtered if v.get("mid")})
+    mid_fans_map = {}
+    uncached = []
+    for mid in candidate_mids:
+        # 已知大号直接跳过
+        if mid in set(TOP_CREATOR_MIDS):
+            mid_fans_map[mid] = 999_999
+            continue
+        c = get_cached_fans(conn, mid)
+        if c is not None and c > 0:
+            mid_fans_map[mid] = c
+        else:
+            uncached.append(mid)
+
+    if uncached:
+        print(f"  查粉丝数: {len(uncached)} 个新 UP 主（{len(mid_fans_map)} 缓存命中）")
+        # 并发10，批间0.2s
+        fan_connector = aiohttp.TCPConnector(limit=10, ssl=False)
+        async with aiohttp.ClientSession(connector=fan_connector) as fan_session:
+            results = []
+            for i in range(0, len(uncached), 10):
+                batch = uncached[i:i+10]
+                br = await asyncio.gather(
+                    *[fetch_fan_count(fan_session, m) for m in batch],
+                    return_exceptions=True
+                )
+                results.extend(br)
+                if i + 10 < len(uncached):
+                    await asyncio.sleep(0.2)
+        for mid, f in zip(uncached, results):
+            fans = f if isinstance(f, int) and f > 0 else 0
+            mid_fans_map[mid] = fans
+            if fans > 0:
+                save_fan_cache(conn, mid, fans)
+    else:
+        print(f"  粉丝数全部命中缓存（{len(mid_fans_map)} 个）")
+
+    # 赋予粉丝数
+    for v in basic_filtered:
+        mid = v.get("mid", 0)
+        v["fans"] = mid_fans_map.get(mid, 0)
 
     conn.close()
     raw_list = list(seen.values())
@@ -558,15 +601,15 @@ def init_db():
 
 
 def get_cached_fans(conn, mid):
-    """从 DB 获取缓存的粉丝数（6小时内有效）"""
+    """从 DB 获取缓存的粉丝数（24小时内有效）"""
     c = conn.cursor()
     c.execute("SELECT fans, updated_at FROM fan_cache WHERE mid=?", (mid,))
     row = c.fetchone()
     if row:
         try:
             dt = datetime.fromisoformat(row[1])
-            if (datetime.now() - dt).total_seconds() < 6 * 3600:
-                return row[0]
+            if (datetime.now() - dt).total_seconds() < 24 * 3600:
+                return row[0]  # 返回缓存值（0也返回，代表之前获取失败）
         except Exception:
             pass
     return None
@@ -1209,7 +1252,7 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 </div>
 
 <script>
-const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位'];
+const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车'];
 const TITLE_MUST_CONTAIN = ['理想','李想'];
 function applyBlacklistFilter(){{
   document.querySelectorAll('.video-item').forEach(el=>{{
@@ -1856,7 +1899,7 @@ async def feishu_push_main():
     filtered = [v for v in raw_videos
                 if not is_blacklisted(v.get("title", ""))
                 and v.get("play", 0) >= MIN_PLAY
-                and (v.get("fans", -1) == -1 or v.get("fans", 0) >= MIN_FANS)]
+                and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
     scored = []
     for v in filtered:
         sv = score_video(v, get_prev_play(conn, v["bvid"]))
@@ -1974,7 +2017,7 @@ async def _score_and_push(all_seen: dict, conn_db, token: str, label: str):
     filtered = [v for v in raw_list
                 if not is_blacklisted(v.get("title", ""))
                 and v.get("play", 0) >= MIN_PLAY
-                and (v.get("fans", -1) == -1 or v.get("fans", 0) >= MIN_FANS)]
+                and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
 
     # 评分
     scored = []
@@ -2013,11 +2056,11 @@ async def main():
     raw_videos = await collect_all_videos()
 
     # Step 2: 过滤（黑名单 + 播放量 + 粉丝数）
-    # fans=-1 表示 API 未返回，不过滤（宁可放行也不误杀）
+    # 严格模式：粉丝数未知(0)视为不达标，一律过滤
     filtered = [v for v in raw_videos
                 if not is_blacklisted(v.get("title", ""))
                 and v.get("play", 0) >= MIN_PLAY
-                and (v.get("fans", -1) == -1 or v.get("fans", 0) >= MIN_FANS)]
+                and v.get("fans", 0) >= MIN_FANS]   # 严格：粉丝数必须 ≥5万
     print(f"过滤后: {len(filtered)} 个视频 (黑名单/低播放/低粉丝已排除)")
 
     # Step 3: 增量存储 + 评分
