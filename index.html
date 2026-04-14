@@ -138,6 +138,14 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 .promo-waiting{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.85em;text-align:center}
 .promo-roi-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#f4f7ff;border-radius:6px;font-size:.85em}
 .roi-lbl{color:#666}.roi-val{font-weight:700;color:#3b6eea;font-size:1.05em}
+/* ── 分组标题 & 筛选按钮 ── */
+.group-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92em;font-weight:700;color:#166534;border-left:4px solid #22c55e;padding:8px 12px;background:#f0fdf4;border-radius:0 6px 6px 0;margin-bottom:12px}
+.group-count{background:#dcfce7;color:#166534;font-size:.72em;padding:2px 8px;border-radius:10px;font-weight:600}
+.filter-btn{padding:5px 14px;border:1px solid #dde2f0;border-radius:20px;font-size:.8em;cursor:pointer;color:#666;background:#fff;transition:all .2s}
+.filter-btn:hover{border-color:#3b6eea;color:#3b6eea}
+.filter-btn.active{background:#3b6eea;color:#fff;border-color:#3b6eea}
+.video-item[data-age-h]{transition:opacity .2s}
+.video-item.time-hidden{display:none!important}
 @media(max-width:720px){.topbar{padding:0 16px}.nav-tabs{padding:0 16px}.page{padding:18px 16px}.dim-row{grid-template-columns:62px 1fr 40px 56px}}
 </style>
 </head>
@@ -145,7 +153,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 
 <div class="topbar">
   <div class="topbar-logo">理想汽车 · <span>B站内容监测</span></div>
-  <div class="topbar-meta">数据更新: 2026-04-14 16:19:22 &nbsp;|&nbsp; 含77个视频</div>
+  <div class="topbar-meta">数据更新: 2026-04-14 16:37:24 &nbsp;|&nbsp; 含636个视频</div>
   <button class="topbar-refresh" onclick="location.reload()">刷新</button>
 </div>
 
@@ -162,79 +170,220 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 <!-- PAGE 1: 推荐榜单 -->
 <div class="page active" id="page-recommend">
   <div class="stats-row">
-    <div class="sc"><div class="lbl">本次分析</div><div class="val">77<span class="unit">个</span></div><div class="sub">去重后候选视频</div></div>
-    <div class="sc"><div class="lbl">达标推荐</div><div class="val">7<span class="unit">个</span></div><div class="sub">评分≥30分</div></div>
+    <div class="sc"><div class="lbl">本次分析</div><div class="val">636<span class="unit">个</span></div><div class="sub">去重后候选视频</div></div>
+    <div class="sc"><div class="lbl">达标推荐</div><div class="val">31<span class="unit">个</span></div><div class="sub">评分≥30分</div></div>
     <div class="sc"><div class="lbl">高优先级</div><div class="val">0<span class="unit">个</span></div><div class="sub">评分≥65分</div></div>
     <div class="sc"><div class="lbl">累计加热</div><div class="val" id="stat-heated-count">—</div><div class="sub">已标记加热</div></div>
   </div>
   <div class="card">
     <div class="card-title">
-      推荐内容 TOP7
-      <span style="font-size:.78em;font-weight:400;color:#aaa">已加热内容自动置灰 · 点击「标记加热」移入历史</span>
+      推荐内容
+      <span style="font-size:.78em;font-weight:400;color:#aaa">已加热自动置灰 · 点击「标记加热」移入历史</span>
     </div>
-    <div class="card-sub">多源异步采集 · 粉丝≥5万 · 互动率×增长趋势×发布时效×口碑评价 · 🆕新内容优先 · 🔥高热度标注 · 🥶停滞降权</div>
-    <div class="video-list">
+    <div class="card-sub">粉丝≥5万严格过滤 · 🆕新发现按新鲜度排序 · 📚历史监控按综合评分 · 🥶停滞降权</div>
 
-    <div class="video-item" data-bvid="BV1HWQiBPEYg" data-mid="590869570">
+    <!-- 时效筛选按钮 -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="filter-btn active" onclick="setTimeFilter(this,'all')">不限时间</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'12h')">12小时内</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'6h')">6小时内</button>
+      <span style="font-size:.78em;color:#aaa;align-self:center;margin-left:4px">按发布时间筛选</span>
+    </div>
+
+    <!-- 🆕 新发现 -->
+    <div class="group-header" id="group-fresh-header">
+      🆕 新发现 · 24小时内
+      <span class="group-count">0 条</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按「新鲜度 = 互动率÷(发布天数+2)^1.5」排序，新视频自动顶升</span>
+    </div>
+    <div class="video-list" id="group-fresh" style="margin-bottom:20px">
+<div class="empty" style="padding:16px">暂无24小时内新发布视频</div>
+    </div>
+
+    <!-- 📚 历史监控 -->
+    <div class="group-header" id="group-history-header" style="border-color:#f59e0b">
+      📚 历史监控 · 24小时以上
+      <span class="group-count" style="background:#fef3c7;color:#92400e">31 条</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按综合评分排序</span>
+    </div>
+    <div class="video-list" id="group-history">
+
+    <div class="video-item" data-bvid="BV1vt421g7B7" data-mid="8169127" data-age-h="17926.3">
         <div class="video-rank top1">#1</div>
         <div class="video-info">
             <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV1HWQiBPEYg" target="_blank">理想 v13.4 智驾实测，到底稳不稳？</a>
-                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-fresh">🆕 新内容</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+                <a href="https://www.bilibili.com/video/BV1vt421g7B7" target="_blank">刚花55.98万买了理想MEGA 我该如何给它拍一支广告</a>
+                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
             </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/590869570" target="_blank" style="color:#3b6eea;text-decoration:none">李益斌</a> &nbsp;<span class="fans-tag" style="color:#22c55e">6.5万粉</span> | BV: BV1HWQiBPEYg | 3小时前</div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/8169127" target="_blank" style="color:#3b6eea;text-decoration:none">悟影Insfinity</a> &nbsp;<span class="fans-tag" style="color:#22c55e">5.7万粉</span> | BV: BV1vt421g7B7 | 746天前</div>
             <div class="recommendation-box">
-                <div class="rec-title">推荐理由 </div>
-                <ul class="rec-list"><li>📊 互动率1.96%</li><li>🆕 <strong>新鲜内容</strong> — 3小时前发布，正是投流黄金期</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>💯 <strong>互动率8.92%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 1,227</span>
-                <span class="s-item">👍 24 (1.96%)</span>
-                <span class="s-item">💰 投币2</span>
-                <span class="s-item">⭐ 收藏1</span>
-                <span class="s-item">💬 3</span>
-                <span class="s-item">📊 互动率1.96%</span>
-                <span class="s-item">📈 增长+1.9%</span>
+                <span class="s-item">▶️ 3,005</span>
+                <span class="s-item">👍 185 (8.92%)</span>
+                <span class="s-item">💰 投币98</span>
+                <span class="s-item">⭐ 收藏59</span>
+                <span class="s-item">💬 21</span>
+                <span class="s-item">📊 互动率8.92%</span>
+                <span class="s-item">📈 增长0.0%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:20%;background:#10b981"></div></div>
-                    <span class="dim-val">7.8/40</span>
-                    <span class="dim-tag">一般</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:89%;background:#10b981"></div></div>
+                    <span class="dim-val">35.7/40</span>
+                    <span class="dim-tag">优秀</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:32%;background:#3b82f6"></div></div>
-                    <span class="dim-val">9.6/30</span>
-                    <span class="dim-tag">+1.9%</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:99%;background:#f59e0b"></div></div>
-                    <span class="dim-val">19.9/20</span>
-                    <span class="dim-tag">3小时前</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">746天前</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:43%;background:#8b5cf6"></div></div>
-                    <span class="dim-val">6.5/15</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">15.0/15</span>
                     <span class="dim-tag">正向反馈</span>
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:58.7%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
-                <span class="score-val" style="color:#f59e0b">58.7分</span>
+                <div class="score-bar"><div class="score-fill" style="width:53.7%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
+                <span class="score-val" style="color:#f59e0b">53.7分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
                 <span class="budget-val">¥3,000–6,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1HWQiBPEYg',"\u7406\u60f3 v13.4 \u667a\u9a7e\u5b9e\u6d4b\uff0c\u5230\u5e95\u7a33\u4e0d\u7a33\uff1f",'李益斌',58.7,'¥3,000–6,000元')">标记加热</button>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1vt421g7B7',"\u521a\u82b155.98\u4e07\u4e70\u4e86\u7406\u60f3MEGA \u6211\u8be5\u5982\u4f55\u7ed9\u5b83\u62cd\u4e00\u652f\u5e7f\u544a",'悟影Insfinity',53.7,'¥3,000–6,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item" data-bvid="BV1d2zXBuEgW" data-mid="549367169">
+    <div class="video-item" data-bvid="BV1ZGDhBGE5R" data-mid="174457913" data-age-h="173.2">
         <div class="video-rank top2">#2</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1ZGDhBGE5R" target="_blank">100%自主知识产权，理想汽车高管称赞张雪机车自研发动机，从根上解决国产大排量摩托“卡脖子”</a>
+                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/174457913" target="_blank" style="color:#3b6eea;text-decoration:none">21世纪经济报道视频</a> &nbsp;<span class="fans-tag" style="color:#22c55e">8.8万粉</span> | BV: BV1ZGDhBGE5R | 7天前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>👍 互动率4.84% — 良好(≥3%)</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 7,988</span>
+                <span class="s-item">👍 387 (4.84%)</span>
+                <span class="s-item">💰 投币0</span>
+                <span class="s-item">⭐ 收藏14</span>
+                <span class="s-item">💬 7</span>
+                <span class="s-item">📊 互动率4.84%</span>
+                <span class="s-item">📈 增长0.0%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:48%;background:#10b981"></div></div>
+                    <span class="dim-val">19.4/40</span>
+                    <span class="dim-tag">良好</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:76%;background:#f59e0b"></div></div>
+                    <span class="dim-val">15.2/20</span>
+                    <span class="dim-tag">7天前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">15.0/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:52.6%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
+                <span class="score-val" style="color:#f59e0b">52.6分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥3,000–6,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1ZGDhBGE5R',"100%\u81ea\u4e3b\u77e5\u8bc6\u4ea7\u6743\uff0c\u7406\u60f3\u6c7d\u8f66\u9ad8\u7ba1\u79f0\u8d5e\u5f20\u96ea\u673a\u8f66\u81ea\u7814\u53d1\u52a8\u673a\uff0c\u4ece\u6839\u4e0a\u89e3\u51b3\u56fd\u4ea7\u5927\u6392\u91cf\u6469\u6258\u201c\u5361\u8116\u5b50\u201d",'21世纪经济报道视频',52.6,'¥3,000–6,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV1mjQKB4EXe" data-mid="590869570" data-age-h="77.8">
+        <div class="video-rank top3">#3</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1mjQKB4EXe" target="_blank">理想i6五座SUV，不求豪华就是温馨家用</a>
+                <span class="badge badge-medium">🔥 推荐</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/590869570" target="_blank" style="color:#3b6eea;text-decoration:none">李益斌</a> &nbsp;<span class="fans-tag" style="color:#22c55e">6.5万粉</span> | BV: BV1mjQKB4EXe | 3天前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>📊 互动率2.52%</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 3,014</span>
+                <span class="s-item">👍 74 (2.52%)</span>
+                <span class="s-item">💰 投币2</span>
+                <span class="s-item">⭐ 收藏8</span>
+                <span class="s-item">💬 12</span>
+                <span class="s-item">📊 互动率2.52%</span>
+                <span class="s-item">📈 增长0.0%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:25%;background:#10b981"></div></div>
+                    <span class="dim-val">10.1/40</span>
+                    <span class="dim-tag">一般</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:89%;background:#f59e0b"></div></div>
+                    <span class="dim-val">17.8/20</span>
+                    <span class="dim-tag">3天前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:97%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">14.5/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:45.5%;background:linear-gradient(90deg,#10b981,#f59e0b)"></div></div>
+                <span class="score-val" style="color:#f59e0b">45.5分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥2,000–4,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1mjQKB4EXe',"\u7406\u60f3i6\u4e94\u5ea7SUV\uff0c\u4e0d\u6c42\u8c6a\u534e\u5c31\u662f\u6e29\u99a8\u5bb6\u7528",'李益斌',45.5,'¥2,000–4,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV1d2zXBuEgW" data-mid="549367169" data-age-h="1805.6">
+        <div class="video-rank ">#4</div>
         <div class="video-info">
             <div class="video-title">
                 <a href="https://www.bilibili.com/video/BV1d2zXBuEgW" target="_blank">喧嚣之后，带你重新认识理想MEGA</a>
@@ -281,171 +430,55 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:43.0%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">43.0分</span>
+                <div class="score-bar"><div class="score-fill" style="width:42.9%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">42.9分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
                 <span class="budget-val">¥2,000–4,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1d2zXBuEgW',"\u55a7\u56a3\u4e4b\u540e\uff0c\u5e26\u4f60\u91cd\u65b0\u8ba4\u8bc6\u7406\u60f3MEGA",'类星频道',43.0,'¥2,000–4,000元')">标记加热</button>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1d2zXBuEgW',"\u55a7\u56a3\u4e4b\u540e\uff0c\u5e26\u4f60\u91cd\u65b0\u8ba4\u8bc6\u7406\u60f3MEGA",'类星频道',42.9,'¥2,000–4,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item" data-bvid="BV1xfQ4BEEGr" data-mid="3546814473046548">
-        <div class="video-rank top3">#3</div>
-        <div class="video-info">
-            <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV1xfQ4BEEGr" target="_blank">北京车展提前看，理想新L8、小鹏新SUV都来了！</a>
-                <span class="badge badge-low">可考虑</span><span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span>
-            </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/3546814473046548" target="_blank" style="color:#3b6eea;text-decoration:none">智能车研究所</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV1xfQ4BEEGr | 22小时前</div>
-            <div class="recommendation-box">
-                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
-                <ul class="rec-list"><li>👍 互动率4.46% — 良好(≥3%)</li><li>🆕 <strong>新鲜内容</strong> — 22小时前发布，正是投流黄金期</li><li>🥶 内容停滞，已停滞降权</li></ul>
-            </div>
-            <div class="video-stats">
-                <span class="s-item">▶️ 1.5万</span>
-                <span class="s-item">👍 400 (4.46%)</span>
-                <span class="s-item">💰 投币19</span>
-                <span class="s-item">⭐ 收藏46</span>
-                <span class="s-item">💬 37</span>
-                <span class="s-item">📊 互动率4.46%</span>
-                <span class="s-item">📈 增长+0.1%</span>
-            </div>
-            <div class="dim-grid">
-                <div class="dim-row">
-                    <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:44%;background:#10b981"></div></div>
-                    <span class="dim-val">17.8/40</span>
-                    <span class="dim-tag">良好</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:2%;background:#3b82f6"></div></div>
-                    <span class="dim-val">0.6/30</span>
-                    <span class="dim-tag">+0.1%</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:97%;background:#f59e0b"></div></div>
-                    <span class="dim-val">19.4/20</span>
-                    <span class="dim-tag">22小时前</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">口碑评价</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
-                    <span class="dim-val">15.0/15</span>
-                    <span class="dim-tag">正向反馈</span>
-                </div></div>
-            <div class="score-row">
-                <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:40.8%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">40.8分</span>
-            </div>
-            <div class="budget-row">
-                <span class="budget-lbl">建议加热预算</span>
-                <span class="budget-val">¥2,000–4,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1xfQ4BEEGr',"\u5317\u4eac\u8f66\u5c55\u63d0\u524d\u770b\uff0c\u7406\u60f3\u65b0L8\u3001\u5c0f\u9e4f\u65b0SUV\u90fd\u6765\u4e86\uff01",'智能车研究所',40.8,'¥2,000–4,000元')">标记加热</button>
-            </div>
-        </div>
-    </div>
-    <div class="video-item" data-bvid="BV1K8QYBYExa" data-mid="2054075556">
-        <div class="video-rank ">#4</div>
-        <div class="video-info">
-            <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV1K8QYBYExa" target="_blank">和王勉一起，过最舒服的理想生活。</a>
-                <span class="badge badge-low">可考虑</span><span class="badge badge-fresh">🆕 新内容</span>
-            </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/2054075556" target="_blank" style="color:#3b6eea;text-decoration:none">理想汽车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV1K8QYBYExa | 4小时前</div>
-            <div class="recommendation-box">
-                <div class="rec-title">推荐理由 </div>
-                <ul class="rec-list"><li>📊 互动率1.81%</li><li>🆕 <strong>新鲜内容</strong> — 4小时前发布，正是投流黄金期</li></ul>
-            </div>
-            <div class="video-stats">
-                <span class="s-item">▶️ 996</span>
-                <span class="s-item">👍 18 (1.81%)</span>
-                <span class="s-item">💰 投币2</span>
-                <span class="s-item">⭐ 收藏1</span>
-                <span class="s-item">💬 2</span>
-                <span class="s-item">📊 互动率1.81%</span>
-                <span class="s-item">📈 增长+0.5%</span>
-            </div>
-            <div class="dim-grid">
-                <div class="dim-row">
-                    <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:18%;background:#10b981"></div></div>
-                    <span class="dim-val">7.2/40</span>
-                    <span class="dim-tag">一般</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:8%;background:#3b82f6"></div></div>
-                    <span class="dim-val">2.5/30</span>
-                    <span class="dim-tag">+0.5%</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:99%;background:#f59e0b"></div></div>
-                    <span class="dim-val">19.9/20</span>
-                    <span class="dim-tag">4小时前</span>
-                </div>
-                <div class="dim-row">
-                    <span class="dim-lbl">口碑评价</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:37%;background:#8b5cf6"></div></div>
-                    <span class="dim-val">5.6/15</span>
-                    <span class="dim-tag">正向反馈</span>
-                </div></div>
-            <div class="score-row">
-                <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:35.2%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">35.2分</span>
-            </div>
-            <div class="budget-row">
-                <span class="budget-lbl">建议加热预算</span>
-                <span class="budget-val">¥1,000–2,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1K8QYBYExa',"\u548c\u738b\u52c9\u4e00\u8d77\uff0c\u8fc7\u6700\u8212\u670d\u7684\u7406\u60f3\u751f\u6d3b\u3002",'理想汽车',35.2,'¥1,000–2,000元')">标记加热</button>
-            </div>
-        </div>
-    </div>
-    <div class="video-item" data-bvid="BV16iQhBSEjA" data-mid="346802311">
+    <div class="video-item" data-bvid="BV1QoqaYyEmN" data-mid="586467893" data-age-h="11707.4">
         <div class="video-rank ">#5</div>
         <div class="video-info">
             <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV16iQhBSEjA" target="_blank">理想新款马上更新，怎么入手更划算</a>
-                <span class="badge badge-low">可考虑</span><span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span>
+                <a href="https://www.bilibili.com/video/BV1QoqaYyEmN" target="_blank">欧洲新能源大咖试驾理想MEGA震撼发声，中国电车领先欧洲整整一代！豪华舒适性秀了他们一脸，可把美国网友羡慕坏了</a>
+                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
             </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/346802311" target="_blank" style="color:#3b6eea;text-decoration:none">老高你好二手车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV16iQhBSEjA | 16小时前</div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/586467893" target="_blank" style="color:#3b6eea;text-decoration:none">油管热评一姐</a> &nbsp;<span class="fans-tag" style="color:#22c55e">8.7万粉</span> | BV: BV1QoqaYyEmN | 487天前</div>
             <div class="recommendation-box">
                 <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
-                <ul class="rec-list"><li>📊 互动率2.70%</li><li>🆕 <strong>新鲜内容</strong> — 16小时前发布，正是投流黄金期</li><li>🥶 内容停滞，已停滞降权</li></ul>
+                <ul class="rec-list"><li>💯 <strong>互动率5.95%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 2,780</span>
-                <span class="s-item">👍 75 (2.70%)</span>
-                <span class="s-item">💰 投币3</span>
-                <span class="s-item">⭐ 收藏9</span>
-                <span class="s-item">💬 2</span>
-                <span class="s-item">📊 互动率2.70%</span>
-                <span class="s-item">📈 增长+0.2%</span>
+                <span class="s-item">▶️ 8.3万</span>
+                <span class="s-item">👍 4,864 (5.95%)</span>
+                <span class="s-item">💰 投币53</span>
+                <span class="s-item">⭐ 收藏667</span>
+                <span class="s-item">💬 58</span>
+                <span class="s-item">📊 互动率5.95%</span>
+                <span class="s-item">📈 增长0.0%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:27%;background:#10b981"></div></div>
-                    <span class="dim-val">10.8/40</span>
-                    <span class="dim-tag">一般</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:60%;background:#10b981"></div></div>
+                    <span class="dim-val">23.8/40</span>
+                    <span class="dim-tag">优秀</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:3%;background:#3b82f6"></div></div>
-                    <span class="dim-val">0.9/30</span>
-                    <span class="dim-tag">+0.2%</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:98%;background:#f59e0b"></div></div>
-                    <span class="dim-val">19.5/20</span>
-                    <span class="dim-tag">16小时前</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">487天前</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
@@ -455,43 +488,43 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:34.2%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">34.2分</span>
+                <div class="score-bar"><div class="score-fill" style="width:41.8%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">41.8分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
-                <span class="budget-val">¥1,000–2,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV16iQhBSEjA',"\u7406\u60f3\u65b0\u6b3e\u9a6c\u4e0a\u66f4\u65b0\uff0c\u600e\u4e48\u5165\u624b\u66f4\u5212\u7b97",'老高你好二手车',34.2,'¥1,000–2,000元')">标记加热</button>
+                <span class="budget-val">¥2,000–4,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1QoqaYyEmN',"\u6b27\u6d32\u65b0\u80fd\u6e90\u5927\u5496\u8bd5\u9a7e\u7406\u60f3MEGA\u9707\u64bc\u53d1\u58f0\uff0c\u4e2d\u56fd\u7535\u8f66\u9886\u5148\u6b27\u6d32\u6574\u6574\u4e00\u4ee3\uff01\u8c6a\u534e\u8212\u9002\u6027\u79c0\u4e86\u4ed6\u4eec\u4e00\u8138\uff0c\u53ef\u628a\u7f8e\u56fd\u7f51\u53cb\u7fa1\u6155\u574f\u4e86",'油管热评一姐',41.8,'¥2,000–4,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item" data-bvid="BV1u89KBvE73" data-mid="3546724748495813">
+    <div class="video-item" data-bvid="BV1QFFkzpEuG" data-mid="1583414" data-age-h="1604.9">
         <div class="video-rank ">#6</div>
         <div class="video-info">
             <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV1u89KBvE73" target="_blank">租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你</a>
-                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span>
+                <a href="https://www.bilibili.com/video/BV1QFFkzpEuG" target="_blank">理想OTA8.2 VLA蒙眼盲测 太稳了</a>
+                <span class="badge badge-low">可考虑</span><span class="badge badge-stale">🥶 停滞</span>
             </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/3546724748495813" target="_blank" style="color:#3b6eea;text-decoration:none">超哥超车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV1u89KBvE73 | 7天前</div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/1583414" target="_blank" style="color:#3b6eea;text-decoration:none">科技小辛</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">15.6万粉</span> | BV: BV1QFFkzpEuG | 66天前</div>
             <div class="recommendation-box">
                 <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
-                <ul class="rec-list"><li>👍 互动率4.07% — 良好(≥3%)</li><li>🥶 内容停滞，已停滞降权</li></ul>
+                <ul class="rec-list"><li>💯 <strong>互动率9.61%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 27.4万</span>
-                <span class="s-item">👍 10,556 (4.07%)</span>
-                <span class="s-item">💰 投币398</span>
-                <span class="s-item">⭐ 收藏583</span>
-                <span class="s-item">💬 1,455</span>
-                <span class="s-item">📊 互动率4.07%</span>
+                <span class="s-item">▶️ 6,037</span>
+                <span class="s-item">👍 576 (9.61%)</span>
+                <span class="s-item">💰 投币8</span>
+                <span class="s-item">⭐ 收藏119</span>
+                <span class="s-item">💬 31</span>
+                <span class="s-item">📊 互动率9.61%</span>
                 <span class="s-item">📈 增长0.0%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:41%;background:#10b981"></div></div>
-                    <span class="dim-val">16.3/40</span>
-                    <span class="dim-tag">良好</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:96%;background:#10b981"></div></div>
+                    <span class="dim-val">38.4/40</span>
+                    <span class="dim-tag">优秀</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
@@ -501,9 +534,9 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:74%;background:#f59e0b"></div></div>
-                    <span class="dim-val">14.7/20</span>
-                    <span class="dim-tag">7天前</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">66天前</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
@@ -513,43 +546,43 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:34.0%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">34.0分</span>
+                <div class="score-bar"><div class="score-fill" style="width:41.4%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">41.4分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
-                <span class="budget-val">¥1,000–2,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1u89KBvE73',"\u79df\u8f66\u62cd\u8f66\u53ea\u8bf4\u771f\u8bdd\uff1a\u7406\u60f3i6\u4e3a\u4ec0\u4e48\u80fd\u5356\u5f97\u8fd9\u4e48\u597d\uff1f\u4e00\u6761\u89c6\u9891\u544a\u8bc9\u4f60",'超哥超车',34.0,'¥1,000–2,000元')">标记加热</button>
+                <span class="budget-val">¥2,000–4,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1QFFkzpEuG',"\u7406\u60f3OTA8.2 VLA\u8499\u773c\u76f2\u6d4b \u592a\u7a33\u4e86",'科技小辛',41.4,'¥2,000–4,000元')">标记加热</button>
             </div>
         </div>
     </div>
-    <div class="video-item" data-bvid="BV1f5XoB9EJH" data-mid="6738451">
+    <div class="video-item" data-bvid="BV1ZqsZzzEH3" data-mid="3546724748495813" data-age-h="4076.6">
         <div class="video-rank ">#7</div>
         <div class="video-info">
             <div class="video-title">
-                <a href="https://www.bilibili.com/video/BV1f5XoB9EJH" target="_blank">理想i8：理想原生家庭走出来的好学生。</a>
-                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+                <a href="https://www.bilibili.com/video/BV1ZqsZzzEH3" target="_blank">理想MEGA事件解读，安全是最大的豪华！</a>
+                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span>
             </div>
-            <div class="video-meta">UP主: <a href="https://space.bilibili.com/6738451" target="_blank" style="color:#3b6eea;text-decoration:none">肉呆大魔王</a> &nbsp;<span class="fans-tag" style="color:#22c55e">9.2万粉</span> | BV: BV1f5XoB9EJH | 14天前</div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/3546724748495813" target="_blank" style="color:#3b6eea;text-decoration:none">超哥超车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV1ZqsZzzEH3 | 169天前</div>
             <div class="recommendation-box">
                 <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
-                <ul class="rec-list"><li>📊 互动率1.15%</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+                <ul class="rec-list"><li>💯 <strong>互动率9.21%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li></ul>
             </div>
             <div class="video-stats">
-                <span class="s-item">▶️ 40.7万</span>
-                <span class="s-item">👍 4,526 (1.15%)</span>
-                <span class="s-item">💰 投币630</span>
-                <span class="s-item">⭐ 收藏602</span>
-                <span class="s-item">💬 2,175</span>
-                <span class="s-item">📊 互动率1.15%</span>
+                <span class="s-item">▶️ 160.6万</span>
+                <span class="s-item">👍 138,516 (9.21%)</span>
+                <span class="s-item">💰 投币15062</span>
+                <span class="s-item">⭐ 收藏10691</span>
+                <span class="s-item">💬 9,520</span>
+                <span class="s-item">📊 互动率9.21%</span>
                 <span class="s-item">📈 增长0.0%</span>
             </div>
             <div class="dim-grid">
                 <div class="dim-row">
                     <span class="dim-lbl">互动率</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:12%;background:#10b981"></div></div>
-                    <span class="dim-val">4.6/40</span>
-                    <span class="dim-tag">一般</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:92%;background:#10b981"></div></div>
+                    <span class="dim-val">36.9/40</span>
+                    <span class="dim-tag">优秀</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">增长趋势</span>
@@ -559,9 +592,9 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">发布时效</span>
-                    <div class="dim-bar"><div class="dim-fill" style="width:50%;background:#f59e0b"></div></div>
-                    <span class="dim-val">10.0/20</span>
-                    <span class="dim-tag">14天前</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">169天前</span>
                 </div>
                 <div class="dim-row">
                     <span class="dim-lbl">口碑评价</span>
@@ -571,13 +604,187 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
                 </div></div>
             <div class="score-row">
                 <span>综合评分</span>
-                <div class="score-bar"><div class="score-fill" style="width:32.6%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
-                <span class="score-val" style="color:#667eea">32.6分</span>
+                <div class="score-bar"><div class="score-fill" style="width:39.9%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">39.9分</span>
             </div>
             <div class="budget-row">
                 <span class="budget-lbl">建议加热预算</span>
                 <span class="budget-val">¥1,000–2,000元</span>
-                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1f5XoB9EJH',"\u7406\u60f3i8\uff1a\u7406\u60f3\u539f\u751f\u5bb6\u5ead\u8d70\u51fa\u6765\u7684\u597d\u5b66\u751f\u3002",'肉呆大魔王',32.6,'¥1,000–2,000元')">标记加热</button>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1ZqsZzzEH3',"\u7406\u60f3MEGA\u4e8b\u4ef6\u89e3\u8bfb\uff0c\u5b89\u5168\u662f\u6700\u5927\u7684\u8c6a\u534e\uff01",'超哥超车',39.9,'¥1,000–2,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV1Mh4y1C7GC" data-mid="549367169" data-age-h="23661.7">
+        <div class="video-rank ">#8</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1Mh4y1C7GC" target="_blank">集齐 5 款理想，和大家讲讲理想汽车的故事</a>
+                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span><span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/549367169" target="_blank" style="color:#3b6eea;text-decoration:none">类星频道</a> &nbsp;<span class="fans-tag" style="color:#22c55e">6.0万粉</span> | BV: BV1Mh4y1C7GC | 985天前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>💯 <strong>互动率5.38%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li><li>⭐ <strong>素人优质内容</strong> — 投流成本更低(+15分)</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 8.1万</span>
+                <span class="s-item">👍 3,261 (5.38%)</span>
+                <span class="s-item">💰 投币1150</span>
+                <span class="s-item">⭐ 收藏1192</span>
+                <span class="s-item">💬 478</span>
+                <span class="s-item">📊 互动率5.38%</span>
+                <span class="s-item">📈 增长0.0%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:54%;background:#10b981"></div></div>
+                    <span class="dim-val">21.5/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">985天前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">15.0/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:39.5%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">39.5分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥1,000–2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1Mh4y1C7GC',"\u96c6\u9f50 5 \u6b3e\u7406\u60f3\uff0c\u548c\u5927\u5bb6\u8bb2\u8bb2\u7406\u60f3\u6c7d\u8f66\u7684\u6545\u4e8b",'类星频道',39.5,'¥1,000–2,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV1KTtPzGEHi" data-mid="3546724748495813" data-age-h="5998.6">
+        <div class="video-rank ">#9</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1KTtPzGEHi" target="_blank">理想i8降价带来的一些思考…</a>
+                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/3546724748495813" target="_blank" style="color:#3b6eea;text-decoration:none">超哥超车</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">100.0万粉</span> | BV: BV1KTtPzGEHi | 249天前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>💯 <strong>互动率8.91%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 50.0万</span>
+                <span class="s-item">👍 39,989 (8.91%)</span>
+                <span class="s-item">💰 投币7201</span>
+                <span class="s-item">⭐ 收藏2214</span>
+                <span class="s-item">💬 2,241</span>
+                <span class="s-item">📊 互动率8.91%</span>
+                <span class="s-item">📈 增长0.0%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:89%;background:#10b981"></div></div>
+                    <span class="dim-val">35.6/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">249天前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">15.0/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:38.6%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">38.6分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥1,000–2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1KTtPzGEHi',"\u7406\u60f3i8\u964d\u4ef7\u5e26\u6765\u7684\u4e00\u4e9b\u601d\u8003\u2026",'超哥超车',38.6,'¥1,000–2,000元')">标记加热</button>
+            </div>
+        </div>
+    </div>
+    <div class="video-item" data-bvid="BV1LC411L7t6" data-mid="18154819" data-age-h="17905.5">
+        <div class="video-rank ">#10</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1LC411L7t6" target="_blank">Damn！我们把粤A牌的理想L9运到美国啦！</a>
+                <span class="badge badge-low">可考虑</span><span class="badge" style="background:#fff7ed;color:#c2410c">🔥 高热度</span><span class="badge badge-stale">🥶 停滞</span>
+            </div>
+            <div class="video-meta">UP主: <a href="https://space.bilibili.com/18154819" target="_blank" style="color:#3b6eea;text-decoration:none">极速拍档-小乔</a> &nbsp;<span class="fans-tag" style="color:#3b6eea">86.1万粉</span> | BV: BV1LC411L7t6 | 746天前</div>
+            <div class="recommendation-box">
+                <div class="rec-title">推荐理由 <span class="stale-note">⚠️ 停滞降权 -12分</span></div>
+                <ul class="rec-list"><li>💯 <strong>互动率8.69%</strong> — 优秀(≥5%)</li><li>🥶 内容停滞，已停滞降权</li></ul>
+            </div>
+            <div class="video-stats">
+                <span class="s-item">▶️ 16.7万</span>
+                <span class="s-item">👍 14,359 (8.69%)</span>
+                <span class="s-item">💰 投币486</span>
+                <span class="s-item">⭐ 收藏545</span>
+                <span class="s-item">💬 310</span>
+                <span class="s-item">📊 互动率8.69%</span>
+                <span class="s-item">📈 增长0.0%</span>
+            </div>
+            <div class="dim-grid">
+                <div class="dim-row">
+                    <span class="dim-lbl">互动率</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:87%;background:#10b981"></div></div>
+                    <span class="dim-val">34.8/40</span>
+                    <span class="dim-tag">优秀</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">增长趋势</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b82f6"></div></div>
+                    <span class="dim-val">0.0/30</span>
+                    <span class="dim-tag">数据不足</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">发布时效</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+                    <span class="dim-val">0.0/20</span>
+                    <span class="dim-tag">746天前</span>
+                </div>
+                <div class="dim-row">
+                    <span class="dim-lbl">口碑评价</span>
+                    <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#8b5cf6"></div></div>
+                    <span class="dim-val">15.0/15</span>
+                    <span class="dim-tag">正向反馈</span>
+                </div></div>
+            <div class="score-row">
+                <span>综合评分</span>
+                <div class="score-bar"><div class="score-fill" style="width:37.8%;background:linear-gradient(90deg,#10b981,#667eea)"></div></div>
+                <span class="score-val" style="color:#667eea">37.8分</span>
+            </div>
+            <div class="budget-row">
+                <span class="budget-lbl">建议加热预算</span>
+                <span class="budget-val">¥1,000–2,000元</span>
+                <button class="btn btn-secondary btn-sm btn-mark-heat" onclick="markHeated('BV1LC411L7t6',"Damn\uff01\u6211\u4eec\u628a\u7ca4A\u724c\u7684\u7406\u60f3L9\u8fd0\u5230\u7f8e\u56fd\u5566\uff01",'极速拍档-小乔',37.8,'¥1,000–2,000元')">标记加热</button>
             </div>
         </div>
     </div>
@@ -594,6 +801,32 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1rFYLz5EPT" target="_blank">嚣张理想车主，故意挑衅，我才不惯着他</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">小超说交通 | ▶️ 469.2万 | 218天前 | 评分 4.0</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">4.0</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV19m411z7m9" target="_blank">省流：给理想MEGA画个机械涂装</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">潮绘师王大呀 | ▶️ 370.5万 | 738天前 | 评分 18.4</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">18.4</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1FwY4zkEef" target="_blank">【正片】李想×罗永浩！四小时马拉松访谈！李想首度公开讲述25年创业之路</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -602,6 +835,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">12.9</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV12SmEBmECm" target="_blank">探秘理想汽车工厂真实水平！这波全是科技与狠活儿</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">终极小腾 | ▶️ 192.0万 | 123天前 | 评分 14.4</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">14.4</div>
             <div class="heated-score-lbl">评分</div>
           </div>
         </div>
@@ -633,6 +879,58 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV11T42117FY" target="_blank">25岁，买了理想MEGA后被攻击，我后悔了吗？</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">飞飞的车COOL | ▶️ 165.9万 | 727天前 | 评分 28.3</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">28.3</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1ZqsZzzEH3" target="_blank">理想MEGA事件解读，安全是最大的豪华！</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">超哥超车 | ▶️ 160.6万 | 169天前 | 评分 39.9</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">39.9</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1xT411n76r" target="_blank">哪有理想L7这样造车的？</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">铁秀IRONSHOW | ▶️ 159.2万 | 1085天前 | 评分 17.3</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">17.3</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1DXaqzsET9" target="_blank">怎么车越小空间越大？理想i8空间魔法是如何生效的？</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">所长Wy | ▶️ 152.3万 | 219天前 | 评分 11.1</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">11.1</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1pD421j7Jm" target="_blank">理想MEGA！续航尴尬？！</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -641,6 +939,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">25.8</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1yjqFBwEJZ" target="_blank">【苏星河车机】离谱的鼻祖理想车机，现在已经彻底疯了…</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">苏星河牛通 | ▶️ 134.8万 | 97天前 | 评分 13.5</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">13.5</div>
             <div class="heated-score-lbl">评分</div>
           </div>
         </div>
@@ -659,6 +970,58 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1FYaqzME5n" target="_blank">【短的发布会】小黑屋里李想泪流满面，罗老师猛攻软肋无法破防？</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">短的发布会 | ▶️ 129.9万 | 218天前 | 评分 11.5</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">11.5</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1SehnzBEQp" target="_blank">5点分析解读理想i8撞飞卡车，到底是谁的问题？</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">超哥超车 | ▶️ 129.6万 | 255天前 | 评分 27.6</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">27.6</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1PTnozqELH" target="_blank">【短的发布会】忍不住化身一条鲨鱼～，李想发布鲨鱼i6～</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">短的发布会 | ▶️ 124.7万 | 197天前 | 评分 18.1</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">18.1</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV13a411x7bV" target="_blank">全球首发！开箱理想L9</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">极速拍档-小乔 | ▶️ 123.9万 | 1392天前 | 评分 22.9</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">22.9</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1PAb7zjEz6" target="_blank">理想i8：别开！你得坐！！</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -672,6 +1035,19 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         </div>
         <div class="history-item">
           <div class="history-item-info">
+            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1xz421b7GL" target="_blank">李想节目中当众怒吼，马云一句话让他受益一生</a>
+              <span class='badge badge-stale'>🥶 停滞</span>
+              
+            </div>
+            <div class="history-item-meta">懂一点人情世故 | ▶️ 117.9万 | 669天前 | 评分 24.5</div>
+          </div>
+          <div class="history-item-score">
+            <div class="heated-score-val">24.5</div>
+            <div class="heated-score-lbl">评分</div>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-info">
             <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1VM4m1R7Qx" target="_blank">56万！理想MEGA怎么敢的？</a>
               <span class='badge badge-stale'>🥶 停滞</span>
               
@@ -680,175 +1056,6 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           </div>
           <div class="history-item-score">
             <div class="heated-score-val">23.0</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1UNSyBhEv8" target="_blank">真车主体验！理想i6到底值不值？</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">先看评测 | ▶️ 110.7万 | 133天前 | 评分 28.2</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">28.2</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1SW421F7aK" target="_blank">拆解对比结构用料！问界M9/理想L9谁更领先？</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">易车横评 | ▶️ 86.8万 | 763天前 | 评分 19.5</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">19.5</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1pXxeedEfM" target="_blank">理想L6为什么卖得这么好</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">38号车评中心官方账号 | ▶️ 84.2万 | 559天前 | 评分 20.3</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">20.3</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1Br42137QA" target="_blank">【大虾沉浸式试车】全新理想L6 MAX版👉快来快来～带你沉浸式体验！</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">大虾试车真香 | ▶️ 73.1万 | 723天前 | 评分 7.3</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">7.3</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV19nnEzVEGr" target="_blank">【大虾沉浸式试车】黑武士！理想i6👉快来快来～带你沉浸式体验！</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">大虾试车真香 | ▶️ 72.5万 | 198天前 | 评分 7.4</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">7.4</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1K78ozAEZj" target="_blank">【大虾沉浸式试车】理想i8👉快来快来～带你沉浸式体验！</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">大虾试车真香 | ▶️ 69.1万 | 258天前 | 评分 8.2</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">8.2</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1toFPenE7c" target="_blank">车主告诉你【理想L6】所有的缺点！(无任何商业合作,可放心观看)</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">6GHz | ▶️ 64.3万 | 439天前 | 评分 13.2</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">13.2</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1aE421M7YN" target="_blank">详细分析理想L6值不值</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">韩路有点意思 | ▶️ 62.2万 | 725天前 | 评分 7.4</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">7.4</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1bXnMzrEKH" target="_blank">理想i6：谁也别想平替我！！</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">大鹏快开车 | ▶️ 58.8万 | 200天前 | 评分 20.7</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">20.7</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1L1421Q79N" target="_blank">理想MEGA深度体验，这车56w你会买吗？</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">九筒键车 | ▶️ 53.6万 | 753天前 | 评分 10.3</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">10.3</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1gm8CzNEr1" target="_blank">理想i8上市32.18万起售，你觉得有没有诚意？#理想i8 #国产高端新能源 #买车 #买个der</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">超哥超车 | ▶️ 49.0万 | 256天前 | 评分 22.0</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">22.0</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1rB4y1s7U9" target="_blank">理想L9新车首发，50万内最拿得出手的家用SUV【理想L9】</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">大家车-YYP | ▶️ 45.7万 | 1392天前 | 评分 14.5</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">14.5</div>
-            <div class="heated-score-lbl">评分</div>
-          </div>
-        </div>
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/BV1WfrfBGEyf" target="_blank">理想i6值不值25万？3700公里长途体验【BB Time第498期】</a>
-              <span class='badge badge-stale'>🥶 停滞</span>
-              
-            </div>
-            <div class="history-item-meta">TESTV官方频道 | ▶️ 45.6万 | 88天前 | 评分 20.2</div>
-          </div>
-          <div class="history-item-score">
-            <div class="heated-score-val">20.2</div>
             <div class="heated-score-lbl">评分</div>
           </div>
         </div>
@@ -869,42 +1076,18 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         <div class="sustained-item">
           <div class="si-rank">#1</div>
           <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1HWQiBPEYg" target="_blank">理想 v13.4 智驾实测，到底稳不稳？</a> <span class="badge badge-fresh">🆕 新内容</span></div>
-            <div class="si-meta">李益斌 · ▶️1,227 · 互动2.0% · 增长+1.9%</div>
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV1aJDSBnE8t" target="_blank">东风日产和理想汽车你挺谁？</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">躁动的小哥 · ▶️2,884 · 互动2.1% · 增长+0.1%</div>
           </div>
-          <div class="si-score" style="color:#f59e0b">58.7</div>
+          <div class="si-score" style="color:#9ca3af">26.5</div>
         </div>
         <div class="sustained-item">
           <div class="si-rank">#2</div>
           <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1xfQ4BEEGr" target="_blank">北京车展提前看，理想新L8、小鹏新SUV都来了！</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">智能车研究所 · ▶️1.5万 · 互动4.5% · 增长+0.1%</div>
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV15PDCBTENU" target="_blank">理想i6上路感受 全程丝滑流畅绝了</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">李益斌 · ▶️2,614 · 互动1.8% · 增长0.0%</div>
           </div>
-          <div class="si-score" style="color:#667eea">40.8</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#3</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1K8QYBYExa" target="_blank">和王勉一起，过最舒服的理想生活。</a> <span class="badge badge-fresh">🆕 新内容</span></div>
-            <div class="si-meta">理想汽车 · ▶️996 · 互动1.8% · 增长+0.5%</div>
-          </div>
-          <div class="si-score" style="color:#667eea">35.2</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#4</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV16iQhBSEjA" target="_blank">理想新款马上更新，怎么入手更划算</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">老高你好二手车 · ▶️2,780 · 互动2.7% · 增长+0.2%</div>
-          </div>
-          <div class="si-score" style="color:#667eea">34.2</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#5</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1aJDSBnE8t" target="_blank">东风日产和理想汽车你挺谁？</a> <span class="badge badge-fresh">🆕 新稿</span><span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">躁动的小哥 · ▶️2,883 · 互动2.1% · 增长0.0%</div>
-          </div>
-          <div class="si-score" style="color:#9ca3af">26.3</div>
+          <div class="si-score" style="color:#667eea">36.9</div>
         </div>
       </div>
       <div class="sustained-panel steady">
@@ -913,13 +1096,37 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
         <div class="sustained-item">
           <div class="si-rank">#1</div>
           <div class="si-info">
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV1rFYLz5EPT" target="_blank">嚣张理想车主，故意挑衅，我才不惯着他</a> <span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">小超说交通 · ▶️469.2万 · 互动0.2% · 增长0.0%</div>
+          </div>
+          <div class="si-score" style="color:#9ca3af">4.0</div>
+        </div>
+        <div class="sustained-item">
+          <div class="si-rank">#2</div>
+          <div class="si-info">
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV19m411z7m9" target="_blank">省流：给理想MEGA画个机械涂装</a> <span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">潮绘师王大呀 · ▶️370.5万 · 互动3.9% · 增长0.0%</div>
+          </div>
+          <div class="si-score" style="color:#9ca3af">18.4</div>
+        </div>
+        <div class="sustained-item">
+          <div class="si-rank">#3</div>
+          <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1FwY4zkEef" target="_blank">【正片】李想×罗永浩！四小时马拉松访谈！李想首度公开讲述25年创业之路</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">罗永浩的十字路口 · ▶️367.7万 · 互动2.5% · 增长0.0%</div>
           </div>
           <div class="si-score" style="color:#9ca3af">12.9</div>
         </div>
         <div class="sustained-item">
-          <div class="si-rank">#2</div>
+          <div class="si-rank">#4</div>
+          <div class="si-info">
+            <div class="si-title"><a href="https://www.bilibili.com/video/BV12SmEBmECm" target="_blank">探秘理想汽车工厂真实水平！这波全是科技与狠活儿</a> <span class="badge badge-stale">🥶 停滞</span></div>
+            <div class="si-meta">终极小腾 · ▶️192.0万 · 互动2.9% · 增长0.0%</div>
+          </div>
+          <div class="si-score" style="color:#9ca3af">14.4</div>
+        </div>
+        <div class="sustained-item">
+          <div class="si-rank">#5</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1UgHUzxEkT" target="_blank">B站新同学！新人李想前来报到！</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">李想 · ▶️189.2万 · 互动2.2% · 增长0.0%</div>
@@ -927,36 +1134,12 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
           <div class="si-score" style="color:#9ca3af">26.7</div>
         </div>
         <div class="sustained-item">
-          <div class="si-rank">#3</div>
+          <div class="si-rank">#6</div>
           <div class="si-info">
             <div class="si-title"><a href="https://www.bilibili.com/video/BV1Uj5qzTESi" target="_blank">理想MEGA Home 全网最细！新款MEGA 升级了啥？Home版有啥不同？</a> <span class="badge badge-stale">🥶 停滞</span></div>
             <div class="si-meta">李大锤同学 · ▶️183.1万 · 互动0.3% · 增长0.0%</div>
           </div>
           <div class="si-score" style="color:#9ca3af">4.2</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#4</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1pD421j7Jm" target="_blank">理想MEGA！续航尴尬？！</a> <span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">大鹏快开车 · ▶️146.5万 · 互动5.7% · 增长0.0%</div>
-          </div>
-          <div class="si-score" style="color:#9ca3af">25.8</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#5</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1yr421j7Cj" target="_blank">理想L6！真的理想吗？！</a> <span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">大鹏快开车 · ▶️134.7万 · 互动3.6% · 增长0.0%</div>
-          </div>
-          <div class="si-score" style="color:#9ca3af">17.4</div>
-        </div>
-        <div class="sustained-item">
-          <div class="si-rank">#6</div>
-          <div class="si-info">
-            <div class="si-title"><a href="https://www.bilibili.com/video/BV1PAb7zjEz6" target="_blank">理想i8：别开！你得坐！！</a> <span class="badge badge-stale">🥶 停滞</span></div>
-            <div class="si-meta">大鹏快开车 · ▶️121.6万 · 互动2.5% · 增长0.0%</div>
-          </div>
-          <div class="si-score" style="color:#9ca3af">13.2</div>
         </div>
       </div>
     </div>
@@ -1083,7 +1266,7 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
       <div class="cfg-item"><div class="cfg-l">标题相关性</div><div class="cfg-v">必须含「理想」或「李想」，排除竞品/无关视频</div></div>
       <div class="cfg-item"><div class="cfg-l">监控关键词</div><div class="cfg-v">理想汽车, 理想i6, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 理想i8, 理想智驾, 李想</div></div>
       <div class="cfg-item"><div class="cfg-l">增量存储</div><div class="cfg-v">仅保存变化字段，data/history.db</div></div>
-      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 16:19:22</div></div>
+      <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">2026-04-14 16:37:24</div></div>
     </div>
   </div>
   <div class="card" style="margin-top:14px">
@@ -1115,8 +1298,8 @@ a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
 </div>
 
 <script>
-const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车'];
-const TITLE_MUST_CONTAIN = ['理想','李想'];
+const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车','offer','求职','招聘','应届','算法岗','大厂','字节'];
+const TITLE_MUST_CONTAIN = ['理想L6','理想L7','理想L8','理想L9','理想i6','理想i8','理想MEGA','理想ONE','理想汽车','理想车','理想车主','理想智驾','理想OTA','理想音响','理想座舱','李想'];
 function applyBlacklistFilter(){
   document.querySelectorAll('.video-item').forEach(el=>{
     const t=el.querySelector('.video-title a');
@@ -1131,6 +1314,16 @@ function switchPage(tab){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   tab.classList.add('active');
   document.getElementById(tab.dataset.page).classList.add('active');
+}
+function setTimeFilter(btn, mode){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const maxH = mode==='6h'?6 : mode==='12h'?12 : 99999;
+  document.querySelectorAll('.video-item[data-age-h]').forEach(el=>{
+    const ageH = parseFloat(el.dataset.ageH||99999);
+    if(ageH <= maxH) el.classList.remove('time-hidden');
+    else el.classList.add('time-hidden');
+  });
 }
 function getHeatedSet(){try{return new Set(JSON.parse(localStorage.getItem('heated_bvids')||'[]'));}catch{return new Set();}}
 function saveHeatedSet(s){localStorage.setItem('heated_bvids',JSON.stringify([...s]));}
@@ -1376,7 +1569,7 @@ function checkTokenStatus(){
 }
 function resetToken(){if(confirm('确认清除已保存的 GitHub Token？')){localStorage.removeItem('lixiang_gh_token');checkTokenStatus();}}
 
-const ALL_ALERTS=[{"bvid": "BV1HWQiBPEYg", "title": "理想 v13.4 智驾实测，到底稳不稳？", "author": "李益斌", "score": 58.7, "alert_time": "2026-04-14T16:19:22.894513", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1d2zXBuEgW", "title": "喧嚣之后，带你重新认识理想MEGA", "author": "类星频道", "score": 43.0, "alert_time": "2026-04-14T16:19:22.894516", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1xfQ4BEEGr", "title": "北京车展提前看，理想新L8、小鹏新SUV都来了！", "author": "智能车研究所", "score": 40.8, "alert_time": "2026-04-14T16:19:22.894518", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1K8QYBYExa", "title": "和王勉一起，过最舒服的理想生活。", "author": "理想汽车", "score": 35.2, "alert_time": "2026-04-14T16:19:22.894519", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV16iQhBSEjA", "title": "理想新款马上更新，怎么入手更划算", "author": "老高你好二手车", "score": 34.2, "alert_time": "2026-04-14T16:19:22.894521", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1u89KBvE73", "title": "租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你", "author": "超哥超车", "score": 34.0, "alert_time": "2026-04-14T16:19:22.894522", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1f5XoB9EJH", "title": "理想i8：理想原生家庭走出来的好学生。", "author": "肉呆大魔王", "score": 32.6, "alert_time": "2026-04-14T16:19:22.894523", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}];
+const ALL_ALERTS=[{"bvid": "BV1vt421g7B7", "title": "刚花55.98万买了理想MEGA 我该如何给它拍一支广告", "author": "悟影Insfinity", "score": 53.7, "alert_time": "2026-04-14T16:37:24.820818", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1ZGDhBGE5R", "title": "100%自主知识产权，理想汽车高管称赞张雪机车自研发动机，从根上解决国产大排量摩托“卡脖子”", "author": "21世纪经济报道视频", "score": 52.6, "alert_time": "2026-04-14T16:37:24.820826", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1mjQKB4EXe", "title": "理想i6五座SUV，不求豪华就是温馨家用", "author": "李益斌", "score": 45.5, "alert_time": "2026-04-14T16:37:24.820827", "is_underdog": true, "recommendation": "🔥 推荐", "suggested_budget": "2000-4000元"}, {"bvid": "BV1d2zXBuEgW", "title": "喧嚣之后，带你重新认识理想MEGA", "author": "类星频道", "score": 42.9, "alert_time": "2026-04-14T16:37:24.820829", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1QoqaYyEmN", "title": "欧洲新能源大咖试驾理想MEGA震撼发声，中国电车领先欧洲整整一代！豪华舒适性秀了他们一脸，可把美国网友羡慕坏了", "author": "油管热评一姐", "score": 41.8, "alert_time": "2026-04-14T16:37:24.820831", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1QFFkzpEuG", "title": "理想OTA8.2 VLA蒙眼盲测 太稳了", "author": "科技小辛", "score": 41.4, "alert_time": "2026-04-14T16:37:24.820832", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1ZqsZzzEH3", "title": "理想MEGA事件解读，安全是最大的豪华！", "author": "超哥超车", "score": 39.9, "alert_time": "2026-04-14T16:37:24.820834", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1Mh4y1C7GC", "title": "集齐 5 款理想，和大家讲讲理想汽车的故事", "author": "类星频道", "score": 39.5, "alert_time": "2026-04-14T16:37:24.820835", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1KTtPzGEHi", "title": "理想i8降价带来的一些思考…", "author": "超哥超车", "score": 38.6, "alert_time": "2026-04-14T16:37:24.820837", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1LC411L7t6", "title": "Damn！我们把粤A牌的理想L9运到美国啦！", "author": "极速拍档-小乔", "score": 37.8, "alert_time": "2026-04-14T16:37:24.820838", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV15PDCBTENU", "title": "理想i6上路感受 全程丝滑流畅绝了", "author": "李益斌", "score": 36.9, "alert_time": "2026-04-14T16:37:24.820839", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1dj421o75r", "title": "理想MEGA续航不理想？！", "author": "25度考场", "score": 36.5, "alert_time": "2026-04-14T16:37:24.820841", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV19t421t7ah", "title": "沉浸式体验理想MEGA", "author": "小恬快爆", "score": 35.5, "alert_time": "2026-04-14T16:37:24.820843", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1AK421e7hG", "title": "全网唯一！理想MEGA、小鹏X9、极氪009首度同场对比！", "author": "袁启聪", "score": 35.2, "alert_time": "2026-04-14T16:37:24.820844", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1pDpGzjEg2", "title": "理想i8可以油电同速？来场油车和电车的京沪高速1200公里对决吧！", "author": "疯膜哥", "score": 35.2, "alert_time": "2026-04-14T16:37:24.820846", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1Hz421q72Y", "title": "人间理想，说的是她的前任“李想”", "author": "酸菜日记v", "score": 34.7, "alert_time": "2026-04-14T16:37:24.820848", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1sFWDzfEdu", "title": "理想i6已下单！有什么需要注意的吗？", "author": "TESTV-哈哈岛", "score": 34.6, "alert_time": "2026-04-14T16:37:24.820850", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1zCQcBYEnf", "title": "汽车设计零重力女王副驾谁更强？理想L9场景横评全", "author": "草帽课堂的汽车设计", "score": 34.3, "alert_time": "2026-04-14T16:37:24.820851", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1u89KBvE73", "title": "租车拍车只说真话：理想i6为什么能卖得这么好？一条视频告诉你", "author": "超哥超车", "score": 34.1, "alert_time": "2026-04-14T16:37:24.820853", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1AVZtBhE3L", "title": "理想OTA8.2都有哪些新进步？", "author": "苏黎世贝勒爷", "score": 34.1, "alert_time": "2026-04-14T16:37:24.820855", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1D14y1e7Tc", "title": "开劳斯莱斯去提理想L9！库里南弱爆了？…..", "author": "飞飞的车COOL", "score": 33.7, "alert_time": "2026-04-14T16:37:24.820857", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1iA7AzfEyy", "title": "李想 你帮我一下不就没事了", "author": "青年小帅-", "score": 32.9, "alert_time": "2026-04-14T16:37:24.820858", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1f5XoB9EJH", "title": "理想i8：理想原生家庭走出来的好学生。", "author": "肉呆大魔王", "score": 32.6, "alert_time": "2026-04-14T16:37:24.820860", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1E5wLeiEPS", "title": "理想L6：更适合中国宝宝的MODEL Y", "author": "平凡的三水", "score": 32.5, "alert_time": "2026-04-14T16:37:24.820862", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1T8kcYhEtB", "title": "第一视角 试捷途山海L7 又一个“青春版”理想L7？", "author": "阿远与阿中", "score": 32.4, "alert_time": "2026-04-14T16:37:24.820864", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1G84y1m7HT", "title": "第一视角 试理想L7 Air版 5秒4破百 但是年轻人 这真不是你的菜！", "author": "阿远与阿中", "score": 32.4, "alert_time": "2026-04-14T16:37:24.820866", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1j4Z4YpEPp", "title": "开上理想L9、也是排面十足！", "author": "超弟没排面-", "score": 32.0, "alert_time": "2026-04-14T16:37:24.820868", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV19c5vzzEYA", "title": "美国权威车媒实测理想MEGA后沉默：它重新定义了21世纪的汽车！美国网友破防！", "author": "油管热评一姐", "score": 30.8, "alert_time": "2026-04-14T16:37:24.820870", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1Ds421g79F", "title": "雷军同款理想L6，智驾现在是第一梯队了么？", "author": "超级开箱-BiggerBox", "score": 30.6, "alert_time": "2026-04-14T16:37:24.820872", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1iTAjzYEBP", "title": "小米发布会半个车圈的人都来了，王传福、李想、何小鹏、王兴兴等出现在现场。网友：新能源车圈的“奥斯卡”", "author": "21世纪经济报道视频", "score": 30.4, "alert_time": "2026-04-14T16:37:24.820874", "is_underdog": true, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}, {"bvid": "BV1Fr421p77L", "title": "理想MEGA的尾厢，我觉得是有争议的【理想MEGA】", "author": "大家车-YYP", "score": 30.1, "alert_time": "2026-04-14T16:37:24.820875", "is_underdog": false, "recommendation": "可考虑", "suggested_budget": "2000-4000元"}];
 function renderAlertList(){
   const container=document.getElementById('alert-list-container');if(!container)return;
   const filtered=ALL_ALERTS.filter(a=>!TITLE_BLACKLIST.some(kw=>(a.title||'').includes(kw)) && TITLE_MUST_CONTAIN.some(kw=>(a.title||'').includes(kw)));
