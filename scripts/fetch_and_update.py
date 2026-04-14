@@ -121,20 +121,35 @@ async def fetch_json(session, url, params=None, retries=2):
 
 
 async def search_videos(session, keyword, order="totalrank"):
-    """综合搜索 / 最新发布"""
+    """综合搜索 / 最新发布 — 优先 search/type，降级 search/all/v2"""
+    # 主接口
     url = "https://api.bilibili.com/x/web-interface/search/type"
     params = {
         "search_type": "video",
         "keyword": keyword,
-        "order": order,         # totalrank / pubdate / click
+        "order": order,
         "duration": 0,
         "page": 1,
         "page_size": 30,
-        "_t": int(time.time()),  # cache-bust
+        "_t": int(time.time()),
     }
     data = await fetch_json(session, url, params)
+
+    # 降级：search/all/v2（不受 412 限制）
+    if not data or data.get("code") != 0:
+        url2 = "https://api.bilibili.com/x/web-interface/search/all/v2"
+        p2 = {"keyword": keyword, "search_type": "video", "_t": int(time.time())}
+        data2 = await fetch_json(session, url2, p2)
+        if data2 and data2.get("code") == 0:
+            # 从 result 里找 video section
+            for section in data2.get("data", {}).get("result", []):
+                if section.get("result_type") == "video":
+                    data = {"code": 0, "data": {"result": section.get("data", [])}}
+                    break
+
     if not data or data.get("code") != 0:
         return []
+
     results = data.get("data", {}).get("result", []) or []
     videos = []
     for r in results:
