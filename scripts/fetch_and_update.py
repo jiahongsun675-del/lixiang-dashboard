@@ -71,8 +71,8 @@ TOP_CREATOR_MIDS = [
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
-SCORE_THRESHOLD = 40      # 上榜最低分
-MAX_VIDEOS     = 15       # 推荐榜最多显示
+SCORE_THRESHOLD = 30      # 上榜最低分（降低门槛显示更多内容）
+MAX_VIDEOS     = 20       # 推荐榜最多显示
 
 # ── GitHub 配置（自动 push） ──
 _token_file = BASE_DIR / "data" / ".github_token"
@@ -305,61 +305,71 @@ async def fetch_fan_count(session, mid):
 
 
 async def collect_all_videos():
-    """并发采集所有来源的视频"""
+    """并发采集所有来源的视频（多轮）"""
     print(f"[{datetime.now():%H:%M:%S}] 开始多源采集...")
 
     conn = init_db()
+    seen = {}
 
-    connector = aiohttp.TCPConnector(limit=20, ssl=False)  # 提高并发数
-    async with aiohttp.ClientSession(connector=connector) as session:
+    async def run_round(round_num: int):
+        connector = aiohttp.TCPConnector(limit=20, ssl=False)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            tasks = []
+            # ① 关键词搜索：3种排序 × 3页
+            orders = ["totalrank", "pubdate", "click"]
+            pages  = [1, 2, 3] if round_num == 1 else [4, 5]  # 第2轮取4-5页
+            for kw in KEYWORDS:
+                for order in orders:
+                    for pg in pages:
+                        tasks.append(search_videos(session, kw, order=order, page=pg))
+            # ② 汽车分区新列表：3页
+            for pn in [1, 2, 3]:
+                tasks.append(fetch_newlist(session, rid=17, ps=50, pn=pn))
+            # ③ 排行榜（仅第1轮）
+            if round_num == 1:
+                tasks.append(fetch_ranking(session, rid=17))
+                for mid in TOP_CREATOR_MIDS:
+                    tasks.append(fetch_up_videos(session, mid, ps=20))
 
-        tasks = []
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # ① 关键词搜索：totalrank 取 3 页，pubdate 取 2 页
-        for kw in KEYWORDS:
-            for pg in [1, 2, 3]:
-                tasks.append(search_videos(session, kw, order="totalrank", page=pg))
-            for pg in [1, 2]:
-                tasks.append(search_videos(session, kw, order="pubdate", page=pg))
-
-        # ② 汽车分区新列表：取 3 页，每页 50 条
-        for pn in [1, 2, 3]:
-            tasks.append(fetch_newlist(session, rid=17, ps=50, pn=pn))
-
-        # ③ 汽车分区排行榜
-        tasks.append(fetch_ranking(session, rid=17))
-
-        # ④ 核心 UP 主频道扫描（最新 20 条）
-        for mid in TOP_CREATOR_MIDS:
-            tasks.append(fetch_up_videos(session, mid, ps=20))
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # 合并去重
-        seen = {}
-        for batch in results:
-            if isinstance(batch, Exception) or not batch:
-                continue
-            for v in batch:
-                bvid = v.get("bvid", "")
-                if not bvid:
+            batch_new = 0
+            for batch in results:
+                if isinstance(batch, Exception) or not batch:
                     continue
-                if bvid not in seen:
-                    seen[bvid] = v
-                elif seen[bvid].get("play", 0) < v.get("play", 0):
-                    seen[bvid].update(v)
+                for v in batch:
+                    bvid = v.get("bvid", "")
+                    if not bvid:
+                        continue
+                    if bvid not in seen:
+                        seen[bvid] = v
+                        batch_new += 1
+                    elif seen[bvid].get("play", 0) < v.get("play", 0):
+                        seen[bvid].update(v)
+            return batch_new
 
-        print(f"  去重后 {len(seen)} 个视频，开始获取详细数据...")
+    # 第1轮
+    n1 = await run_round(1)
+    print(f"  第1轮: +{n1} 个新视频")
 
-        # 并发获取详细数据
+    # 第2轮（换页，接力）
+    await asyncio.sleep(2)
+    n2 = await run_round(2)
+    print(f"  第2轮: +{n2} 个新视频，合计去重 {len(seen)} 个")
+
+    # 获取详细数据
+    connector = aiohttp.TCPConnector(limit=20, ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
         bvids = list(seen.keys())
-        detail_tasks = [fetch_video_detail(session, b) for b in bvids]
-        details = await asyncio.gather(*detail_tasks, return_exceptions=True)
-        for detail in details:
-            if isinstance(detail, dict) and detail.get("bvid"):
-                seen[detail["bvid"]].update(detail)
+        details = await asyncio.gather(
+            *[fetch_video_detail(session, b) for b in bvids],
+            return_exceptions=True
+        )
+        for d in details:
+            if isinstance(d, dict) and d.get("bvid"):
+                seen[d["bvid"]].update(d)
 
-        # 粉丝数：DB缓存优先
+        # 粉丝数：缓存优先
         mid_set = {v.get("mid", 0) for v in seen.values() if v.get("mid")}
         uncached, mid_fans_map = [], {}
         for mid in mid_set:
@@ -368,11 +378,12 @@ async def collect_all_videos():
                 mid_fans_map[mid] = c
             else:
                 uncached.append(mid)
-
         if uncached:
-            print(f"  获取 {len(uncached)} 个 UP 主粉丝数（{len(mid_fans_map)} 缓存命中）...")
-            fan_results = await asyncio.gather(*[fetch_fan_count(session, m) for m in uncached],
-                                               return_exceptions=True)
+            print(f"  获取 {len(uncached)} 个粉丝数（{len(mid_fans_map)} 缓存命中）...")
+            fan_results = await asyncio.gather(
+                *[fetch_fan_count(session, m) for m in uncached],
+                return_exceptions=True
+            )
             for mid, f in zip(uncached, fan_results):
                 fans = f if isinstance(f, int) else -1
                 mid_fans_map[mid] = fans
@@ -845,7 +856,7 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 .topbar-meta{{font-size:.8em;color:#aaa}}
 .topbar-refresh{{font-size:.78em;color:#3b6eea;cursor:pointer;padding:5px 12px;border:1px solid #d0dbf7;border-radius:6px;background:#f0f4ff;transition:background .2s}}
 .topbar-refresh:hover{{background:#e0eaff}}
-.nav-tabs{{background:#fff;border-bottom:1px solid #e8eaed;padding:0 32px;display:flex;gap:0}}
+.nav-tabs{{background:#fff;border-bottom:1px solid #e8eaed;padding:0 32px;display:flex;gap:0;position:sticky;top:56px;z-index:99}}
 .nav-tab{{padding:14px 22px;font-size:.92em;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}}
 .nav-tab:hover{{color:#3b6eea}}.nav-tab.active{{color:#3b6eea;border-bottom-color:#3b6eea;font-weight:600}}
 .page{{display:none;padding:28px 32px;max-width:1280px;margin:0 auto}}.page.active{{display:block}}
