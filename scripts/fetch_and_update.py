@@ -71,8 +71,9 @@ TOP_CREATOR_MIDS = [
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
-SCORE_THRESHOLD = 30      # 上榜最低分（降低门槛显示更多内容）
+SCORE_THRESHOLD = 30      # 上榜最低分
 MAX_VIDEOS     = 20       # 推荐榜最多显示
+SEARCH_ROUNDS  = 5        # 搜索轮数（每轮3页，共覆盖15页）
 
 # ── GitHub 配置（自动 push） ──
 _token_file = BASE_DIR / "data" / ".github_token"
@@ -315,17 +316,19 @@ async def collect_all_videos():
         connector = aiohttp.TCPConnector(limit=20, ssl=False)
         async with aiohttp.ClientSession(connector=connector) as session:
             tasks = []
-            # ① 关键词搜索：3种排序 × 3页
+            # 3种排序 × 3页/轮（每轮覆盖不同页码段）
             orders = ["totalrank", "pubdate", "click"]
-            pages  = [1, 2, 3] if round_num == 1 else [4, 5]  # 第2轮取4-5页
+            start_page = (round_num - 1) * 3 + 1
+            pages = [start_page, start_page + 1, start_page + 2]
             for kw in KEYWORDS:
                 for order in orders:
                     for pg in pages:
                         tasks.append(search_videos(session, kw, order=order, page=pg))
-            # ② 汽车分区新列表：3页
-            for pn in [1, 2, 3]:
-                tasks.append(fetch_newlist(session, rid=17, ps=50, pn=pn))
-            # ③ 排行榜（仅第1轮）
+            # 汽车分区新列表（仅前3轮）
+            if round_num <= 3:
+                for pn in [round_num * 2 - 1, round_num * 2]:
+                    tasks.append(fetch_newlist(session, rid=17, ps=50, pn=pn))
+            # 排行榜+UP主（仅第1轮）
             if round_num == 1:
                 tasks.append(fetch_ranking(session, rid=17))
                 for mid in TOP_CREATOR_MIDS:
@@ -348,14 +351,11 @@ async def collect_all_videos():
                         seen[bvid].update(v)
             return batch_new
 
-    # 第1轮
-    n1 = await run_round(1)
-    print(f"  第1轮: +{n1} 个新视频")
-
-    # 第2轮（换页，接力）
-    await asyncio.sleep(2)
-    n2 = await run_round(2)
-    print(f"  第2轮: +{n2} 个新视频，合计去重 {len(seen)} 个")
+    for rnd in range(1, SEARCH_ROUNDS + 1):
+        n = await run_round(rnd)
+        print(f"  第{rnd}轮: +{n} 新视频，累计 {len(seen)} 个")
+        if rnd < SEARCH_ROUNDS:
+            await asyncio.sleep(1.5)  # 轮间小延迟防限速
 
     # 获取详细数据
     connector = aiohttp.TCPConnector(limit=20, ssl=False)
@@ -1260,7 +1260,7 @@ async function ghPromoGet(){{
   const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/promotions.json?ref=${{GH_BRANCH}}`,{{headers:{{'Authorization':`token ${{t}}`,'Accept':'application/vnd.github.v3+json'}}}});
   if(!r.ok)return[[], null];
   const d=await r.json();
-  try{{return[JSON.parse(atob(d.content.replace(/\n/g,''))), d.sha];}}catch{{return[[],d.sha];}}
+  try{{return[JSON.parse(atob(d.content.replace(/\\n/g,''))), d.sha];}}catch{{return[[],d.sha];}}
 }}
 async function ghPromoPut(records, sha, message){{
   const t=getGhToken(); if(!t)throw new Error('未配置 GitHub Token');
