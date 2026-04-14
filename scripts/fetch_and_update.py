@@ -55,7 +55,20 @@ COMPETITOR_BRANDS = [
 COMPARE_WORDS = ["vs", "VS", "对比", "PK", "pk", "哪个好", "选哪个", "怎么选",
                  "谁更", "谁强", "谁好", "谁胜", "谁划算", "还是", "区别"]
 
-# ── 过滤阈值 ──
+# ── 高频理想内容 UP 主 MID（自动扫新视频）──
+TOP_CREATOR_MIDS = [
+    2054075556,      # 理想汽车（官方）
+    3546724748495813, # 超哥超车
+    60259602,        # 百车全说
+    39736779,        # 38号车评中心
+    346802311,       # 老高你好二手车
+    1339268,         # 农民新八
+    3546814473046548, # 智能车研究所
+    401117766,       # 德皮剪辑Sir
+    283310205,       # 韩路有点意思
+]
+
+
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
 SCORE_THRESHOLD = 40      # 上榜最低分
@@ -124,28 +137,26 @@ async def fetch_json(session, url, params=None, retries=2):
     return None
 
 
-async def search_videos(session, keyword, order="totalrank"):
-    """综合搜索 / 最新发布 — 优先 search/type，降级 search/all/v2"""
-    # 主接口
+async def search_videos(session, keyword, order="totalrank", page=1):
+    """综合搜索 — 优先 search/type，降级 search/all/v2，支持多页"""
     url = "https://api.bilibili.com/x/web-interface/search/type"
     params = {
         "search_type": "video",
         "keyword": keyword,
         "order": order,
         "duration": 0,
-        "page": 1,
+        "page": page,
         "page_size": 30,
         "_t": int(time.time()),
     }
     data = await fetch_json(session, url, params)
 
-    # 降级：search/all/v2（不受 412 限制）
-    if not data or data.get("code") != 0:
+    # 降级：search/all/v2（不受 412 限制，但只有第1页）
+    if (not data or data.get("code") != 0) and page == 1:
         url2 = "https://api.bilibili.com/x/web-interface/search/all/v2"
         p2 = {"keyword": keyword, "search_type": "video", "_t": int(time.time())}
         data2 = await fetch_json(session, url2, p2)
         if data2 and data2.get("code") == 0:
-            # 从 result 里找 video section
             for section in data2.get("data", {}).get("result", []):
                 if section.get("result_type") == "video":
                     data = {"code": 0, "data": {"result": section.get("data", [])}}
@@ -178,10 +189,64 @@ async def search_videos(session, keyword, order="totalrank"):
     return videos
 
 
-async def fetch_newlist(session, rid=17, ps=30):
-    """汽车分区最新发布（rid=17）"""
+async def fetch_up_videos(session, mid, ps=20):
+    """抓取指定 UP 主最新上传的视频"""
+    url = "https://api.bilibili.com/x/space/wbi/arc/search"
+    # 尝试不带 wbi 的旧接口
+    url2 = "https://api.bilibili.com/x/space/arc/search"
+    params = {"mid": mid, "ps": ps, "pn": 1, "order": "pubdate", "_t": int(time.time())}
+    data = await fetch_json(session, url2, params)
+    if not data or data.get("code") != 0:
+        data = await fetch_json(session, url, params)
+    if not data or data.get("code") != 0:
+        return []
+    vlist = data.get("data", {}).get("list", {}).get("vlist", []) or []
+    return [{
+        "bvid": v.get("bvid", ""),
+        "title": v.get("title", ""),
+        "author": v.get("author", ""),
+        "mid": mid,
+        "play": v.get("play", 0),
+        "danmaku": v.get("video_review", 0),
+        "like": 0,
+        "coin": 0,
+        "favorite": v.get("favorites", 0),
+        "reply": v.get("comment", 0),
+        "pubdate": v.get("created", 0),
+        "duration_str": v.get("length", ""),
+        "keyword_source": f"UP主:{v.get('author','')}",
+    } for v in vlist if re.match(r"^BV[a-zA-Z0-9]{10}$", v.get("bvid", ""))]
+
+
+async def fetch_ranking(session, rid=17, day=3):
+    """B站分区热门排行（汽车 rid=17，day=3 表示3天内）"""
+    url = "https://api.bilibili.com/x/web-interface/ranking/v2"
+    params = {"rid": rid, "type": 0, "_t": int(time.time())}
+    data = await fetch_json(session, url, params)
+    if not data or data.get("code") != 0:
+        return []
+    items = data.get("data", {}).get("list", []) or []
+    return [{
+        "bvid": v.get("bvid", ""),
+        "title": v.get("title", ""),
+        "author": v.get("owner", {}).get("name", ""),
+        "mid": v.get("owner", {}).get("mid", 0),
+        "play": v.get("stat", {}).get("view", 0),
+        "danmaku": v.get("stat", {}).get("danmaku", 0),
+        "like": v.get("stat", {}).get("like", 0),
+        "coin": v.get("stat", {}).get("coin", 0),
+        "favorite": v.get("stat", {}).get("favorite", 0),
+        "reply": v.get("stat", {}).get("reply", 0),
+        "pubdate": v.get("pubdate", 0),
+        "duration_str": "",
+        "keyword_source": "汽车排行榜",
+    } for v in items if re.match(r"^BV[a-zA-Z0-9]{10}$", v.get("bvid", ""))]
+
+
+async def fetch_newlist(session, rid=17, ps=50, pn=1):
+    """汽车分区最新发布（rid=17），支持翻页"""
     url = "https://api.bilibili.com/x/web-interface/newlist"
-    params = {"rid": rid, "type": 0, "pn": 1, "ps": ps, "_t": int(time.time())}
+    params = {"rid": rid, "type": 0, "pn": pn, "ps": ps, "_t": int(time.time())}
     data = await fetch_json(session, url, params)
     if not data or data.get("code") != 0:
         return []
@@ -243,18 +308,30 @@ async def collect_all_videos():
     """并发采集所有来源的视频"""
     print(f"[{datetime.now():%H:%M:%S}] 开始多源采集...")
 
-    # 先连 DB 查粉丝缓存
     conn = init_db()
 
-    connector = aiohttp.TCPConnector(limit=8, ssl=False)
+    connector = aiohttp.TCPConnector(limit=20, ssl=False)  # 提高并发数
     async with aiohttp.ClientSession(connector=connector) as session:
 
-        # 并发发起所有搜索任务
         tasks = []
+
+        # ① 关键词搜索：totalrank 取 3 页，pubdate 取 2 页
         for kw in KEYWORDS:
-            tasks.append(search_videos(session, kw, order="totalrank"))
-            tasks.append(search_videos(session, kw, order="pubdate"))
-        tasks.append(fetch_newlist(session, rid=17, ps=40))
+            for pg in [1, 2, 3]:
+                tasks.append(search_videos(session, kw, order="totalrank", page=pg))
+            for pg in [1, 2]:
+                tasks.append(search_videos(session, kw, order="pubdate", page=pg))
+
+        # ② 汽车分区新列表：取 3 页，每页 50 条
+        for pn in [1, 2, 3]:
+            tasks.append(fetch_newlist(session, rid=17, ps=50, pn=pn))
+
+        # ③ 汽车分区排行榜
+        tasks.append(fetch_ranking(session, rid=17))
+
+        # ④ 核心 UP 主频道扫描（最新 20 条）
+        for mid in TOP_CREATOR_MIDS:
+            tasks.append(fetch_up_videos(session, mid, ps=20))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -265,9 +342,11 @@ async def collect_all_videos():
                 continue
             for v in batch:
                 bvid = v.get("bvid", "")
-                if bvid and bvid not in seen:
+                if not bvid:
+                    continue
+                if bvid not in seen:
                     seen[bvid] = v
-                elif bvid and seen[bvid].get("play", 0) < v.get("play", 0):
+                elif seen[bvid].get("play", 0) < v.get("play", 0):
                     seen[bvid].update(v)
 
         print(f"  去重后 {len(seen)} 个视频，开始获取详细数据...")
@@ -278,29 +357,27 @@ async def collect_all_videos():
         details = await asyncio.gather(*detail_tasks, return_exceptions=True)
         for detail in details:
             if isinstance(detail, dict) and detail.get("bvid"):
-                bvid = detail["bvid"]
-                seen[bvid].update(detail)
+                seen[detail["bvid"]].update(detail)
 
-        # 获取粉丝数：先查缓存，未命中才 API 请求
+        # 粉丝数：DB缓存优先
         mid_set = {v.get("mid", 0) for v in seen.values() if v.get("mid")}
-        uncached_mids = []
-        mid_fans_map = {}
+        uncached, mid_fans_map = [], {}
         for mid in mid_set:
-            cached = get_cached_fans(conn, mid)
-            if cached is not None:
-                mid_fans_map[mid] = cached
+            c = get_cached_fans(conn, mid)
+            if c is not None:
+                mid_fans_map[mid] = c
             else:
-                uncached_mids.append(mid)
+                uncached.append(mid)
 
-        if uncached_mids:
-            print(f"  获取 {len(uncached_mids)} 个 UP 主粉丝数（{len(mid_fans_map)} 个来自缓存）...")
-            fan_tasks = [fetch_fan_count(session, mid) for mid in uncached_mids]
-            fan_results = await asyncio.gather(*fan_tasks, return_exceptions=True)
-            for mid, fans in zip(uncached_mids, fan_results):
-                f = fans if isinstance(fans, int) else -1
-                mid_fans_map[mid] = f
-                if f > 0:
-                    save_fan_cache(conn, mid, f)
+        if uncached:
+            print(f"  获取 {len(uncached)} 个 UP 主粉丝数（{len(mid_fans_map)} 缓存命中）...")
+            fan_results = await asyncio.gather(*[fetch_fan_count(session, m) for m in uncached],
+                                               return_exceptions=True)
+            for mid, f in zip(uncached, fan_results):
+                fans = f if isinstance(f, int) else -1
+                mid_fans_map[mid] = fans
+                if fans > 0:
+                    save_fan_cache(conn, mid, fans)
         else:
             print(f"  粉丝数全部命中缓存（{len(mid_fans_map)} 个）")
 
