@@ -91,8 +91,8 @@ TOP_CREATOR_MIDS = [
 
 MIN_FANS       = 50_000   # 粉丝数 >= 5万
 MIN_PLAY       = 100      # 最低播放量
-SCORE_THRESHOLD    = 30      # 上榜最低分
-MAX_VIDEOS         = 20       # 推荐榜最多显示
+SCORE_THRESHOLD    = 25      # 上榜最低分（25分入榜，保证数量）
+MAX_VIDEOS         = 30       # 推荐榜最多显示
 SEARCH_ROUNDS      = 5        # 搜索轮数（每轮3页，共覆盖15页）
 HIGH_VALUE_THRESHOLD = 65     # 高价值内容实时推送阈值
 
@@ -107,6 +107,7 @@ GIT_BRANCH = "gh-pages:main"
 FEISHU_WEBHOOK    = "https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149"
 DASHBOARD_URL     = "https://jiahongsun675-del.github.io/lixiang-dashboard/"
 PUSHED_ALERTS_FILE = BASE_DIR / "data" / "pushed_alerts.json"  # 已推送记录
+DAILY_REC_FILE     = BASE_DIR / "data" / "daily_rec.json"       # 每日推荐归档
 
 
 # ══════════════════════════════════════════════
@@ -556,7 +557,7 @@ def score_video(v, prev_play=None):
     sentiment_score = min(15, max(4.0, like * 0.15 + coin * 0.4 + fav * 0.08 + 2))
 
     # 素人加成
-    underdog_bonus = 15.0 if fans < 100_000 else 0.0
+    underdog_bonus = 15.0 if fans < 500_000 else 0.0  # 50万粉以下都算素人
 
     # 停滞降权
     is_stale = (age_h > 12 and growth_pct < 0.5 and play > 50)
@@ -688,6 +689,62 @@ def save_snapshot(conn, v):
 # ══════════════════════════════════════════════
 # 5. HTML 生成
 # ══════════════════════════════════════════════
+
+# ══════════════════════════════════════════════
+# 4b. 每日推荐归档
+# ══════════════════════════════════════════════
+
+def load_daily_rec() -> dict:
+    """加载每日推荐归档（{日期: [{bvid,title,...}]}）"""
+    try:
+        if DAILY_REC_FILE.exists():
+            return json.loads(DAILY_REC_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def save_daily_rec(scored_today: list, date_str: str):
+    """
+    将今日推荐写入归档（按天存，保留30天）
+    date_str 格式: '2026-04-14'
+    """
+    data = load_daily_rec()
+
+    # 今日推荐：取达标且1月内的视频，最多保存30条
+    today_vids = [
+        {
+            "bvid":   v.get("bvid", ""),
+            "title":  v.get("title", ""),
+            "author": v.get("author", ""),
+            "fans":   v.get("fans", 0),
+            "play":   v.get("play", 0),
+            "ir":     v.get("interaction_rate", 0),
+            "score":  v.get("total_score", 0),
+            "pubdate":v.get("pubdate", 0),
+            "age_h":  v.get("age_h", 0),
+            "priority_label": v.get("priority_label", ""),
+        }
+        for v in scored_today
+        if v.get("total_score", 0) >= SCORE_THRESHOLD and v.get("age_h", 999) <= 720
+    ]
+    today_vids = sorted(today_vids, key=lambda v: v["score"], reverse=True)[:30]
+
+    if today_vids:
+        data[date_str] = today_vids
+
+    # 只保留最近30天
+    cutoff = datetime.now().timestamp() - 30 * 86400
+    data = {
+        d: v for d, v in data.items()
+        if datetime.strptime(d, "%Y-%m-%d").timestamp() >= cutoff
+    }
+
+    DAILY_REC_FILE.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"[日报] 归档 {date_str} 推荐 {len(today_vids)} 条，共 {len(data)} 天记录")
+
 
 def fmt_play(n):
     if n >= 10000:
@@ -898,21 +955,52 @@ def generate_html(scored_videos, now_str):
     # 历史监控组（total_score排序，最多10条）
     history_cards = "".join(video_card_full(v, i+1) for i, v in enumerate(history_rec[:10]))
 
-    # 历史上榜（精简卡片）
-    history_items = "".join(f"""
+    # ── 历史上榜（按天归档，今天→最近→较早）──
+    daily_rec = load_daily_rec()
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    sorted_days = sorted(daily_rec.keys(), reverse=True)  # 最新日期优先
+
+    history_day_sections = ""
+    for day_str in sorted_days[:14]:  # 最多展示14天
+        day_vids = daily_rec.get(day_str, [])
+        if not day_vids:
+            continue
+        # 日期标签
+        try:
+            day_dt = datetime.strptime(day_str, "%Y-%m-%d")
+            delta = (datetime.now().date() - day_dt.date()).days
+            if delta == 0:   day_label = f"📅 今天 ({day_str})"
+            elif delta == 1: day_label = f"📅 昨天 ({day_str})"
+            elif delta <= 7: day_label = f"📅 {delta}天前 ({day_str})"
+            else:            day_label = f"📅 {day_str}"
+        except Exception:
+            day_label = f"📅 {day_str}"
+
+        items_html = "".join(f"""
         <div class="history-item">
           <div class="history-item-info">
-            <div class="history-item-title"><a href="https://www.bilibili.com/video/{v['bvid']}" target="_blank">{v.get('title','')[:60]}</a>
-              {"<span class='badge badge-stale'>🥶 停滞</span>" if v.get('is_stale') else ""}
-              {"<span class='badge badge-alert-hist'>历史高分</span>" if v.get('total_score',0)>=60 else ""}
+            <div class="history-item-title">
+              <a href="https://www.bilibili.com/video/{v['bvid']}" target="_blank">{v.get('title','')[:60]}</a>
+              {"<span class='badge badge-high'>"+v.get('priority_label','')+"</span>" if v.get('score',0)>=65 else ""}
             </div>
-            <div class="history-item-meta">{v.get('author','')} | ▶️ {fmt_play(v.get('play',0))} | {fmt_age(v.get('pubdate'))} | 评分 {v.get('total_score',0)}</div>
+            <div class="history-item-meta">
+              UP主: {v.get('author','')} &nbsp;|&nbsp; ▶️{fmt_play(v.get('play',0))} &nbsp;|&nbsp; 互动率 {v.get('ir',0):.1f}% &nbsp;|&nbsp; 评分 {v.get('score',0)}
+            </div>
           </div>
           <div class="history-item-score">
-            <div class="heated-score-val">{v.get('total_score',0)}</div>
+            <div class="heated-score-val">{v.get('score',0)}</div>
             <div class="heated-score-lbl">评分</div>
           </div>
-        </div>""" for v in by_play[:20])
+        </div>""" for v in day_vids[:20])
+
+        history_day_sections += f"""
+    <div style="margin-bottom:18px">
+      <div style="font-size:.85em;font-weight:600;color:#555;margin-bottom:8px;padding:6px 10px;background:#f8f9fc;border-radius:6px;border-left:3px solid #3b6eea">{day_label} · {len(day_vids)} 条推荐</div>
+      <div class="history-list">{items_html}</div>
+    </div>"""
+
+    if not history_day_sections:
+        history_day_sections = '<div class="empty">暂无历史记录，每次巡检自动归档当日推荐</div>'
 
     # 持续热度双榜
     new_items = "".join(video_compact(v, i+1) for i, v in enumerate(new_vids[:6]))
@@ -1150,11 +1238,9 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 <!-- PAGE 2: 历史上榜 -->
 <div class="page" id="page-history">
   <div class="card">
-    <div class="card-title">历史上榜推荐加热<span style="font-size:.78em;font-weight:400;color:#aaa">按播放量排序 · TOP20</span></div>
-    <div class="card-sub">曾进入推荐榜的视频 · 按累计播放量排序 · 🥶停滞标签表示增速放缓</div>
-    <div class="history-list">
-{history_items}
-    </div>
+    <div class="card-title">历史上榜 · 每日归档<span style="font-size:.78em;font-weight:400;color:#aaa">今天上榜的视频，明天自动出现在这里</span></div>
+    <div class="card-sub">按天分组 · 最近14天记录 · 每次巡检自动归档当日推荐</div>
+{history_day_sections}
   </div>
 </div>
 
@@ -2255,6 +2341,10 @@ async def main():
 
     scored = scored_this_run + db_videos
     print(f"合并DB历史: 本次 {len(scored_this_run)} + DB补充 {len(db_videos)} = {len(scored)} 个视频")
+
+    # Step 3c: 归档今日推荐
+    today_date = datetime.now().strftime("%Y-%m-%d")
+    save_daily_rec(scored, today_date)
 
     # Step 4: 生成 HTML（仅在有足够视频时才覆盖）
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
