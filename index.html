@@ -6,417 +6,92 @@
     <meta http-equiv="refresh" content="300">
     <title>理想汽车B站监控数据看板</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .header .update-time {
-            margin-top: 10px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        .stat-card .label {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-        }
-
-        .stat-card .value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .stat-card .unit {
-            font-size: 0.5em;
-            color: #999;
-            margin-left: 5px;
-        }
-
-        .stat-card.primary .value {
-            color: #667eea;
-        }
-
-        .stat-card.success .value {
-            color: #10b981;
-        }
-
-        .stat-card.warning .value {
-            color: #f59e0b;
-        }
-
-        .stat-card.info .value {
-            color: #3b82f6;
-        }
-
-        .content-section {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .content-section h2 {
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            color: #333;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .video-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .video-item {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 15px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .video-item:hover {
-            background: #f9fafb;
-            border-color: #667eea;
-        }
-
-        .video-rank {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #667eea;
-            min-width: 40px;
-            text-align: center;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header .subtitle { font-size: 1.1em; opacity: 0.9; }
+        .header .update-time { margin-top: 10px; font-size: 0.9em; opacity: 0.8; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card .label { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        .stat-card .value { font-size: 2.5em; font-weight: bold; color: #333; }
+        .stat-card .unit { font-size: 0.5em; color: #999; margin-left: 5px; }
+        .stat-card.primary .value { color: #667eea; }
+        .stat-card.success .value { color: #10b981; }
+        .stat-card.warning .value { color: #f59e0b; }
+        .stat-card.danger .value { color: #ef4444; }
+        .stat-card.info .value { color: #3b82f6; }
+        .content-section { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .content-section h2 { font-size: 1.5em; margin-bottom: 20px; color: #333; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        .video-list { display: grid; gap: 15px; }
+        .video-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; transition: all 0.3s; display: flex; align-items: flex-start; gap: 15px; }
+        .video-item:hover { background: #f9fafb; border-color: #667eea; }
+        .video-rank { font-size: 1.5em; font-weight: bold; color: #667eea; min-width: 40px; text-align: center; }
         .video-rank.top1 { color: #ef4444; }
         .video-rank.top2 { color: #f59e0b; }
         .video-rank.top3 { color: #10b981; }
+        .video-info { flex: 1; }
+        .video-title { font-size: 1.1em; font-weight: 600; color: #333; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .video-title a { color: inherit; text-decoration: none; }
+        .video-title a:hover { color: #667eea; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
+        .badge-high { background: #fee2e2; color: #991b1b; }
+        .badge-medium { background: #fef3c7; color: #92400e; }
+        .badge-low { background: #e0e7ff; color: #3730a3; }
+        .badge-skip { background: #f3f4f6; color: #6b7280; }
+        .badge-underdog { background: #fef9c3; color: #713f12; }
+        .badge-stale { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-growing { background: #dcfce7; color: #166534; }
+        .badge-hot { background: #fff7ed; color: #c2410c; }
+        .penalty-note { font-size: 0.8em; color: #dc2626; font-weight: 600; margin-left: 8px; }
+        .video-meta { color: #666; font-size: 0.9em; margin-bottom: 8px; }
+        .video-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+        .stat-item { display: flex; align-items: center; gap: 5px; font-size: 0.9em; color: #666; }
+        .stat-item .icon { font-size: 1.1em; }
+        .video-score { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
+        .score-bar { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .score-fill { height: 100%; transition: width 0.3s; }
+        .score-value { font-weight: 600; min-width: 60px; text-align: right; }
+        .recommendation-box { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px 15px; margin: 12px 0; border-radius: 4px; }
+        .recommendation-title { font-weight: 600; color: #1e40af; margin-bottom: 8px; }
+        .recommendation-reasons { margin: 0; padding-left: 20px; color: #334155; font-size: 0.9em; }
+        .recommendation-reasons li { margin-bottom: 4px; line-height: 1.6; }
 
-        .video-info {
-            flex: 1;
-        }
+        /* Dual chart layout */
+        .dual-chart { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .dual-chart { grid-template-columns: 1fr; } }
+        .chart-panel { background: #f9fafb; border-radius: 8px; padding: 16px; }
+        .chart-panel h3 { font-size: 1.1em; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid; }
+        .chart-panel.growing h3 { color: #166534; border-color: #22c55e; }
+        .chart-panel.steady h3 { color: #1d4ed8; border-color: #3b82f6; }
 
-        .video-title {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        /* Compact video cards */
+        .video-compact { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; transition: all 0.2s; }
+        .video-compact:hover { background: white; border-color: #667eea; }
+        .video-rank-sm { font-size: 1.1em; font-weight: bold; color: #667eea; min-width: 28px; text-align: center; }
+        .vc-info { flex: 1; }
+        .vc-title { font-size: 0.95em; font-weight: 600; color: #333; margin-bottom: 4px; }
+        .vc-title a { color: inherit; text-decoration: none; }
+        .vc-title a:hover { color: #667eea; }
+        .vc-meta { font-size: 0.82em; color: #888; }
+        .vc-score { font-weight: 700; font-size: 1.1em; min-width: 45px; text-align: right; }
 
-        .video-title a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .video-title a:hover {
-            color: #667eea;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-weight: 600;
-        }
-
-        .badge.underdog {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .badge.high {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .badge.medium {
-            background: #fed7aa;
-            color: #9a3412;
-        }
-
-        .video-meta {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 8px;
-        }
-
-        .video-stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .stat-item .icon {
-            font-size: 1.2em;
-        }
-
-        .video-score {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .score-bar {
-            flex: 1;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .score-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #3b82f6, #667eea);
-            transition: width 0.3s;
-        }
-
-        .score-value {
-            font-weight: 600;
-            color: #667eea;
-            min-width: 60px;
-            text-align: right;
-        }
-
-        .alert-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .alert-item {
-            padding: 12px;
-            border-left: 4px solid #667eea;
-            background: #f9fafb;
-            border-radius: 4px;
-        }
-
-        .alert-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .alert-meta {
-            font-size: 0.85em;
-            color: #666;
-        }
-
-        .config-info {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .config-item {
-            margin-bottom: 8px;
-            font-size: 0.9em;
-        }
-
-        .config-label {
-            font-weight: 600;
-            color: #666;
-            display: inline-block;
-            min-width: 120px;
-        }
-
-        .config-value {
-            color: #333;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .recommendation-box {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 12px 15px;
-            margin: 12px 0;
-            border-radius: 4px;
-        }
-
-        .recommendation-title {
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 8px;
-        }
-
-        .recommendation-reasons {
-            margin: 0;
-            padding-left: 20px;
-            color: #334155;
-            font-size: 0.9em;
-        }
-
-        .recommendation-reasons li {
-            margin-bottom: 4px;
-            line-height: 1.6;
-        }
-
-        .dimensions-detail {
-            margin: 15px 0;
-            padding: 15px;
-            background: #fafafa;
-            border-radius: 6px;
-        }
-
-        .dimension-item {
-            display: grid;
-            grid-template-columns: 100px 1fr 60px 80px;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .dimension-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .dim-label {
-            font-size: 0.85em;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .dim-bar {
-            height: 6px;
-            background: #e5e7eb;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .dim-fill {
-            height: 100%;
-            transition: width 0.3s;
-        }
-
-        .dim-score {
-            font-size: 0.85em;
-            color: #333;
-            font-weight: 600;
-            text-align: right;
-        }
-
-        .dim-eval {
-            font-size: 0.75em;
-            color: #666;
-            text-align: right;
-        }
-
-        .budget-suggest {
-            margin-top: 12px;
-            padding: 10px;
-            background: #fef3c7;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .budget-label {
-            font-weight: 600;
-            color: #92400e;
-        }
-
-        .budget-value {
-            font-weight: 700;
-            color: #78350f;
-            font-size: 1.1em;
-        }
-
+        .config-info { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .config-item { margin-bottom: 8px; font-size: 0.9em; }
+        .config-label { font-weight: 600; color: #666; display: inline-block; min-width: 120px; }
+        .config-value { color: #333; }
+        .alert-list { display: grid; gap: 10px; }
+        .alert-item { padding: 12px; border-left: 4px solid #667eea; background: #f9fafb; border-radius: 4px; }
+        .alert-title { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .alert-meta { font-size: 0.85em; color: #666; }
+        .section-note { font-size: 0.85em; color: #666; margin-bottom: 15px; font-style: italic; }
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .video-item {
-                flex-direction: column;
-            }
-
-            .video-stats {
-                font-size: 0.85em;
-            }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .video-item { flex-direction: column; }
+            .video-stats { font-size: 0.85em; }
         }
     </style>
 </head>
@@ -424,30 +99,466 @@
     <div class="container">
         <div class="header">
             <h1>🚗 理想汽车B站监控数据看板</h1>
-            <div class="subtitle">实时追踪高价值内容 · 智能投流决策支持</div>
-            <div class="update-time">最后更新: 2026-03-25 17:14:45 (每5分钟自动刷新)</div>
+            <div class="subtitle">实时追踪高价值内容 · 智能投流决策支持 · 持续热度双榜</div>
+            <div class="update-time">最后更新: 2026-03-25 17:05:12 &nbsp;|&nbsp; 数据覆盖 22 个视频 (每5分钟自动刷新)</div>
         </div>
 
         <!-- 统计卡片 -->
         <div class="stats-grid">
             <div class="stat-card primary">
-                <div class="label">本次分析视频</div>
-                <div class="value">2<span class="unit">个</span></div>
+                <div class="label">本次监控视频</div>
+                <div class="value">22<span class="unit">个</span></div>
             </div>
-
             <div class="stat-card success">
-                <div class="label">达标推荐</div>
+                <div class="label">💎 高分推荐 (≥65分)</div>
                 <div class="value">2<span class="unit">个</span></div>
             </div>
-
             <div class="stat-card warning">
-                <div class="label">素人优质</div>
-                <div class="value">2<span class="unit">个</span></div>
+                <div class="label">📈 持续增长 (≥2%)</div>
+                <div class="value">5<span class="unit">个</span></div>
             </div>
+            <div class="stat-card danger">
+                <div class="label">🥶 停滞降权</div>
+                <div class="value">6<span class="unit">个</span></div>
+            </div>
+        </div>
 
-            <div class="stat-card info">
-                <div class="label">累计提醒</div>
-                <div class="value">4<span class="unit">次</span></div>
+        <!-- TOP推荐内容 -->
+        <div class="content-section">
+            <h2>🔥 TOP推荐内容 (综合评分排序 · 含停滞降权)</h2>
+            <p class="section-note">评分维度：互动率(40pts) + 增长趋势(30pts) + UP主质量(15pts) + 情感评价(15pts) + 素人加成(+15pts) + 停滞降权(-15pts)</p>
+            <div class="video-list">
+
+    <div class="video-item">
+        <div class="video-rank top1">#1</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1rPQUBvEaK" target="_blank">理想汽车启动10亿美元回购计划</a>
+                <span class="badge badge-high">💎 强烈推荐</span> <span class="badge badge-hot">🚀 50%↑</span> <span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: 易车视讯 | BV: BV1rPQUBvEaK | 时长: 0:27 | 发布: 2026-03-25</div>
+            <div class="recommendation-box">
+                <div class="recommendation-title">💡 推荐分析: </div>
+                <ul class="recommendation-reasons"><li>👍 互动率4.2% — 良好</li><li>🚀 爆发增长 +50%（2小时内）</li><li>⭐ 素人优质内容 — 投流ROI高（+15分）</li></ul>
+            </div>
+            <div class="video-stats">
+                <div class="stat-item"><span class="icon">▶️</span><span>71</span></div>
+                <div class="stat-item"><span class="icon">👍</span><span>3 (4.2%)</span></div>
+                <div class="stat-item"><span class="icon">💰</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">⭐</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">💬</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">📊</span><span>互动率 4.2%</span></div>
+                <div class="stat-item"><span class="icon">📈</span><span>增长 +50.0%</span></div>
+            </div>
+            <div class="video-score">
+                <span>综合评分:</span>
+                <div class="score-bar"><div class="score-fill" style="width:69.9%; background:#ef4444;"></div></div>
+                <span class="score-value" style="color:#ef4444">69.9分</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank top2">#2</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！</a>
+                <span class="badge badge-high">💎 强烈推荐</span> <span class="badge badge-growing">📈 4.1%↑</span> <span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: 抽象行为学 | BV: BV1bnQyBMERi | 时长: 3:12 | 发布: 2026-03-25</div>
+            <div class="recommendation-box">
+                <div class="recommendation-title">💡 推荐分析: </div>
+                <ul class="recommendation-reasons"><li>💯 互动率5.5% — 优秀</li><li>📈 持续增长 +4.1%（10小时内）</li><li>⭐ 素人优质内容 — 投流ROI高（+15分）</li></ul>
+            </div>
+            <div class="video-stats">
+                <div class="stat-item"><span class="icon">▶️</span><span>541</span></div>
+                <div class="stat-item"><span class="icon">👍</span><span>27 (5.0%)</span></div>
+                <div class="stat-item"><span class="icon">💰</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">⭐</span><span>1</span></div>
+                <div class="stat-item"><span class="icon">💬</span><span>1</span></div>
+                <div class="stat-item"><span class="icon">📊</span><span>互动率 5.5%</span></div>
+                <div class="stat-item"><span class="icon">📈</span><span>增长 +4.1%</span></div>
+            </div>
+            <div class="video-score">
+                <span>综合评分:</span>
+                <div class="score-bar"><div class="score-fill" style="width:69.3%; background:#ef4444;"></div></div>
+                <span class="score-value" style="color:#ef4444">69.3分</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank top3">#3</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1kiAAzKEGU" target="_blank">还得是MEGA</a>
+                <span class="badge badge-medium">🔥 推荐</span> <span class="badge badge-growing">📈 7.8%↑</span> <span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: 火鸡同学玩智驾 | BV: BV1kiAAzKEGU | 时长: 0:9 | 发布: 2026-03-24</div>
+            <div class="recommendation-box">
+                <div class="recommendation-title">💡 推荐分析: </div>
+                <ul class="recommendation-reasons"><li>👍 互动率2.2% — 良好</li><li>📈 持续增长 +7.8%（21小时内）</li><li>⭐ 素人优质内容 — 投流ROI高（+15分）</li></ul>
+            </div>
+            <div class="video-stats">
+                <div class="stat-item"><span class="icon">▶️</span><span>91</span></div>
+                <div class="stat-item"><span class="icon">👍</span><span>2 (2.2%)</span></div>
+                <div class="stat-item"><span class="icon">💰</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">⭐</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">💬</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">📊</span><span>互动率 2.2%</span></div>
+                <div class="stat-item"><span class="icon">📈</span><span>增长 +7.8%</span></div>
+            </div>
+            <div class="video-score">
+                <span>综合评分:</span>
+                <div class="score-bar"><div class="score-fill" style="width:61.8%; background:#f59e0b;"></div></div>
+                <span class="score-value" style="color:#f59e0b">61.8分</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#4</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1e1Q6BvEub" target="_blank">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。</a>
+                <span class="badge badge-medium">🔥 推荐</span>  
+            </div>
+            <div class="video-meta">UP主: 叶枫有理想 | BV: BV1e1Q6BvEub | 时长: 1:14 | 发布: 2026-03-24</div>
+            <div class="recommendation-box">
+                <div class="recommendation-title">💡 推荐分析: </div>
+                <ul class="recommendation-reasons"><li>💯 互动率9.0% — 优秀</li></ul>
+            </div>
+            <div class="video-stats">
+                <div class="stat-item"><span class="icon">▶️</span><span>1,221</span></div>
+                <div class="stat-item"><span class="icon">👍</span><span>24 (2.0%)</span></div>
+                <div class="stat-item"><span class="icon">💰</span><span>11</span></div>
+                <div class="stat-item"><span class="icon">⭐</span><span>69</span></div>
+                <div class="stat-item"><span class="icon">💬</span><span>5</span></div>
+                <div class="stat-item"><span class="icon">📊</span><span>互动率 9.0%</span></div>
+                <div class="stat-item"><span class="icon">📈</span><span>增长 +1.1%</span></div>
+            </div>
+            <div class="video-score">
+                <span>综合评分:</span>
+                <div class="score-bar"><div class="score-fill" style="width:60.4%; background:#f59e0b;"></div></div>
+                <span class="score-value" style="color:#f59e0b">60.4分</span>
+            </div>
+        </div>
+    </div>
+    <div class="video-item">
+        <div class="video-rank ">#5</div>
+        <div class="video-info">
+            <div class="video-title">
+                <a href="https://www.bilibili.com/video/BV1h3Q6BZEE5" target="_blank">理想直接把考斯特的路给堵了</a>
+                <span class="badge badge-low">可考虑</span>  <span class="badge badge-underdog">⭐ 素人 +15</span>
+            </div>
+            <div class="video-meta">UP主: 一生最爱HatchBaaack | BV: BV1h3Q6BZEE5 | 时长: 0:16 | 发布: 2026-03-25</div>
+            <div class="recommendation-box">
+                <div class="recommendation-title">💡 推荐分析: </div>
+                <ul class="recommendation-reasons"><li>📊 互动率1.6%</li><li>⭐ 素人优质内容 — 投流ROI高（+15分）</li></ul>
+            </div>
+            <div class="video-stats">
+                <div class="stat-item"><span class="icon">▶️</span><span>121</span></div>
+                <div class="stat-item"><span class="icon">👍</span><span>2 (1.6%)</span></div>
+                <div class="stat-item"><span class="icon">💰</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">⭐</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">💬</span><span>0</span></div>
+                <div class="stat-item"><span class="icon">📊</span><span>互动率 1.6%</span></div>
+                <div class="stat-item"><span class="icon">📈</span><span>增长 +1.7%</span></div>
+            </div>
+            <div class="video-score">
+                <span>综合评分:</span>
+                <div class="score-bar"><div class="score-fill" style="width:37.9%; background:#667eea;"></div></div>
+                <span class="score-value" style="color:#667eea">37.9分</span>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+
+        <!-- 持续热度 双榜 -->
+        <div class="content-section">
+            <h2>🌡️ 持续热度双榜</h2>
+            <p class="section-note">左榜：近期播放增速 ≥2%，内容正在发酵；右榜：播放量 ≥300，存量热度高适合持续投流</p>
+            <div class="dual-chart">
+                <div class="chart-panel growing">
+                    <h3>📈 持续增长榜 (增速≥2%)</h3>
+
+    <div class="video-compact">
+        <div class="video-rank-sm">#1</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1rPQUBvEaK" target="_blank">理想汽车启动10亿美元回购计划</a>  <span class="badge badge-hot">🚀 50%↑</span></div>
+            <div class="vc-meta">易车视讯 · ▶️71 · 互动4.2% · 增长+50.0%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.9</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#2</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1kiAAzKEGU" target="_blank">还得是MEGA</a>  <span class="badge badge-growing">📈 7.8%↑</span></div>
+            <div class="vc-meta">火鸡同学玩智驾 · ▶️91 · 互动2.2% · 增长+7.8%</div>
+        </div>
+        <div class="vc-score" style="color:#f59e0b">61.8</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#3</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1tKQ1BqENX" target="_blank">理想L7 这真是啥样的人都有 找个小的换小米</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">四哥爱收车 · ▶️1,026 · 互动0.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">30.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#4</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停…</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">抽象行为学 · ▶️541 · 互动5.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#5</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1dvPZzEELW" target="_blank">理想专用脚垫，给每天通勤的“第一平方米”换个心情</a>  <span class="badge badge-growing">📈 2.2%↑</span></div>
+            <div class="vc-meta">FLYBROW飞艇 · ▶️136 · 互动0.7% · 增长+2.2%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">37.1</div>
+    </div>
+                </div>
+                <div class="chart-panel steady">
+                    <h3>🏋️ 稳定高热榜 (播放≥300)</h3>
+
+    <div class="video-compact">
+        <div class="video-rank-sm">#1</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1t5Q6BdEUS" target="_blank">你买理想，不是双腔空悬就是不对！</a>  </div>
+            <div class="vc-meta">老高你好二手车 · ▶️2,555 · 互动3.4% · 增长+0.9%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">37.0</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#2</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1e1Q6BvEub" target="_blank">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断…</a>  </div>
+            <div class="vc-meta">叶枫有理想 · ▶️1,221 · 互动9.0% · 增长+1.1%</div>
+        </div>
+        <div class="vc-score" style="color:#f59e0b">60.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#3</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1tKQ1BqENX" target="_blank">理想L7 这真是啥样的人都有 找个小的换小米</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">四哥爱收车 · ▶️1,026 · 互动0.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">30.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#4</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1g9Q6BFEZb" target="_blank">理想汽车宣布10亿美元股票回购计划</a> <span class="badge badge-stale">🥶 停滞</span> </div>
+            <div class="vc-meta">新京报贝壳财经 · ▶️630 · 互动1.3% · 增长0.0%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">13.1</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#5</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停…</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">抽象行为学 · ▶️541 · 互动5.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#6</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1LDQyBmEiA" target="_blank">理想L9更换布纹地板</a>  </div>
+            <div class="vc-meta">森之润理想哥 · ▶️463 · 互动0.4% · 增长+0.4%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">26.9</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#7</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1vrQ6BMEDE" target="_blank">很多人都在抱怨续航不够，其实问题根本不在电池。这个默认开启的小功能，一直在偷偷耗电。看完记…</a>  </div>
+            <div class="vc-meta">叶枫的理想生活 · ▶️359 · 互动2.2% · 增长+0.6%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">34.7</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#8</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1gYQrBYEqD" target="_blank">理想汽车回购10亿美元</a> <span class="badge badge-stale">🥶 停滞</span> </div>
+            <div class="vc-meta">起源价投笔记 · ▶️346 · 互动1.7% · 增长+0.3%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">16.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#9</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1dxQrBTEcY" target="_blank">理想面容识别实用小技巧！遇到面容识别触发不灵敏，另一半用完车坐姿很窄上不去车怎么解决？</a>  </div>
+            <div class="vc-meta">奶爸奥利弗 · ▶️323 · 互动0.9% · 增长+0.9%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">31.4</div>
+    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史上榜 -->
+        <div class="content-section">
+            <h2>🏆 历史上榜 (播放量排行 · TOP10)</h2>
+            <p class="section-note">按累计播放量排序，反映内容传播广度；🥶停滞标签表示内容增速已放缓</p>
+            <div class="video-list">
+
+    <div class="video-compact">
+        <div class="video-rank-sm">#1</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1t5Q6BdEUS" target="_blank">你买理想，不是双腔空悬就是不对！</a>  </div>
+            <div class="vc-meta">老高你好二手车 · ▶️2,555 · 互动3.4% · 增长+0.9%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">37.0</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#2</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1e1Q6BvEub" target="_blank">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断…</a>  </div>
+            <div class="vc-meta">叶枫有理想 · ▶️1,221 · 互动9.0% · 增长+1.1%</div>
+        </div>
+        <div class="vc-score" style="color:#f59e0b">60.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#3</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1tKQ1BqENX" target="_blank">理想L7 这真是啥样的人都有 找个小的换小米</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">四哥爱收车 · ▶️1,026 · 互动0.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">30.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#4</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1g9Q6BFEZb" target="_blank">理想汽车宣布10亿美元股票回购计划</a> <span class="badge badge-stale">🥶 停滞</span> </div>
+            <div class="vc-meta">新京报贝壳财经 · ▶️630 · 互动1.3% · 增长0.0%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">13.1</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#5</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停…</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">抽象行为学 · ▶️541 · 互动5.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#6</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1LDQyBmEiA" target="_blank">理想L9更换布纹地板</a>  </div>
+            <div class="vc-meta">森之润理想哥 · ▶️463 · 互动0.4% · 增长+0.4%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">26.9</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#7</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1vrQ6BMEDE" target="_blank">很多人都在抱怨续航不够，其实问题根本不在电池。这个默认开启的小功能，一直在偷偷耗电。看完记…</a>  </div>
+            <div class="vc-meta">叶枫的理想生活 · ▶️359 · 互动2.2% · 增长+0.6%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">34.7</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#8</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1gYQrBYEqD" target="_blank">理想汽车回购10亿美元</a> <span class="badge badge-stale">🥶 停滞</span> </div>
+            <div class="vc-meta">起源价投笔记 · ▶️346 · 互动1.7% · 增长+0.3%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">16.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#9</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1dxQrBTEcY" target="_blank">理想面容识别实用小技巧！遇到面容识别触发不灵敏，另一半用完车坐姿很窄上不去车怎么解决？</a>  </div>
+            <div class="vc-meta">奶爸奥利弗 · ▶️323 · 互动0.9% · 增长+0.9%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">31.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#10</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1wTQzBkEFj" target="_blank">大型纪录片《理想车主紧急掉头救援》持续为您播出！</a> <span class="badge badge-stale">🥶 停滞</span> </div>
+            <div class="vc-meta">阿瑟纪录片呀 · ▶️224 · 互动2.7% · 增长0.0%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">18.7</div>
+    </div>
+            </div>
+        </div>
+
+        <!-- 新鲜内容 -->
+        <div class="content-section">
+            <h2>🆕 新鲜内容 (今日发布 · 按潜力评分)</h2>
+            <p class="section-note">2026-03-25 发布的视频，新内容通常增长空间更大，早期投流ROI更高</p>
+            <div class="video-list">
+
+    <div class="video-compact">
+        <div class="video-rank-sm">#1</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1rPQUBvEaK" target="_blank">理想汽车启动10亿美元回购计划</a>  <span class="badge badge-hot">🚀 50%↑</span></div>
+            <div class="vc-meta">易车视讯 · ▶️71 · 互动4.2% · 增长+50.0%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.9</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#2</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停…</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">抽象行为学 · ▶️541 · 互动5.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#ef4444">69.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#3</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1h3Q6BZEE5" target="_blank">理想直接把考斯特的路给堵了</a>  </div>
+            <div class="vc-meta">一生最爱HatchBaaack · ▶️121 · 互动1.6% · 增长+1.7%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">37.9</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#4</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1t5Q6BdEUS" target="_blank">你买理想，不是双腔空悬就是不对！</a>  </div>
+            <div class="vc-meta">老高你好二手车 · ▶️2,555 · 互动3.4% · 增长+0.9%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">37.0</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#5</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1StQ2B3EAi" target="_blank">这车开得好嚣张啊！</a>  </div>
+            <div class="vc-meta">大风VIDEO · ▶️70 · 互动1.4% · 增长+1.4%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">36.0</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#6</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1tKQ1BqENX" target="_blank">理想L7 这真是啥样的人都有 找个小的换小米</a>  <span class="badge badge-growing">📈 4.1%↑</span></div>
+            <div class="vc-meta">四哥爱收车 · ▶️1,026 · 互动0.5% · 增长+4.1%</div>
+        </div>
+        <div class="vc-score" style="color:#667eea">30.3</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#7</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV16cQ2BfE8T" target="_blank">理想车主的一天</a>  </div>
+            <div class="vc-meta">喝椰奶的甘雨丶 · ▶️183 · 互动1.1% · 增长0.0%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">27.4</div>
+    </div>
+    <div class="video-compact">
+        <div class="video-rank-sm">#8</div>
+        <div class="vc-info">
+            <div class="vc-title"><a href="https://www.bilibili.com/video/BV1LDQyBmEiA" target="_blank">理想L9更换布纹地板</a>  </div>
+            <div class="vc-meta">森之润理想哥 · ▶️463 · 互动0.4% · 增长+0.4%</div>
+        </div>
+        <div class="vc-score" style="color:#9ca3af">26.9</div>
+    </div>
             </div>
         </div>
 
@@ -455,274 +566,42 @@
         <div class="content-section">
             <h2>⚙️ 系统配置</h2>
             <div class="config-info">
-                <div class="config-item">
-                    <span class="config-label">监控模式:</span>
-                    <span class="config-value">定时推送</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">推送时间:</span>
-                    <span class="config-value">12:00, 17:00</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">提醒阈值:</span>
-                    <span class="config-value">70分</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">监控关键词:</span>
-                    <span class="config-value">理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 李想, 理想L6, 理想L8, 理想智驾, 理想AD, 理想新车</span>
-                </div>
+                <div class="config-item"><span class="config-label">监控模式:</span><span class="config-value">定时推送</span></div>
+                <div class="config-item"><span class="config-label">推送时间:</span><span class="config-value">12:00, 17:00</span></div>
+                <div class="config-item"><span class="config-label">提醒阈值:</span><span class="config-value">65分（高分推荐）</span></div>
+                <div class="config-item"><span class="config-label">停滞降权:</span><span class="config-value">发布>12h 且 增长<0.5% 则扣15分</span></div>
+                <div class="config-item"><span class="config-label">监控关键词:</span><span class="config-value">理想汽车, 理想L9, 理想MEGA, 理想L8, 理想L7, 理想L6, 李想, 理想智驾, 理想AD, 理想新车</span></div>
             </div>
-        </div>
-
-        <!-- TOP推荐视频 -->
-        <div class="content-section">
-            <h2>🔥 TOP推荐内容 (按评分排序)</h2>
-            <div class="video-list">
-        <div class="video-item">
-            <div class="video-rank top1">#1</div>
-            <div class="video-info">
-                <div class="video-title">
-                    <a href="https://www.bilibili.com/video/BV1bnQyBMERi" target="_blank">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！</a>
-                    <span class="badge medium">可考虑</span>
-                    <span class="badge underdog">⭐ 素人 +15分</span>
-                </div>
-                <div class="video-meta">
-                    UP主: 抽象行为学 (粉丝数未知) | BV: BV1bnQyBMERi
-                </div>
-
-                <!-- 推荐理由 -->
-                <div class="recommendation-box">
-                    <div class="recommendation-title">💡 推荐理由:</div>
-                    <ul class="recommendation-reasons">
-                        <li>💯 <strong>互动率5.55%</strong> - 优秀,远超行业平均</li><li>📈 稳定增长 - 6小时内播放增长1.1%</li><li>⭐ <strong>素人优质内容</strong> - 投流成本低30-50%,ROI更高(+15分)</li>
-                    </ul>
-                </div>
-
-                <!-- 基础数据 -->
-                <div class="video-stats">
-                    <div class="stat-item">
-                        <span class="icon">▶️</span>
-                        <span>541</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">👍</span>
-                        <span>27 (4.99%)</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">💰</span>
-                        <span>0 (0.00%)</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">⭐</span>
-                        <span>1</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">💬</span>
-                        <span>1</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">📊</span>
-                        <span>互动率 5.55%</span>
-                    </div>
-                </div>
-
-                <!-- 评分维度详情 -->
-                <div class="dimensions-detail">
-                    <div class="dimension-item">
-                        <span class="dim-label">互动率</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 82.5%; background: #10b981;"></div>
-                        </div>
-                        <span class="dim-score">33.0/40</span>
-                        <span class="dim-eval">优秀</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">增长趋势</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 1.3333333333333335%; background: #3b82f6;"></div>
-                        </div>
-                        <span class="dim-score">0.4/30</span>
-                        <span class="dim-eval">增长缓慢</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">UP主质量</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 26.666666666666668%; background: #f59e0b;"></div>
-                        </div>
-                        <span class="dim-score">4.0/15</span>
-                        <span class="dim-eval">普通创作者</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">口碑评价</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 53.333333333333336%; background: #8b5cf6;"></div>
-                        </div>
-                        <span class="dim-score">8.0/15</span>
-                        <span class="dim-eval">正向反馈</span>
-                    </div>
-                </div>
-
-                <div class="video-score">
-                    <span>综合评分:</span>
-                    <div class="score-bar">
-                        <div class="score-fill" style="width: 60.4%"></div>
-                    </div>
-                    <span class="score-value">60.4分</span>
-                </div>
-                <div class="budget-suggest">
-                    <span class="budget-label">💰 建议预算:</span>
-                    <span class="budget-value">2000-4000元</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="video-item">
-            <div class="video-rank top2">#2</div>
-            <div class="video-info">
-                <div class="video-title">
-                    <a href="https://www.bilibili.com/video/BV1e1Q6BvEub" target="_blank">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。</a>
-                    <span class="badge medium">可考虑</span>
-                    <span class="badge underdog">⭐ 素人 +15分</span>
-                </div>
-                <div class="video-meta">
-                    UP主: 叶枫有理想 (粉丝数未知) | BV: BV1e1Q6BvEub
-                </div>
-
-                <!-- 推荐理由 -->
-                <div class="recommendation-box">
-                    <div class="recommendation-title">💡 推荐理由:</div>
-                    <ul class="recommendation-reasons">
-                        <li>👍 互动率9.01% - 良好</li><li>📈 稳定增长 - 6小时内播放增长0.6%</li><li>⭐ <strong>素人优质内容</strong> - 投流成本低30-50%,ROI更高(+15分)</li>
-                    </ul>
-                </div>
-
-                <!-- 基础数据 -->
-                <div class="video-stats">
-                    <div class="stat-item">
-                        <span class="icon">▶️</span>
-                        <span>1,221</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">👍</span>
-                        <span>24 (1.97%)</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">💰</span>
-                        <span>11 (0.90%)</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">⭐</span>
-                        <span>69</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">💬</span>
-                        <span>5</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="icon">📊</span>
-                        <span>互动率 9.01%</span>
-                    </div>
-                </div>
-
-                <!-- 评分维度详情 -->
-                <div class="dimensions-detail">
-                    <div class="dimension-item">
-                        <span class="dim-label">互动率</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 76.75%; background: #10b981;"></div>
-                        </div>
-                        <span class="dim-score">30.7/40</span>
-                        <span class="dim-eval">良好</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">增长趋势</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 0.6666666666666667%; background: #3b82f6;"></div>
-                        </div>
-                        <span class="dim-score">0.2/30</span>
-                        <span class="dim-eval">增长缓慢</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">UP主质量</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 26.666666666666668%; background: #f59e0b;"></div>
-                        </div>
-                        <span class="dim-score">4.0/15</span>
-                        <span class="dim-eval">普通创作者</span>
-                    </div>
-                    <div class="dimension-item">
-                        <span class="dim-label">口碑评价</span>
-                        <div class="dim-bar">
-                            <div class="dim-fill" style="width: 67.33333333333333%; background: #8b5cf6;"></div>
-                        </div>
-                        <span class="dim-score">10.1/15</span>
-                        <span class="dim-eval">正向反馈</span>
-                    </div>
-                </div>
-
-                <div class="video-score">
-                    <span>综合评分:</span>
-                    <div class="score-bar">
-                        <div class="score-fill" style="width: 60.0%"></div>
-                    </div>
-                    <span class="score-value">60.0分</span>
-                </div>
-                <div class="budget-suggest">
-                    <span class="budget-label">💰 建议预算:</span>
-                    <span class="budget-value">2000-4000元</span>
-                </div>
-            </div>
-        </div>
-        </div>
         </div>
 
         <!-- 最近提醒 -->
         <div class="content-section">
             <h2>🔔 最近提醒记录</h2>
             <div class="alert-list">
-        <div class="alert-item">
-            <div class="alert-title">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。 ⭐素人</div>
-            <div class="alert-meta">
-                UP主: 叶枫有理想 | 评分: 60.0分 | 预算: 2000-4000元 | 提醒时间: 2026-03-25 16:46
+
+                <div class="alert-item">
+                    <div class="alert-title">理想汽车启动10亿美元回购计划 ⭐素人</div>
+                    <div class="alert-meta">UP主: 易车视讯 | 评分: 69.9分 | 增长: +50.0% | 互动率: 4.2% | 监测时间: 2026-03-25 17:05</div>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-title">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！ ⭐素人</div>
+                    <div class="alert-meta">UP主: 抽象行为学 | 评分: 69.3分 | 增长: +4.1% | 互动率: 5.5% | 监测时间: 2026-03-25 17:05</div>
+                </div>
+
             </div>
-        </div>
-        
-        <div class="alert-item">
-            <div class="alert-title">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！ ⭐素人</div>
-            <div class="alert-meta">
-                UP主: 抽象行为学 | 评分: 60.4分 | 预算: 2000-4000元 | 提醒时间: 2026-03-25 16:46
-            </div>
-        </div>
-        
-        <div class="alert-item">
-            <div class="alert-title">理想出火车了？？？最后一个车主更是炸裂！相信口碑的力量！理他干嘛，想怎么开怎么开，想怎么停怎么停！ ⭐素人</div>
-            <div class="alert-meta">
-                UP主: 抽象行为学 | 评分: 72.0分 | 预算: 2000-4000元 | 提醒时间: 2026-03-25 16:40
-            </div>
-        </div>
-        
-        <div class="alert-item">
-            <div class="alert-title">理想20G流量根本不够用？其实一分钱都不用花。教你自动连接手机热点，上车就有网，下车自动断，太省了。 ⭐素人</div>
-            <div class="alert-meta">
-                UP主: 叶枫有理想 | 评分: 71.9分 | 预算: 2000-4000元 | 提醒时间: 2026-03-25 16:33
-            </div>
-        </div>
-        </div>
         </div>
     </div>
 
     <script>
-        // 自动刷新倒计时
-        let countdown = 300; // 5分钟
-
+        let countdown = 300;
         function updateCountdown() {
-            const minutes = Math.floor(countdown / 60);
-            const seconds = countdown % 60;
-            document.title = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')} - 理想汽车监控看板`;
+            const m = Math.floor(countdown/60);
+            const s = countdown%60;
+            document.title = `⏱️ ${m}:${s.toString().padStart(2,'0')} - 理想汽车监控看板`;
             countdown--;
             if (countdown < 0) countdown = 300;
         }
-
         setInterval(updateCountdown, 1000);
     </script>
 </body>
