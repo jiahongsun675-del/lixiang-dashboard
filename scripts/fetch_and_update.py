@@ -934,6 +934,41 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 .modal-field input{{width:100%;padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.92em;outline:none}}
 .modal-actions{{display:flex;gap:10px;margin-top:18px}}.modal-submit{{flex:1;padding:9px;background:#3b6eea;color:#fff;border:none;border-radius:7px;font-size:.95em;font-weight:600;cursor:pointer}}
 .modal-cancel{{padding:9px 18px;background:#f1f3f9;color:#666;border:none;border-radius:7px;font-size:.95em;cursor:pointer}}
+/* ── 投放追踪 ── */
+.promo-add-section{{border:2px dashed #dde2f0;border-radius:10px;padding:20px;margin-bottom:20px;background:#fafbff}}
+.promo-add-title{{font-size:.92em;font-weight:600;color:#555;margin-bottom:14px}}
+.promo-add-tabs{{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}}
+.add-tab{{padding:6px 16px;border:1px solid #dde2f0;border-radius:20px;font-size:.82em;cursor:pointer;color:#666;background:#fff;transition:all .2s}}
+.add-tab.active{{background:#3b6eea;color:#fff;border-color:#3b6eea}}
+.add-panel{{display:none}}.add-panel.active{{display:block}}
+.add-form-row{{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}}
+.add-form-field{{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}}
+.add-form-field label{{font-size:.78em;font-weight:600;color:#555}}
+.add-form-field input{{padding:8px 12px;border:1px solid #dde2f0;border-radius:7px;font-size:.9em;outline:none;transition:border-color .2s}}
+.add-form-field input:focus{{border-color:#3b6eea}}
+.promo-list{{display:grid;gap:16px}}
+.promo-card-v2{{border:1px solid #e8eaed;border-radius:10px;padding:18px;background:#fff}}
+.promo-card-header{{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}}
+.promo-card-title{{font-size:.97em;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}}
+.promo-card-title a:hover{{color:#3b6eea}}.promo-card-meta{{font-size:.78em;color:#aaa}}
+.promo-card-budget{{text-align:right;flex-shrink:0}}
+.pcb-lbl{{font-size:.72em;color:#aaa;margin-bottom:2px}}.pcb-val{{font-size:1.4em;font-weight:700;color:#3b6eea}}
+.promo-track-bar{{margin-bottom:14px}}
+.ptb-label{{font-size:.76em;color:#aaa;margin-bottom:4px}}
+.ptb-bar{{height:5px;background:#eee;border-radius:3px;overflow:hidden}}
+.ptb-fill{{height:100%;background:linear-gradient(90deg,#3b6eea,#10b981);border-radius:3px}}
+.promo-compare-table{{width:100%;border-collapse:collapse;font-size:.83em;margin-bottom:12px}}
+.promo-compare-table th{{background:#f8f9fc;padding:7px 10px;text-align:left;color:#666;font-weight:600;border-bottom:1px solid #e8eaed}}
+.promo-compare-table td{{padding:7px 10px;border-bottom:1px solid #f5f5f5;color:#333}}
+.promo-compare-table tr:last-child td{{border-bottom:none}}
+.promo-compare-table .delta{{color:#059669;font-weight:600}}
+.promo-compare-table .pct{{color:#3b6eea;font-size:.82em}}
+.promo-metrics-row{{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}}
+.promo-metric{{background:#f8f9fc;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #eee}}
+.pm-lbl{{font-size:.72em;color:#aaa;margin-bottom:4px}}.pm-val{{font-size:1em;font-weight:700;color:#1a1a2e}}
+.promo-waiting{{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.85em;text-align:center}}
+.promo-roi-row{{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#f4f7ff;border-radius:6px;font-size:.85em}}
+.roi-lbl{{color:#666}}.roi-val{{font-weight:700;color:#3b6eea;font-size:1.05em}}
 @media(max-width:720px){{.topbar{{padding:0 16px}}.nav-tabs{{padding:0 16px}}.page{{padding:18px 16px}}.dim-row{{grid-template-columns:62px 1fr 40px 56px}}}}
 </style>
 </head>
@@ -950,6 +985,7 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
   <div class="nav-tab" data-page="page-history" onclick="switchPage(this)">历史上榜</div>
   <div class="nav-tab" data-page="page-sustained" onclick="switchPage(this)">持续热度</div>
   <div class="nav-tab" data-page="page-heated" onclick="switchPage(this)">历史加热</div>
+  <div class="nav-tab" data-page="page-promo" onclick="switchPage(this)">投放效果</div>
   <div class="nav-tab" data-page="page-query" onclick="switchPage(this)">BV查询</div>
   <div class="nav-tab" data-page="page-config" onclick="switchPage(this)">监控配置</div>
 </div>
@@ -1012,7 +1048,93 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
   </div>
 </div>
 
-<!-- PAGE 5: BV查询 -->
+<!-- PAGE 5: 投放效果 -->
+<div class="page" id="page-promo">
+  <!-- 添加投放追踪 -->
+  <div class="promo-add-section">
+    <div class="promo-add-title">添加投放追踪</div>
+    <div class="promo-add-tabs">
+      <div class="add-tab active" onclick="switchAddTab(this,'add-from-bv')">输入BV号（自动拉取）</div>
+      <div class="add-tab" onclick="switchAddTab(this,'add-manual')">手动填写数据</div>
+    </div>
+    <div class="add-panel active" id="add-from-bv">
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:280px">
+          <label>BV号</label>
+          <input id="add-bvid" type="text" placeholder="BV1xxxxxxxxx" oninput="onAddBvInput()" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="add-budget" type="number" placeholder="3000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="add-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="add-note" type="text" placeholder="例：周末测试" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;align-self:flex-end" onclick="submitFromBv()">+ 添加追踪</button>
+      </div>
+      <div id="add-bv-preview" style="font-size:.82em;color:#888;min-height:18px"></div>
+      <div id="add-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
+    <div class="add-panel" id="add-manual">
+      <div class="add-form-row">
+        <div class="add-form-field">
+          <label>视频标题</label>
+          <input id="man-title" type="text" placeholder="视频标题" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>BV号（选填）</label>
+          <input id="man-bvid" type="text" placeholder="BV1xxxxxxxxx" />
+        </div>
+        <div class="add-form-field" style="max-width:150px">
+          <label>UP主名</label>
+          <input id="man-author" type="text" placeholder="UP主昵称" />
+        </div>
+      </div>
+      <div class="add-form-row">
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前播放量</label>
+          <input id="man-play-before" type="number" placeholder="10000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放前点赞</label>
+          <input id="man-like-before" type="number" placeholder="500" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:140px">
+          <label>投放金额（元）</label>
+          <input id="man-budget" type="number" placeholder="3000" min="0" />
+        </div>
+        <div class="add-form-field" style="max-width:200px">
+          <label>投放开始时间</label>
+          <input id="man-start-time" type="datetime-local" />
+        </div>
+        <div class="add-form-field" style="max-width:180px">
+          <label>备注（选填）</label>
+          <input id="man-note" type="text" placeholder="" />
+        </div>
+        <button class="btn btn-primary" style="height:36px;align-self:flex-end" onclick="submitManual()">+ 添加</button>
+      </div>
+      <div id="man-status" style="font-size:.82em;color:#3b6eea;min-height:18px;margin-top:4px"></div>
+    </div>
+  </div>
+  <!-- 投放效果看板 -->
+  <div class="card">
+    <div class="card-title">
+      投放效果看板
+      <span style="font-size:.78em;font-weight:400;color:#aaa">每次巡检自动更新 · CPM = 投入 ÷ 新增播放 × 1000</span>
+    </div>
+    <div class="card-sub">记录存储于 GitHub promotions.json · 自动追踪播放/点赞/互动增量</div>
+    <div class="promo-list" id="promo-list-container">
+      <div class="empty">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: BV查询 -->
 <div class="page" id="page-query">
   <div class="card">
     <div class="card-title">BV查询</div>
@@ -1041,18 +1163,30 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
       <div class="cfg-item"><div class="cfg-l">数据更新时间</div><div class="cfg-v">{now_str}</div></div>
     </div>
   </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-title">GitHub Token 配置</div>
+    <div class="card-sub">Token 存于浏览器本地，用于投放记录的云端同步</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <div id="token-status" style="font-size:.88em;color:#aaa;flex:1">检测中...</div>
+      <button class="btn btn-secondary btn-sm" onclick="resetToken()">重置 Token</button>
+    </div>
+    <div style="font-size:.78em;color:#aaa;margin-top:8px">
+      看板地址: <a href="https://jiahongsun675-del.github.io/lixiang-dashboard/" target="_blank" style="color:#3b6eea">https://jiahongsun675-del.github.io/lixiang-dashboard/</a>
+    </div>
+  </div>
 </div>
-
-<!-- 投流弹窗 -->
 <div class="modal-overlay" id="promo-modal">
   <div class="modal">
-    <h3>📋 记录投流信息</h3>
+    <h3>标记加热 & 添加投放追踪</h3>
     <div class="modal-video-title" id="modal-video-title"></div>
-    <div class="modal-field"><label>投流预算 (元)</label><input id="modal-budget" type="number" placeholder="例如 3000"></div>
-    <div class="modal-field"><label>备注</label><input id="modal-note" placeholder="投流平台、时段等备注"></div>
+    <div class="modal-field"><label>BV号</label><input id="modal-bvid" type="text" readonly style="background:#f8f9fc"/></div>
+    <div class="modal-field"><label>投放金额（元，选填）</label><input id="modal-budget" type="number" placeholder="不填则仅标记加热，不计入投放追踪" min="0"></div>
+    <div class="modal-field"><label>投放开始时间</label><input id="modal-start-time" type="datetime-local"/></div>
+    <div class="modal-field"><label>备注（选填）</label><input id="modal-note" placeholder="例如：周末投放测试"></div>
+    <div id="modal-fetch-status" style="font-size:.8em;color:#3b6eea;min-height:16px;margin-top:4px"></div>
     <div class="modal-actions">
-      <button class="modal-submit" onclick="submitPromotion()">确认加热</button>
       <button class="modal-cancel" onclick="closeModal()">取消</button>
+      <button class="modal-submit" onclick="submitPromotion()">确认</button>
     </div>
   </div>
 </div>
@@ -1077,17 +1211,6 @@ function switchPage(tab){{
 }}
 function getHeatedSet(){{try{{return new Set(JSON.parse(localStorage.getItem('heated_bvids')||'[]'));}}catch{{return new Set();}}}}
 function saveHeatedSet(s){{localStorage.setItem('heated_bvids',JSON.stringify([...s]));}}
-let _pendingHeat=null;
-function markHeated(bvid,title,author,score,budget){{
-  const s=getHeatedSet();s.add(bvid);saveHeatedSet(s);
-  const records=getLocalHeatedRecords();
-  if(!records.find(r=>r.bvid===bvid)){{records.unshift({{bvid,title,author,score,budget,heated_at:new Date().toISOString()}});localStorage.setItem('heated_records',JSON.stringify(records));}}
-  refreshHeatedUI();
-  _pendingHeat={{bvid,title}};
-  document.getElementById('modal-video-title').textContent=title;
-  document.getElementById('modal-budget').value=budget.replace(/[^0-9]/g,'');
-  document.getElementById('promo-modal').classList.add('show');
-}}
 function unmarkHeated(bvid){{
   const s=getHeatedSet();s.delete(bvid);saveHeatedSet(s);
   const records=getLocalHeatedRecords().filter(r=>r.bvid!==bvid);
@@ -1115,7 +1238,221 @@ function renderHeatedList(){{
   container.innerHTML=records.map(r=>`<div class="heated-item"><div class="heated-item-info"><div class="heated-item-title"><a href="https://www.bilibili.com/video/${{r.bvid}}" target="_blank">${{r.title||r.bvid}}</a></div><div class="heated-item-meta">UP主: ${{r.author||'—'}} | 加热时间: ${{fmt(r.heated_at)}} | BV: ${{r.bvid}}</div></div><div class="heated-item-score"><div class="heated-score-val">${{r.score?r.score.toFixed(1):'—'}}</div><div class="heated-score-lbl">评分</div><button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="unmarkHeated('${{r.bvid}}')">取消</button></div></div>`).join('');
 }}
 function closeModal(){{document.getElementById('promo-modal').classList.remove('show');}}
-function submitPromotion(){{closeModal();}}
+document.getElementById('promo-modal').addEventListener('click',e=>{{if(e.target===document.getElementById('promo-modal'))closeModal();}});
+
+// ── GitHub API ──
+const GH_OWNER='jiahongsun675-del', GH_REPO='lixiang-dashboard', GH_BRANCH='main';
+function getGhToken(){{return localStorage.getItem('lixiang_gh_token')||'';}}
+function setGhToken(t){{localStorage.setItem('lixiang_gh_token',t);checkTokenStatus();}}
+async function ghPromoGet(){{
+  const t=getGhToken(); if(!t)return[[], null];
+  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/promotions.json?ref=${{GH_BRANCH}}`,{{headers:{{'Authorization':`token ${{t}}`,'Accept':'application/vnd.github.v3+json'}}}});
+  if(!r.ok)return[[], null];
+  const d=await r.json();
+  try{{return[JSON.parse(atob(d.content.replace(/\n/g,''))), d.sha];}}catch{{return[[],d.sha];}}
+}}
+async function ghPromoPut(records, sha, message){{
+  const t=getGhToken(); if(!t)throw new Error('未配置 GitHub Token');
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(records,null,2))));
+  const payload={{message:message||'update promotions',content,branch:GH_BRANCH}};
+  if(sha)payload.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/promotions.json`,{{method:'PUT',headers:{{'Authorization':`token ${{t}}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'}},body:JSON.stringify(payload)}});
+  if(!r.ok){{const e=await r.json();throw new Error(e.message||r.statusText);}}
+}}
+
+// ── 投放效果看板渲染 ──
+const fmtNum = n => n>=10000?(n/10000).toFixed(1)+'万':Number(n||0).toLocaleString();
+const fmtDate = iso => {{try{{return new Date(iso).toLocaleString('zh-CN',{{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}});}}catch{{return iso;}}}};
+
+async function renderPromoList(){{
+  const container=document.getElementById('promo-list-container');
+  if(!container)return;
+  if(!getGhToken()){{container.innerHTML='<div class="empty">请先在「监控配置」页配置 GitHub Token，才能加载投放记录</div>';return;}}
+  container.innerHTML='<div class="empty">⏳ 加载中...</div>';
+  try{{
+    const[records]=await ghPromoGet();
+    if(!records||!records.length){{container.innerHTML='<div class="empty">暂无投放记录 — 点击视频卡片右下角「标记加热」按钮登记</div>';return;}}
+    // 并发拉取最新数据
+    const active=records.filter(r=>r.status==='tracking'&&r.bvid&&!r.bvid.startsWith('MANUAL_'));
+    const latestMap={{}};
+    await Promise.all(active.map(async r=>{{
+      try{{
+        const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${{r.bvid}}`);
+        const d=await res.json();
+        if(d.code===0)latestMap[r.bvid]=d.data.stat;
+      }}catch{{}}
+    }}));
+    container.innerHTML=records.map(r=>renderPromoCard(r,latestMap[r.bvid])).join('');
+  }}catch(e){{container.innerHTML=`<div class="empty">加载失败：${{e.message}}</div>`;}}
+}}
+
+function renderPromoCard(r, latest){{
+  const bl=r.baseline; const latest_play=latest?latest.view:null;
+  const delta_play=bl&&latest_play?latest_play-bl.play:null;
+  const delta_like=bl&&latest?(latest.like-bl.like):null;
+  const cpm=delta_play&&r.budget&&delta_play>0?(r.budget/delta_play*1000).toFixed(2):null;
+  const progress=bl&&latest_play?Math.min(100,(delta_play/Math.max(bl.play*0.1,1)*100)):0;
+  const statusBadge=r.status==='done'?'<span class="badge badge-heated">已完成</span>':'<span class="badge badge-growing">追踪中</span>';
+  const deltaTxt=delta_play!=null?`+${{fmtNum(delta_play)}}`:'—';
+  const rows=[
+    ['播放量', bl?fmtNum(bl.play):'—', latest_play?fmtNum(latest_play):'—', delta_play!=null?`<span class="delta">${{deltaTxt}}</span>`:'—'],
+    ['点赞', bl?fmtNum(bl.like):'—', latest&&latest.like?fmtNum(latest.like):'—', delta_like!=null?`<span class="delta">+${{fmtNum(delta_like)}}</span>`:'—'],
+  ].map(([l,b,a,d])=>`<tr><td>${{l}}</td><td>${{b}}</td><td>${{a}}</td><td>${{d}}</td></tr>`).join('');
+  return `<div class="promo-card-v2">
+    <div class="promo-card-header">
+      <div>
+        <div class="promo-card-title"><a href="https://www.bilibili.com/video/${{r.bvid||''}}" target="_blank">${{r.title||r.bvid||'—'}}</a> ${{statusBadge}}</div>
+        <div class="promo-card-meta">UP主: ${{r.author||'—'}} | BV: ${{r.bvid||'手动'}} | 投放时间: ${{fmtDate(r.start_time)}}${{r.note?' | '+r.note:''}}</div>
+      </div>
+      <div class="promo-card-budget"><div class="pcb-lbl">投放预算</div><div class="pcb-val">¥${{(r.budget||0).toLocaleString()}}</div></div>
+    </div>
+    ${{bl?`<div class="promo-track-bar"><div class="ptb-label">播放增量进度（相较投前基线）</div><div class="ptb-bar"><div class="ptb-fill" style="width:${{progress}}%"></div></div></div>`:'<div class="promo-waiting">⏳ 等待系统采集基线数据（下次巡检时自动记录）</div>'}}
+    <table class="promo-compare-table"><thead><tr><th>指标</th><th>投放前</th><th>当前</th><th>增量</th></tr></thead><tbody>${{rows}}</tbody></table>
+    ${{cpm?`<div class="promo-roi-row"><span class="roi-lbl">CPM（千次播放成本）</span><span class="roi-val">¥${{cpm}}</span><span style="font-size:.78em;color:#aaa;margin-left:8px">= ¥${{(r.budget||0).toLocaleString()}} / ${{delta_play?fmtNum(delta_play):'—'}} × 1000</span></div>`:''}}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="stopPromo('${{r.bvid||''}}')">${{r.status==='done'?'重新追踪':'停止追踪'}}</button>
+    </div>
+  </div>`;
+}}
+
+async function stopPromo(bvid){{
+  if(!bvid)return;
+  const[records,sha]=await ghPromoGet();
+  const idx=records.findIndex(r=>r.bvid===bvid);
+  if(idx>=0){{records[idx].status=records[idx].status==='done'?'tracking':'done';}}
+  await ghPromoPut(records,sha,'更新追踪状态: '+bvid);
+  renderPromoList();
+}}
+
+// ── 从榜单「标记加热」弹窗 ──
+function markHeated(bvid,title,author,score,budget){{
+  const s=getHeatedSet();s.add(bvid);saveHeatedSet(s);
+  const records=getLocalHeatedRecords();
+  if(!records.find(r=>r.bvid===bvid)){{records.unshift({{bvid,title,author,score,budget,heated_at:new Date().toISOString()}});localStorage.setItem('heated_records',JSON.stringify(records));}}
+  refreshHeatedUI();
+  // 打开弹窗
+  document.getElementById('modal-bvid').value=bvid;
+  document.getElementById('modal-video-title').textContent=title+' · UP主: '+author;
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  document.getElementById('modal-start-time').value=now.toISOString().slice(0,16);
+  document.getElementById('modal-budget').value='';
+  document.getElementById('modal-note').value='';
+  document.getElementById('modal-fetch-status').textContent='';
+  document.getElementById('promo-modal').classList.add('show');
+}}
+
+async function submitPromotion(){{
+  const bvid=document.getElementById('modal-bvid').value.trim();
+  const budget=parseFloat(document.getElementById('modal-budget').value)||0;
+  const startTime=document.getElementById('modal-start-time').value;
+  const note=document.getElementById('modal-note').value.trim();
+  const status=document.getElementById('modal-fetch-status');
+  const titleText=document.getElementById('modal-video-title').textContent;
+  const upMatch=titleText.match(/UP主:\s*(.+)$/);
+  const author=upMatch?upMatch[1].trim():'';
+  const title=upMatch?titleText.replace(/\s*·\s*UP主:.*$/,'').trim():titleText.trim();
+  if(budget>0){{
+    if(!getGhToken()){{const t=prompt('请输入 GitHub Token：','');if(!t){{status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}}setGhToken(t);}}
+    status.textContent='⏳ 保存追踪记录...';
+    try{{
+      const[records,sha]=await ghPromoGet();
+      // 抓取当前数据作为基线
+      let baseline=null;
+      try{{const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${{bvid}}`);const d=await res.json();if(d.code===0){{const st=d.data.stat;baseline={{time:startTime,play:st.view,like:st.like,coin:st.coin,favorite:st.favorite,reply:st.reply,share:st.share}};}}}}catch{{}}
+      const newRec={{bvid,title:title||bvid,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking'}};
+      const idx=records.findIndex(r=>r.bvid===bvid);
+      if(idx>=0)records[idx]={{...records[idx],...newRec,baseline,snapshots:[],status:'tracking'}};
+      else records.push(newRec);
+      await ghPromoPut(records,sha,`登记投放: ${{bvid}} ¥${{budget}}`);
+      status.style.color='#059669';status.textContent='✅ 已登记！基线数据已采集，监控自动追踪中';
+    }}catch(e){{status.style.color='#dc2626';status.textContent='❌ 登记失败：'+e.message;return;}}
+  }}else{{
+    status.style.color='#059669';status.textContent='✅ 已标记加热（未填金额，不计入投放追踪）';
+  }}
+  setTimeout(()=>closeModal(),2000);
+}}
+
+async function onAddBvInput(){{
+  const bvid=document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const preview=document.getElementById('add-bv-preview');
+  if(!bvid){{preview.textContent='';return;}}
+  preview.textContent='⏳ 拉取视频信息...';
+  try{{
+    const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${{bvid}}`);
+    const d=await res.json();
+    if(d.code===0){{const v=d.data;preview.textContent=`✓ ${{v.title}} · UP主: ${{v.owner.name}} · 播放: ${{fmtNum(v.stat.view)}}`;}}
+    else{{preview.textContent='⚠ 视频不存在或无法访问';}}
+  }}catch{{preview.textContent='';}}
+}}
+
+async function submitFromBv(){{
+  const bvid=document.getElementById('add-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0];
+  const budget=parseFloat(document.getElementById('add-budget').value)||0;
+  const startTime=document.getElementById('add-start-time').value;
+  const note=document.getElementById('add-note').value.trim();
+  const status=document.getElementById('add-status');
+  if(!bvid){{status.style.color='#dc2626';status.textContent='❌ 请输入有效BV号';return;}}
+  if(!startTime){{status.style.color='#dc2626';status.textContent='❌ 请选择投放开始时间';return;}}
+  if(!getGhToken()){{const t=prompt('请输入 GitHub Token：','');if(!t){{status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}}setGhToken(t);}}
+  status.textContent='⏳ 拉取视频信息并登记...';
+  try{{
+    const res=await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${{bvid}}`);
+    const d=await res.json();
+    const title=d.code===0?d.data.title:bvid;
+    const author=d.code===0?d.data.owner.name:'';
+    let baseline=null;
+    if(d.code===0){{const st=d.data.stat;baseline={{time:startTime,play:st.view,like:st.like,coin:st.coin,favorite:st.favorite,reply:st.reply,share:st.share}};}}
+    const[records,sha]=await ghPromoGet();
+    const newRec={{bvid,title,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking'}};
+    const idx=records.findIndex(r=>r.bvid===bvid);
+    if(idx>=0)records[idx]={{...records[idx],...newRec,baseline,snapshots:[],status:'tracking'}};
+    else records.push(newRec);
+    await ghPromoPut(records,sha,`登记投放: ${{bvid}} ¥${{budget}}`);
+    status.style.color='#059669';status.textContent='✅ 已登记！';
+    document.getElementById('add-bvid').value='';document.getElementById('add-budget').value='';document.getElementById('add-bv-preview').textContent='';
+    renderPromoList();
+  }}catch(e){{status.style.color='#dc2626';status.textContent='❌ '+e.message;}}
+}}
+
+async function submitManual(){{
+  const title=document.getElementById('man-title').value.trim();
+  const bvid=document.getElementById('man-bvid').value.trim().match(/BV[a-zA-Z0-9]+/)?.[0]||('MANUAL_'+Date.now());
+  const author=document.getElementById('man-author').value.trim();
+  const playBefore=parseInt(document.getElementById('man-play-before').value)||0;
+  const likeBefore=parseInt(document.getElementById('man-like-before').value)||0;
+  const budget=parseFloat(document.getElementById('man-budget').value)||0;
+  const startTime=document.getElementById('man-start-time').value;
+  const note=document.getElementById('man-note').value.trim();
+  const status=document.getElementById('man-status');
+  if(!title){{status.style.color='#dc2626';status.textContent='❌ 请填写视频标题';return;}}
+  if(!startTime){{status.style.color='#dc2626';status.textContent='❌ 请选择投放开始时间';return;}}
+  if(!getGhToken()){{const t=prompt('请输入 GitHub Token：','');if(!t){{status.style.color='#dc2626';status.textContent='❌ 未提供Token';return;}}setGhToken(t);}}
+  status.textContent='⏳ 保存...';
+  const baseline=playBefore>0?{{time:startTime,play:playBefore,like:likeBefore,coin:0,favorite:0,reply:0,share:0}}:null;
+  try{{
+    const[records,sha]=await ghPromoGet();
+    records.push({{bvid,title,author,budget,start_time:startTime,note,created_at:new Date().toISOString(),baseline,snapshots:[],status:'tracking',manual:true}});
+    await ghPromoPut(records,sha,`手动登记: ${{title}}`);
+    status.style.color='#059669';status.textContent='✅ 已登记！';
+    ['man-title','man-bvid','man-author','man-play-before','man-like-before','man-budget','man-note'].forEach(id=>document.getElementById(id).value='');
+    renderPromoList();
+  }}catch(e){{status.style.color='#dc2626';status.textContent='❌ '+e.message;}}
+}}
+
+function switchAddTab(tab,panelId){{
+  document.querySelectorAll('.add-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.add-panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');document.getElementById(panelId).classList.add('active');
+}}
+
+function checkTokenStatus(){{
+  const t=getGhToken();const el=document.getElementById('token-status');
+  if(!el)return;
+  if(t){{el.style.color='#059669';el.textContent='✅ Token 已配置（'+t.slice(0,8)+'...）';}}
+  else{{el.style.color='#aaa';el.textContent='未配置，首次使用投放功能时会提示输入';}}
+}}
+function resetToken(){{if(confirm('确认清除已保存的 GitHub Token？')){{localStorage.removeItem('lixiang_gh_token');checkTokenStatus();}}}}
+
 const ALL_ALERTS={alerts_json};
 function renderAlertList(){{
   const container=document.getElementById('alert-list-container');if(!container)return;
@@ -1144,8 +1481,14 @@ async function queryBV(){{
   btn.disabled=false;btn.textContent='查询';
 }}
 (function init(){{
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const nowStr=now.toISOString().slice(0,16);
+  const addStart=document.getElementById('add-start-time');if(addStart)addStart.value=nowStr;
+  const manStart=document.getElementById('man-start-time');if(manStart)manStart.value=nowStr;
   applyBlacklistFilter();
   refreshHeatedUI();
+  checkTokenStatus();
+  renderPromoList();
 }})();
 </script>
 </body>
@@ -1154,8 +1497,100 @@ async function queryBV(){{
 
 
 # ══════════════════════════════════════════════
-# 6. Git push
+# 5b. 投放追踪自动快照更新
 # ══════════════════════════════════════════════
+
+async def auto_update_promo_snapshots(token: str):
+    """每次巡检时自动更新 promotions.json 中的快照数据"""
+    if not token:
+        return
+    # 读取 promotions.json
+    import base64
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    api_url = f"https://api.github.com/repos/jiahongsun675-del/lixiang-dashboard/contents/promotions.json?ref=main"
+    try:
+        import urllib.request, json as _json
+        req = urllib.request.Request(api_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = _json.loads(resp.read())
+        content = _json.loads(base64.b64decode(data["content"].replace("\n", "")).decode())
+        sha = data["sha"]
+    except Exception as e:
+        print(f"[PROMO] 读取 promotions.json 失败: {e}")
+        return
+
+    active = [r for r in content if r.get("status") == "tracking"
+              and r.get("bvid") and not r["bvid"].startswith("MANUAL_")]
+    if not active:
+        return
+
+    print(f"[PROMO] 更新 {len(active)} 条追踪记录的快照...")
+    connector = aiohttp.TCPConnector(limit=5, ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        details = await asyncio.gather(
+            *[fetch_video_detail(session, r["bvid"]) for r in active],
+            return_exceptions=True
+        )
+
+    changed = False
+    now_str = datetime.now().isoformat()
+    for record, detail in zip(active, details):
+        if not isinstance(detail, dict):
+            continue
+        stat = {
+            "time": now_str,
+            "play": detail.get("play", 0),
+            "like": detail.get("like", 0),
+            "coin": detail.get("coin", 0),
+            "favorite": detail.get("favorite", 0),
+            "reply": detail.get("reply", 0),
+            "share": detail.get("share", 0),
+        }
+        # 设置基线（首次）
+        if not record.get("baseline") and stat["play"] > 0:
+            record["baseline"] = stat.copy()
+            changed = True
+        # 添加快照（仅数据变化时）
+        snaps = record.setdefault("snapshots", [])
+        if not snaps or snaps[-1].get("play") != stat["play"]:
+            snaps.append(stat)
+            if len(snaps) > 100:  # 最多保留100条快照
+                snaps = snaps[-100:]
+                record["snapshots"] = snaps
+            changed = True
+
+    if not changed:
+        print("[PROMO] 无变化，跳过更新")
+        return
+
+    # 写回 GitHub
+    try:
+        encoded = base64.b64encode(
+            json.dumps(content, ensure_ascii=False, indent=2).encode()
+        ).decode()
+        put_data = json.dumps({
+            "message": f"Auto snapshot {now_str[:16]}",
+            "content": encoded,
+            "sha": sha,
+            "branch": "main",
+        }).encode()
+        req2 = urllib.request.Request(
+            "https://api.github.com/repos/jiahongsun675-del/lixiang-dashboard/contents/promotions.json",
+            data=put_data,
+            headers={**headers, "Content-Type": "application/json"},
+            method="PUT",
+        )
+        with urllib.request.urlopen(req2, timeout=15):
+            pass
+        print(f"[PROMO] 快照已更新（{len(active)} 条）")
+    except Exception as e:
+        print(f"[PROMO] 写入 promotions.json 失败: {e}")
+
+
+
 
 def git_push(token, message):
     if not token:
@@ -1235,6 +1670,10 @@ async def main():
     else:
         print("[INFO] 未设置 GITHUB_TOKEN，跳过自动推送")
         print("[INFO] 手动推送: cd lixiang-dashboard && git add index.html && git push")
+
+    # Step 6: 自动更新投放追踪快照
+    if token:
+        await auto_update_promo_snapshots(token)
 
     elapsed = time.time() - start
     print(f"\n完成！耗时 {elapsed:.1f}s，推荐榜 {sum(1 for v in scored if v['total_score']>=SCORE_THRESHOLD)} 个视频")
