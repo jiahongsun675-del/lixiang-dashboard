@@ -39,12 +39,27 @@ KEYWORDS = [
 
 # ── 黑名单（标题含这些词的视频直接过滤）──
 TITLE_BLACKLIST = [
-    "停车", "剐蹭", "刮蹭", "车位", "乱停", "陷车", "停车场", "停车位",  # 停车/剐蹭
-    "火车", "理想进行曲", "铁路", "高铁", "动车",                          # 无关内容
+    # 停车/剐蹭类
+    "停车", "剐蹭", "刮蹭", "车位", "乱停", "陷车", "停车场", "停车位",
+    # 火车/进行曲类（无关内容）
+    "火车", "理想进行曲", "铁路", "高铁", "动车",
+    # 求职/招聘类（理想汽车公司相关，非汽车本身）
+    "offer", "求职", "招聘", "应届", "算法岗", "工作邀约", "大厂", "字节",
+    "华为招", "实习生", "校招", "社招",
 ]
 
-# ── 标题相关性：必须包含至少一个理想/李想汽车相关词 ──
-TITLE_MUST_CONTAIN = ["理想", "李想"]
+# ── 标题相关性：必须包含汽车品牌/车型/车主等明确车辆上下文 ──
+TITLE_MUST_CONTAIN = [
+    # 车型
+    "理想L6", "理想L7", "理想L8", "理想L9",
+    "理想i6", "理想i8", "理想MEGA", "理想ONE",
+    # 品牌/车主/功能
+    "理想汽车", "理想车", "理想车主", "理想智驾", "理想AD",
+    "理想OTA", "理想v",    # OTA版本如 v13.4
+    "理想音响", "理想座舱", "理想增程",
+    # CEO 相关
+    "李想",
+]
 
 # ── 竞品品牌词（用于识别竞品主内容视频）──
 COMPETITOR_BRANDS = [
@@ -557,6 +572,13 @@ def score_video(v, prev_play=None):
     else:
         priority, priority_label = "skip", "暂不投流"
 
+    # 新鲜度排名分（推荐分 = 互动率 × (1+增长) / (发布天数+2)^1.5）
+    # 让新视频自动顶上去，老视频自然沉底
+    age_days = age_h / 24
+    freshness_rank = round(
+        interaction_rate * (1 + growth_pct / 10) / ((age_days + 2) ** 1.5), 3
+    )
+
     return {
         **v,
         "interaction_rate": round(interaction_rate, 2),
@@ -567,6 +589,7 @@ def score_video(v, prev_play=None):
         "growth_score": round(growth_score, 1),
         "freshness_score": round(freshness_score, 1),
         "sentiment_score": round(sentiment_score, 1),
+        "freshness_rank": freshness_rank,
         "underdog_bonus": underdog_bonus,
         "stagnation_penalty": stagnation_penalty,
         "total_score": round(total, 1),
@@ -781,7 +804,7 @@ def video_card_full(v, rank):
     else:             budget = "¥1,000–2,000元"
 
     return f"""
-    <div class="video-item" data-bvid="{bvid}" data-mid="{mid}">
+    <div class="video-item" data-bvid="{bvid}" data-mid="{mid}" data-age-h="{v.get('age_h',999)}">
         <div class="video-rank {rank_cls}">#{rank}</div>
         <div class="video-info">
             <div class="video-title">
@@ -841,18 +864,34 @@ def video_compact(v, rank):
 
 
 def generate_html(scored_videos, now_str):
+    # ── 分组 ──
+    # 新发现：24小时内发布，按新鲜度排名
+    fresh = sorted(
+        [v for v in scored_videos if v.get("age_h", 999) <= 24 and v["total_score"] >= SCORE_THRESHOLD],
+        key=lambda v: v.get("freshness_rank", 0), reverse=True
+    )
+    # 历史监控：24小时以上，按综合评分
+    history_rec = sorted(
+        [v for v in scored_videos if v.get("age_h", 999) > 24 and v["total_score"] >= SCORE_THRESHOLD],
+        key=lambda v: v["total_score"], reverse=True
+    )
+    # 全部综合排名（备用）
     by_score  = sorted([v for v in scored_videos if v["total_score"] >= SCORE_THRESHOLD], key=lambda v: v["total_score"], reverse=True)
     by_play   = sorted(scored_videos, key=lambda v: v.get("play", 0), reverse=True)
-    new_vids  = sorted([v for v in scored_videos if v.get("age_h", 999) <= 72], key=lambda v: v["total_score"], reverse=True)
+    new_vids  = sorted([v for v in scored_videos if v.get("age_h", 999) <= 72], key=lambda v: v.get("freshness_rank",0), reverse=True)
     hot_vids  = sorted([v for v in scored_videos if v.get("play", 0) >= 30000], key=lambda v: v.get("play", 0), reverse=True)
 
     total_cnt     = len(scored_videos)
     recommend_cnt = len(by_score)
+    fresh_cnt     = len(fresh)
     high_cnt      = sum(1 for v in scored_videos if v.get("priority") == "high")
     stale_cnt     = sum(1 for v in scored_videos if v.get("is_stale"))
 
-    # 推荐榜视频卡片
-    top_cards = "".join(video_card_full(v, i+1) for i, v in enumerate(by_score[:MAX_VIDEOS]))
+    # ── 推荐榜视频卡片 ──
+    # 新发现组（freshness_rank排序，最多10条）
+    fresh_cards = "".join(video_card_full(v, i+1) for i, v in enumerate(fresh[:10]))
+    # 历史监控组（total_score排序，最多10条）
+    history_cards = "".join(video_card_full(v, i+1) for i, v in enumerate(history_rec[:10]))
 
     # 历史上榜（精简卡片）
     history_items = "".join(f"""
@@ -1029,6 +1068,14 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 .promo-waiting{{padding:14px;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px;color:#92400e;font-size:.85em;text-align:center}}
 .promo-roi-row{{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:#f4f7ff;border-radius:6px;font-size:.85em}}
 .roi-lbl{{color:#666}}.roi-val{{font-weight:700;color:#3b6eea;font-size:1.05em}}
+/* ── 分组标题 & 筛选按钮 ── */
+.group-header{{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92em;font-weight:700;color:#166534;border-left:4px solid #22c55e;padding:8px 12px;background:#f0fdf4;border-radius:0 6px 6px 0;margin-bottom:12px}}
+.group-count{{background:#dcfce7;color:#166534;font-size:.72em;padding:2px 8px;border-radius:10px;font-weight:600}}
+.filter-btn{{padding:5px 14px;border:1px solid #dde2f0;border-radius:20px;font-size:.8em;cursor:pointer;color:#666;background:#fff;transition:all .2s}}
+.filter-btn:hover{{border-color:#3b6eea;color:#3b6eea}}
+.filter-btn.active{{background:#3b6eea;color:#fff;border-color:#3b6eea}}
+.video-item[data-age-h]{{transition:opacity .2s}}
+.video-item.time-hidden{{display:none!important}}
 @media(max-width:720px){{.topbar{{padding:0 16px}}.nav-tabs{{padding:0 16px}}.page{{padding:18px 16px}}.dim-row{{grid-template-columns:62px 1fr 40px 56px}}}}
 </style>
 </head>
@@ -1060,12 +1107,37 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
   </div>
   <div class="card">
     <div class="card-title">
-      推荐内容 TOP{min(MAX_VIDEOS, recommend_cnt)}
-      <span style="font-size:.78em;font-weight:400;color:#aaa">已加热内容自动置灰 · 点击「标记加热」移入历史</span>
+      推荐内容
+      <span style="font-size:.78em;font-weight:400;color:#aaa">已加热自动置灰 · 点击「标记加热」移入历史</span>
     </div>
-    <div class="card-sub">多源异步采集 · 粉丝≥5万 · 互动率×增长趋势×发布时效×口碑评价 · 🆕新内容优先 · 🔥高热度标注 · 🥶停滞降权</div>
-    <div class="video-list">
-{top_cards}
+    <div class="card-sub">粉丝≥5万严格过滤 · 🆕新发现按新鲜度排序 · 📚历史监控按综合评分 · 🥶停滞降权</div>
+
+    <!-- 时效筛选按钮 -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="filter-btn active" onclick="setTimeFilter(this,'all')">不限时间</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'12h')">12小时内</button>
+      <button class="filter-btn" onclick="setTimeFilter(this,'6h')">6小时内</button>
+      <span style="font-size:.78em;color:#aaa;align-self:center;margin-left:4px">按发布时间筛选</span>
+    </div>
+
+    <!-- 🆕 新发现 -->
+    <div class="group-header" id="group-fresh-header">
+      🆕 新发现 · 24小时内
+      <span class="group-count">{fresh_cnt} 条</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按「新鲜度 = 互动率÷(发布天数+2)^1.5」排序，新视频自动顶升</span>
+    </div>
+    <div class="video-list" id="group-fresh" style="margin-bottom:20px">
+{fresh_cards if fresh_cards else '<div class="empty" style="padding:16px">暂无24小时内新发布视频</div>'}
+    </div>
+
+    <!-- 📚 历史监控 -->
+    <div class="group-header" id="group-history-header" style="border-color:#f59e0b">
+      📚 历史监控 · 24小时以上
+      <span class="group-count" style="background:#fef3c7;color:#92400e">{len(history_rec)} 条</span>
+      <span style="font-size:.74em;font-weight:400;color:#aaa">按综合评分排序</span>
+    </div>
+    <div class="video-list" id="group-history">
+{history_cards if history_cards else '<div class="empty" style="padding:16px">暂无历史监控视频</div>'}
     </div>
   </div>
 </div>
@@ -1252,8 +1324,8 @@ a{{color:inherit;text-decoration:none}}a:hover{{color:#3b6eea}}
 </div>
 
 <script>
-const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车'];
-const TITLE_MUST_CONTAIN = ['理想','李想'];
+const TITLE_BLACKLIST = ['停车','剐蹭','刮蹭','车位','乱停','陷车','停车场','停车位','火车','理想进行曲','铁路','高铁','动车','offer','求职','招聘','应届','算法岗','大厂','字节'];
+const TITLE_MUST_CONTAIN = ['理想L6','理想L7','理想L8','理想L9','理想i6','理想i8','理想MEGA','理想ONE','理想汽车','理想车','理想车主','理想智驾','理想OTA','理想音响','理想座舱','李想'];
 function applyBlacklistFilter(){{
   document.querySelectorAll('.video-item').forEach(el=>{{
     const t=el.querySelector('.video-title a');
@@ -1268,6 +1340,16 @@ function switchPage(tab){{
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   tab.classList.add('active');
   document.getElementById(tab.dataset.page).classList.add('active');
+}}
+function setTimeFilter(btn, mode){{
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const maxH = mode==='6h'?6 : mode==='12h'?12 : 99999;
+  document.querySelectorAll('.video-item[data-age-h]').forEach(el=>{{
+    const ageH = parseFloat(el.dataset.ageH||99999);
+    if(ageH <= maxH) el.classList.remove('time-hidden');
+    else el.classList.add('time-hidden');
+  }});
 }}
 function getHeatedSet(){{try{{return new Set(JSON.parse(localStorage.getItem('heated_bvids')||'[]'));}}catch{{return new Set();}}}}
 function saveHeatedSet(s){{localStorage.setItem('heated_bvids',JSON.stringify([...s]));}}
@@ -2045,12 +2127,53 @@ async def _score_and_push(all_seen: dict, conn_db, token: str, label: str):
         await auto_update_promo_snapshots(token)
 
 
+async def backfill_fan_counts():
+    """补全 DB 中 fans=0 的视频粉丝数（每次运行时顺带修复）"""
+    conn = init_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT DISTINCT mid FROM video_meta
+        WHERE fans = 0 AND mid > 0
+        LIMIT 50
+    """)
+    zero_mids = [row[0] for row in c.fetchall()]
+    if not zero_mids:
+        conn.close()
+        return
+    print(f"[补全] 修复 {len(zero_mids)} 个 fans=0 的 UP 主粉丝数...")
+    fan_connector = aiohttp.TCPConnector(limit=10, ssl=False)
+    async with aiohttp.ClientSession(connector=fan_connector) as session:
+        results = []
+        for i in range(0, len(zero_mids), 10):
+            batch = zero_mids[i:i+10]
+            br = await asyncio.gather(
+                *[fetch_fan_count(session, m) for m in batch],
+                return_exceptions=True
+            )
+            results.extend(br)
+            if i + 10 < len(zero_mids):
+                await asyncio.sleep(0.3)
+    updated = 0
+    for mid, f in zip(zero_mids, results):
+        fans = f if isinstance(f, int) and f > 0 else 0
+        if fans > 0:
+            c.execute("UPDATE video_meta SET fans=? WHERE mid=?", (fans, mid))
+            save_fan_cache(conn, mid, fans)
+            updated += 1
+    conn.commit()
+    conn.close()
+    print(f"[补全] 已修复 {updated}/{len(zero_mids)} 个 UP 主粉丝数")
+
+
 async def main():
     start = time.time()
     print(f"\n{'='*60}")
     print(f"理想汽车B站监控 - 多源异步采集")
     print(f"启动时间: {datetime.now():%Y-%m-%d %H:%M:%S}")
     print(f"{'='*60}")
+
+    # Step 0: 补全历史 fans=0（最多50个，后台顺带修复）
+    await backfill_fan_counts()
 
     # Step 1: 采集
     raw_videos = await collect_all_videos()
