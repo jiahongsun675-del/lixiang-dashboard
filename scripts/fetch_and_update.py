@@ -82,6 +82,10 @@ GITHUB_TOKEN = (os.environ.get("GITHUB_TOKEN") or
 GITHUB_REMOTE = "https://jiahongsun675-del:{token}@github.com/jiahongsun675-del/lixiang-dashboard.git"
 GIT_BRANCH = "gh-pages:main"
 
+# ── 飞书 Webhook ──
+FEISHU_WEBHOOK = "https://open.feishu.cn/open-apis/bot/v2/hook/3736aa75-07a1-4580-8d84-77675d7dc149"
+DASHBOARD_URL  = "https://jiahongsun675-del.github.io/lixiang-dashboard/"
+
 
 # ══════════════════════════════════════════════
 # 1. 动态请求头（绕过 CDN 缓存）
@@ -1629,8 +1633,146 @@ def git_push(token, message):
 
 
 # ══════════════════════════════════════════════
-# 7. 主流程
+# 6b. 飞书定时推送
 # ══════════════════════════════════════════════
+
+def send_feishu_push(scored_videos: list, now_str: str):
+    """向飞书机器人推送今日推荐内容"""
+    import urllib.request, json as _json
+
+    top = sorted(
+        [v for v in scored_videos if v.get("total_score", 0) >= SCORE_THRESHOLD],
+        key=lambda v: v["total_score"], reverse=True
+    )[:10]
+
+    if not top:
+        print("[飞书] 无达标视频，跳过推送")
+        return
+
+    def fmt_n(n):
+        return f"{n/10000:.1f}万" if n >= 10000 else str(n)
+
+    # 构造卡片消息
+    lines = []
+    for i, v in enumerate(top, 1):
+        title = v.get("title", "")[:35] + ("…" if len(v.get("title","")) > 35 else "")
+        author = v.get("author", "")
+        score  = v.get("total_score", 0)
+        play   = fmt_n(v.get("play", 0))
+        ir     = v.get("interaction_rate", 0)
+        fans   = v.get("fans", 0)
+        fans_str = f"{fans/10000:.1f}万粉" if fans > 0 else "粉丝未知"
+
+        # 预算
+        if score >= 65:   budget = "¥6,000~10,000"
+        elif score >= 50: budget = "¥3,000~6,000"
+        elif score >= 40: budget = "¥2,000~4,000"
+        else:             budget = "¥1,000~2,000"
+
+        # 标签
+        tags = []
+        if v.get("age_h", 999) < 72:  tags.append("🆕新内容")
+        if v.get("play", 0) >= 50000:  tags.append("🔥高热度")
+        if v.get("underdog_bonus", 0):  tags.append("⭐素人")
+        if v.get("is_stale"):           tags.append("🥶停滞")
+        tag_str = " ".join(tags)
+
+        url = f"https://www.bilibili.com/video/{v['bvid']}"
+        lines.append(
+            f"**#{i} {title}**\n"
+            f"UP主：{author}（{fans_str}）| 评分：**{score}分** {tag_str}\n"
+            f"播放：{play} | 互动率：{ir:.1f}% | 建议预算：{budget}\n"
+            f"[→ 查看视频]({url})\n"
+        )
+
+    body_text = "\n".join(lines)
+    total = len(scored_videos)
+    recommend_cnt = len(top)
+
+    payload = {
+        "msg_type": "interactive",
+        "card": {
+            "config": {"wide_screen_mode": True},
+            "header": {
+                "title": {"tag": "plain_text", "content": f"🚗 理想汽车B站推荐日报 · {now_str[:10]}"},
+                "template": "blue"
+            },
+            "elements": [
+                {
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": (
+                            f"**本次分析：{total} 个视频 | 达标推荐：{recommend_cnt} 个**\n"
+                            f"评分维度：互动率 × 增长趋势 × 发布时效 × 口碑评价\n"
+                        )
+                    }
+                },
+                {"tag": "hr"},
+                {
+                    "tag": "div",
+                    "text": {"tag": "lark_md", "content": body_text}
+                },
+                {"tag": "hr"},
+                {
+                    "tag": "action",
+                    "actions": [{
+                        "tag": "button",
+                        "text": {"tag": "plain_text", "content": "查看完整看板"},
+                        "url": DASHBOARD_URL,
+                        "type": "primary"
+                    }]
+                }
+            ]
+        }
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode()
+    try:
+        req = urllib.request.Request(
+            FEISHU_WEBHOOK,
+            data=data,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = _json.loads(resp.read())
+        if result.get("code") == 0 or result.get("StatusCode") == 0:
+            print(f"[飞书] 推送成功，共 {recommend_cnt} 条推荐")
+        else:
+            print(f"[飞书] 推送失败: {result}")
+    except Exception as e:
+        print(f"[飞书] 推送异常: {e}")
+
+
+async def feishu_push_main():
+    """独立飞书推送模式：抓取最新数据并推送"""
+    print(f"[{datetime.now():%H:%M:%S}] 飞书定时推送...")
+    raw_videos = await collect_all_videos()
+    conn = init_db()
+    filtered = [v for v in raw_videos
+                if not is_blacklisted(v.get("title", ""))
+                and v.get("play", 0) >= MIN_PLAY
+                and (v.get("fans", -1) == -1 or v.get("fans", 0) >= MIN_FANS)]
+    scored = []
+    for v in filtered:
+        sv = score_video(v, get_prev_play(conn, v["bvid"]))
+        save_snapshot(conn, sv)
+        scored.append(sv)
+    conn.close()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    send_feishu_push(scored, now_str)
+    # 顺便更新 dashboard
+    if len(scored) >= 3:
+        html = generate_html(scored, now_str)
+        with open(HTML_PATH, "w", encoding="utf-8") as f:
+            f.write(html)
+        token = GITHUB_TOKEN
+        if token:
+            git_push(token, f"Feishu push update {now_str}")
+
+
+
 
 async def deep_crawl_main(minutes: int = 30):
     """
@@ -1818,12 +1960,13 @@ async def main():
 
 if __name__ == "__main__":
     import sys
-    # 检查是否传入 --deep <分钟数>
     args = sys.argv[1:]
     if "--deep" in args:
         idx = args.index("--deep")
         minutes = int(args[idx + 1]) if idx + 1 < len(args) else 30
         asyncio.run(deep_crawl_main(minutes))
+    elif "--feishu-push" in args:
+        asyncio.run(feishu_push_main())
     else:
         asyncio.run(main())
 
