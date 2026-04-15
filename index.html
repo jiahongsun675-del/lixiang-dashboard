@@ -1,1 +1,216 @@
-<html>test</html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="refresh" content="1800">
+<title>理想汽车 · B站互动监测</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f4f5f7;min-height:100vh;color:#1a1a2e}
+a{color:inherit;text-decoration:none}a:hover{color:#3b6eea}
+.topbar{background:#fff;border-bottom:1px solid #e8eaed;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:1.05em;font-weight:700}.topbar-logo span{color:#3b6eea}
+.topbar-meta{font-size:.8em;color:#aaa}
+.page{padding:28px 32px;max-width:1280px;margin:0 auto}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.sc{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:18px 20px}
+.sc .lbl{font-size:.78em;color:#999;margin-bottom:6px}
+.sc .val{font-size:1.9em;font-weight:700;color:#1a1a2e}
+.sc .val .unit{font-size:.42em;color:#aaa;font-weight:400;margin-left:2px}
+.sc .sub{font-size:.75em;color:#bbb;margin-top:3px}
+.card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:22px;margin-bottom:18px}
+.card-title{font-size:1.05em;font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-sub{font-size:.8em;color:#aaa;margin-bottom:16px}
+.video-list{display:grid;gap:12px}
+.video-item{border:1px solid #e8eaed;border-radius:8px;padding:14px 16px;display:flex;gap:14px;background:#fff;transition:border-color .2s}
+.video-item:hover{border-color:#a5b8f5}
+.video-rank{font-size:1.4em;font-weight:700;min-width:32px;text-align:center;color:#c0c8d8;padding-top:2px}
+.video-rank.top1{color:#ef4444}.video-rank.top2{color:#f59e0b}.video-rank.top3{color:#10b981}
+.video-info{flex:1;min-width:0}
+.video-title{font-size:.97em;font-weight:600;margin-bottom:4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;line-height:1.4}
+.video-meta{color:#aaa;font-size:.8em;margin-bottom:8px}
+.fans-tag{font-size:.78em;padding:1px 6px;border-radius:4px;background:#f4f7ff;margin-left:2px}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.68em;font-weight:600}
+.badge-positive{background:#e6f9f0;color:#0d7a4e}
+.badge-hot{background:#fee2e2;color:#b91c1c}
+.badge-warn{background:#fff3cd;color:#856404}
+.video-stats{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0}
+.s-item{font-size:.8em;color:#777}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.sg-item{background:#fafbfc;border:1px solid #f0f0f0;border-radius:6px;padding:8px 10px}
+.sg-lbl{font-size:.72em;color:#999;margin-bottom:3px}
+.sg-val{font-size:1em;font-weight:700;margin-bottom:5px}
+.dim-grid{margin:6px 0;padding:8px 10px;background:#fafbfc;border-radius:6px;display:grid;gap:5px;border:1px solid #f0f0f0}
+.dim-row{display:grid;grid-template-columns:42px 1fr 52px;align-items:center;gap:8px}
+.dim-lbl{font-size:.76em;color:#999}
+.dim-bar{height:4px;background:#eee;border-radius:2px;overflow:hidden}
+.dim-fill{height:100%}
+.dim-val{font-size:.76em;font-weight:600;color:#444;text-align:right}
+.hot-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;font-size:.85em;line-height:1.8}
+.footer{text-align:center;padding:32px;font-size:.8em;color:#ccc}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">理想汽车 · <span>B站互动监测</span></div>
+  <div class="topbar-meta">每30分钟更新 · 无需Cookie · 最后更新: 2026-04-15 12:54</div>
+</div>
+<div class="page">
+  <div class="stats-row">
+    <div class="sc"><div class="lbl">监测视频数</div>
+      <div class="val">2<span class="unit">个</span></div>
+      <div class="sub">互动率 TOP2</div></div>
+    <div class="sc"><div class="lbl">总播放量</div>
+      <div class="val">38.8万</div>
+      <div class="sub">本批次合计</div></div>
+    <div class="sc"><div class="lbl">平均互动率</div>
+      <div class="val">0.79<span class="unit">%</span></div>
+      <div class="sub">互动偏低</div></div>
+    <div class="sc"><div class="lbl">高互动视频</div>
+      <div class="val">0<span class="unit">个</span></div>
+      <div class="sub">互动率≥5%</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">投流推荐 · 高互动视频</div>
+    <div class="card-sub">互动率≥5% 的视频，适合通过"起飞计划"加热</div>
+    <div class="hot-box"><span style="color:#aaa">暂无高互动视频</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      互动率 TOP2 · 实时排行
+      <span style="font-size:.78em;color:#aaa;font-weight:400">
+        互动率=(点赞+投币+收藏)/播放量 · 粉丝>5万
+      </span>
+    </div>
+    <div class="card-sub">
+      BV 池：25 个 | 本次拉取：25 个 |
+      过滤后：2 个 | 展示 TOP2
+    </div>
+    <div class="video-list">
+    <div class="video-item" data-bvid="BV14LkwYfEVz">
+      <div class="video-rank top1">1</div>
+      <div class="video-info">
+        <div class="video-title">
+          <a href="https://www.bilibili.com/video/BV14LkwYfEVz" target="_blank">理想L6与L9长得几乎一样，价格相差16万，到底有啥不同？</a>
+          
+        </div>
+        <div class="video-meta">
+          UP主: <a href="https://space.bilibili.com/272712050" target="_blank"
+                  style="color:#3b6eea">杨坨Alpaca</a>
+          &nbsp;<span class="fans-tag" style="color:#3b6eea">21.8万粉</span>
+          | BV: BV14LkwYfEVz | 12-18
+        </div>
+
+        <div class="stats-grid">
+          <div class="sg-item">
+            <div class="sg-lbl">播放量</div>
+            <div class="sg-val" style="color:#1a1a2e">34.1万</div>
+            <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#6366f1"></div></div>
+          </div>
+          <div class="sg-item">
+            <div class="sg-lbl">互动率</div>
+            <div class="sg-val" style="color:#aaa">1.06%</div>
+            <div class="dim-bar"><div class="dim-fill" style="width:100%;background:#aaa"></div></div>
+          </div>
+        </div>
+
+        <div class="video-stats">
+          <span class="s-item">👍 2685</span>
+          <span class="s-item">🪙 214</span>
+          <span class="s-item">⭐ 714</span>
+          <span class="s-item">↗ 280</span>
+          <span class="s-item">💬 740</span>
+        </div>
+
+        <div class="dim-grid">
+          <div class="dim-row">
+            <span class="dim-lbl">点赞</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:1%;background:#10b981"></div></div>
+            <span class="dim-val">0.8%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">投币</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+            <span class="dim-val">0.1%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">收藏</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b6eea"></div></div>
+            <span class="dim-val">0.2%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">分享</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#e879f9"></div></div>
+            <span class="dim-val">0.08%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-item" data-bvid="BV1jmQgBQEC9">
+      <div class="video-rank top2">2</div>
+      <div class="video-info">
+        <div class="video-title">
+          <a href="https://www.bilibili.com/video/BV1jmQgBQEC9" target="_blank">请选择你的理想汽车SBTI人格。</a>
+          
+        </div>
+        <div class="video-meta">
+          UP主: <a href="https://space.bilibili.com/2054075556" target="_blank"
+                  style="color:#3b6eea">理想汽车</a>
+          &nbsp;<span class="fans-tag" style="color:#22c55e">7.3万粉</span>
+          | BV: BV1jmQgBQEC9 | 04-14
+        </div>
+
+        <div class="stats-grid">
+          <div class="sg-item">
+            <div class="sg-lbl">播放量</div>
+            <div class="sg-val" style="color:#1a1a2e">4.7万</div>
+            <div class="dim-bar"><div class="dim-fill" style="width:14%;background:#6366f1"></div></div>
+          </div>
+          <div class="sg-item">
+            <div class="sg-lbl">互动率</div>
+            <div class="sg-val" style="color:#aaa">0.51%</div>
+            <div class="dim-bar"><div class="dim-fill" style="width:48%;background:#aaa"></div></div>
+          </div>
+        </div>
+
+        <div class="video-stats">
+          <span class="s-item">👍 206</span>
+          <span class="s-item">🪙 5</span>
+          <span class="s-item">⭐ 30</span>
+          <span class="s-item">↗ 115</span>
+          <span class="s-item">💬 24</span>
+        </div>
+
+        <div class="dim-grid">
+          <div class="dim-row">
+            <span class="dim-lbl">点赞</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#10b981"></div></div>
+            <span class="dim-val">0.4%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">投币</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#f59e0b"></div></div>
+            <span class="dim-val">0.0%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">收藏</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#3b6eea"></div></div>
+            <span class="dim-val">0.1%</span>
+          </div>
+          <div class="dim-row">
+            <span class="dim-lbl">分享</span>
+            <div class="dim-bar"><div class="dim-fill" style="width:0%;background:#e879f9"></div></div>
+            <span class="dim-val">0.25%</span>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+<div class="footer">公开 API 直采 · 无 Cookie · 无 Token 消耗 · 2026-04-15 12:54 生成</div>
+</body>
+</html>
