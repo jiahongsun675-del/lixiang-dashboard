@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<title>B站投流效果监控与决策看板</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4f8;color:#1e2d3d;font-size:13px}
+:root{--blue:#00A1D6;--pink:#FF77AA;--gold:#FFB347;--green:#27AE60;--purple:#7B68EE}
+.wrap{max-width:1400px;margin:0 auto;padding:18px 16px}
+/* header */
+.hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.hdr h1{font-size:20px;font-weight:700;color:var(--blue);letter-spacing:.5px}
+.hdr .sub{font-size:12px;color:#8a9bb0;margin-top:2px}
+.upload-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background .15s}
+.upload-btn:hover{background:#008cb8}
+/* filters */
+.filter-bar{background:#fff;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:18px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.filter-group{display:flex;flex-direction:column;gap:6px}
+.filter-label{font-size:11px;font-weight:600;color:#8a9bb0;text-transform:uppercase;letter-spacing:.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:3px 12px;border-radius:999px;font-size:12px;border:1.5px solid #d9e2ec;background:#fff;cursor:pointer;transition:all .15s;color:#374151}
+.chip:hover{border-color:var(--blue);color:var(--blue)}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chip.cat.on{background:var(--pink);border-color:var(--pink)}
+.chip.qt.on{background:var(--purple);border-color:var(--purple);color:#fff}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid var(--blue)}
+.kpi.pink{border-left-color:var(--pink)}
+.kpi.gold{border-left-color:var(--gold)}
+.kpi.green{border-left-color:var(--green)}
+.kpi.purple{border-left-color:var(--purple)}
+.kpi .lbl{font-size:11px;color:#8a9bb0;margin-bottom:4px}
+.kpi .val{font-size:22px;font-weight:700;color:#1e2d3d;line-height:1.1}
+.kpi .sub{font-size:11px;color:#b0bec5;margin-top:3px}
+/* section */
+.section{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:16px}
+.section h2{font-size:14px;font-weight:600;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section h2 .bar{width:4px;height:16px;border-radius:2px;background:var(--blue);display:inline-block}
+.section h2 .bar.pink{background:var(--pink)}
+.section h2 .bar.gold{background:var(--gold)}
+.section h2 .bar.green{background:var(--green)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:800px){.two-col{grid-template-columns:1fr}}
+.chart-wrap{position:relative;width:100%}
+/* table */
+.tbl-wrap{overflow-x:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8fafc;font-weight:600;color:#6b7280;padding:8px 10px;text-align:left;border-bottom:1px solid #e5e7eb}
+td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}
+tr:hover td{background:#f8fafc}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500}
+.tag.头部{background:#fff3e0;color:#e65100}
+.tag.腰部{background:#e3f2fd;color:#1565c0}
+.tag.尾部{background:#f3e5f5;color:#6a1b9a}
+/* insights */
+.insight-list{display:flex;flex-direction:column;gap:10px}
+.insight{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px}
+.insight .ico{font-size:20px;flex-shrink:0;line-height:1}
+.insight .txt strong{font-weight:600;color:#1e2d3d}
+.insight .txt p{margin-top:3px;color:#4b6070;line-height:1.6}
+.highlight{color:var(--blue);font-weight:700}
+.highlight.pink{color:var(--pink)}
+.highlight.gold{color:var(--gold)}
+.highlight.green{color:var(--green)}
+/* pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;flex-wrap:wrap}
+.pg-btn{padding:4px 12px;border-radius:6px;border:1.5px solid #d9e2ec;background:#fff;cursor:pointer;font-size:12px;color:#374151;transition:all .15s}
+.pg-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+.pg-info{font-size:12px;color:#8a9bb0}
+/* footer */
+.section.full{margin-bottom:16px}
+.footer{text-align:center;font-size:11px;color:#b0bec5;padding:10px 0 4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Header -->
+  <div class="hdr">
+    <div>
+      <h1>📊 B站投流效果监控与决策看板</h1>
+      <div class="sub"></div>
+    </div>
+    <label>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none"/>
+      <span class="upload-btn">⬆ 上传新数据</span>
+    </label>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <div class="filter-label">车型</div>
+      <div class="chips" id="modChips"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">UP主分类</div>
+      <div class="chips" id="catChips"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">投放类型</div>
+      <div class="chips" id="typeChips"></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">消耗季度</div>
+      <div class="chips" id="qtChips"></div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- Trend -->
+  <div class="section">
+    <h2><span class="bar"></span>趋势分析：播放量 & 消耗金额（按视频上线日期）</h2>
+    <div class="chart-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <!-- Bubble + Cat -->
+  <div class="two-col">
+    <div class="section" style="margin-bottom:0">
+      <h2><span class="bar pink"></span>效率象限（消耗 vs 播放量，气泡=互动率）<span style="font-size:11px;background:rgba(255,179,71,.15);color:#e6910a;border-radius:6px;padding:2px 8px;margin-left:6px">★ 黄金视频</span></h2>
+      <div class="chart-wrap" style="height:260px"><canvas id="bubbleChart"></canvas></div>
+    </div>
+    <div class="section" style="margin-bottom:0">
+      <h2><span class="bar"></span>UP主分类对比（CPM & 互动率）</h2>
+      <div class="chart-wrap" style="height:260px"><canvas id="catChart"></canvas></div>
+    </div>
+  </div>
+  <div style="margin-bottom:16px"></div>
+
+  <!-- Model -->
+  <div class="section">
+    <h2><span class="bar gold"></span>车型表现对比（CPM & CPE）</h2>
+    <div class="chart-wrap" style="height:240px"><canvas id="modelChart"></canvas></div>
+  </div>
+
+  <!-- Target type -->
+  <div class="section">
+    <h2><span class="bar pink"></span>投放类型对比（通投 vs 定向）</h2>
+    <div class="chart-wrap" style="height:200px"><canvas id="typeChart"></canvas></div>
+  </div>
+
+  <!-- Videos table -->
+  <div class="section full">
+    <h2><span class="bar gold"></span>视频加热效果排行</h2>
+    <div class="tbl-wrap"><table id="topTable"></table></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- Insights -->
+  <div class="section">
+    <h2><span class="bar green"></span>策略观察 · 自动洞察</h2>
+    <div class="insight-list" id="insightList"></div>
+  </div>
+
+  <div class="footer">CPM = 总消耗/总播放×1000 &nbsp;|&nbsp; 互动率 = 总互动/总播放 &nbsp;|&nbsp; CPE = 总消耗/总互动 &nbsp;|&nbsp; 数据仅在本地浏览器处理</div>
+</div>
+
+<script>
+// ─── Embedded data ───────────────────────────────────────────────────────────
+const EMBEDDED = [{"date":"2025-04-18","upName":"李大锤同学","model":"MEGA","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":5102.490566037736,"views":79368.0,"interactions":966.0},{"date":"2025-04-18","upName":"小特叔叔","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":3762.899999999999,"views":19835.0,"interactions":98.0},{"date":"2025-04-18","upName":"韩路大叔","model":"MEGA","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":4936.695283018868,"views":47441.0,"interactions":389.0},{"date":"2025-04-18","upName":"科技新一官方账号","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":3634.853773584906,"views":39490.0,"interactions":445.0},{"date":"2025-04-23","upName":"极速拍档-Berlin","model":"MEGA","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":5222.708490566038,"views":82505.0,"interactions":1741.0},{"date":"2025-04-25","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1780.5990566037738,"views":50730.0,"interactions":745.0},{"date":"2025-04-28","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1727.9490566037737,"views":28407.0,"interactions":308.0},{"date":"2025-04-29","upName":"望远镜-Telescope","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":5101.896226415094,"views":44626.0,"interactions":298.0},{"date":"2025-04-29","upName":"金韩龙的MOCAR","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1701.0424528301885,"views":42566.0,"interactions":466.0},{"date":"2025-05-05","upName":"UPTuber","model":"MEGA","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":4284.662264150944,"views":81616.0,"interactions":1815.0},{"date":"2025-05-05","upName":"iCatbot","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":5000.0,"cost":4282.352830188679,"views":85183.0,"interactions":1428.0},{"date":"2025-05-06","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1711.1716981132076,"views":45033.0,"interactions":556.0},{"date":"2025-05-12","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1698.5377358490566,"views":33243.0,"interactions":411.0},{"date":"2025-05-14","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1779.240566037736,"views":33568.0,"interactions":319.0},{"date":"2025-05-15","upName":"42号车库","model":"L9","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":1000.0,"cost":884.1141509433962,"views":21763.0,"interactions":170.0},{"date":"2025-05-19","upName":"路咖汽车","model":"L9","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":1000.0,"cost":858.4301886792452,"views":12527.0,"interactions":72.0},{"date":"2025-05-16","upName":"老汤哥Tango","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1699.0556603773584,"views":22865.0,"interactions":255.0},{"date":"2025-05-20","upName":"花叔频道","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1762.0301886792454,"views":19246.0,"interactions":168.0},{"date":"2025-05-20","upName":"老汤哥Tango","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1664.0915094339623,"views":27998.0,"interactions":443.0},{"date":"2025-05-20","upName":"知料汽车","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":1000.0,"cost":874.3584905660377,"views":14794.0,"interactions":71.0},{"date":"2025-05-26","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":4000.0,"cost":3876.350943396226,"views":42259.0,"interactions":290.0},{"date":"2025-05-27","upName":"老汤哥Tango","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1793.114150943396,"views":29894.0,"interactions":350.0},{"date":"2025-06-18","upName":"卡卡门卡_","model":"MEGA","upCat":"腰部","targetType":"通投","quarter":"25年Q2","budget":2000.0,"cost":1776.5405660377357,"views":31850.0,"interactions":321.0},{"date":"2025-07-04","upName":"老汤哥Tango","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q3","budget":2000.0,"cost":3026.317924528302,"views":40903.0,"interactions":722.0},{"date":"2025-07-17","upName":"花叔频道","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q3","budget":10000.0,"cost":8917.301886792453,"views":104452.0,"interactions":519.0},{"date":"2025-07-17","upName":"羊驼的睡衣","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4294.867924528302,"views":51464.0,"interactions":597.0},{"date":"2025-07-17","upName":"查叔Charles","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4266.645283018868,"views":51093.0,"interactions":566.0},{"date":"2025-07-17","upName":"类星频道","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4821.410377358491,"views":61063.0,"interactions":864.0},{"date":"2025-07-17","upName":"韩路大叔","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4249.621698113207,"views":54756.0,"interactions":702.0},{"date":"2025-07-17","upName":"野生试驾","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4274.5330188679245,"views":65584.0,"interactions":988.0},{"date":"2025-07-17","upName":"科技小辛","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4486.780188679245,"views":64404.0,"interactions":500.0},{"date":"2025-07-17","upName":"天才李杰灵","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4360.007547169811,"views":76510.0,"interactions":1455.0},{"date":"2025-07-17","upName":"李大锤同学","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4294.901886792452,"views":53259.0,"interactions":686.0},{"date":"2025-07-17","upName":"42号车库","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4299.019811320754,"views":68950.0,"interactions":1078.0},{"date":"2025-07-23","upName":"硬核的半佛仙人","model":"i8","upCat":"头部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":7301.343396226415,"views":97213.0,"interactions":806.0},{"date":"2025-07-24","upName":"兔撕机频道","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":7171.989622641509,"views":87891.0,"interactions":716.0},{"date":"2025-07-24","upName":"极速拍档-Berlin","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":10000.0,"cost":9106.641509433963,"views":174179.0,"interactions":2828.0},{"date":"2025-07-24","upName":"秋晨同学","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":5567.646226415094,"views":78562.0,"interactions":1120.0},{"date":"2025-07-24","upName":"电动车公社","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4563.670754716981,"views":53822.0,"interactions":305.0},{"date":"2025-07-24","upName":"迪仔Dizzz","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4272.597169811321,"views":58872.0,"interactions":467.0},{"date":"2025-07-24","upName":"布朗倪Suki","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4230.26320754717,"views":48993.0,"interactions":320.0},{"date":"2025-07-24","upName":"科技新一官方账号","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4339.757547169812,"views":55637.0,"interactions":255.0},{"date":"2025-07-24","upName":"我是HYK","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4258.774528301888,"views":47498.0,"interactions":213.0},{"date":"2025-07-24","upName":"穆杉老湿","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4480.480188679245,"views":89974.0,"interactions":793.0},{"date":"2025-07-24","upName":"逗斗车-胡永平","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4818.540566037736,"views":59061.0,"interactions":677.0},{"date":"2025-07-24","upName":"-_-二师兄官方","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4231.299056603773,"views":48726.0,"interactions":580.0},{"date":"2025-07-24","upName":"查叔Charles","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4263.469811320754,"views":48032.0,"interactions":684.0},{"date":"2025-07-24","upName":"低转中年李伟龙","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4262.459433962264,"views":48096.0,"interactions":414.0},{"date":"2025-07-24","upName":"测评君","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4296.897169811321,"views":67475.0,"interactions":752.0},{"date":"2025-07-24","upName":"时睦华","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4451.985849056603,"views":65110.0,"interactions":838.0},{"date":"2025-07-24","upName":"保罗车闻Cars01","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4210.140566037735,"views":47439.0,"interactions":255.0},{"date":"2025-07-24","upName":"七点发车","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4256.745283018868,"views":58285.0,"interactions":220.0},{"date":"2025-07-24","upName":"老司机出品","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4287.523584905661,"views":57590.0,"interactions":276.0},{"date":"2025-07-24","upName":"42号车库","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":10000.0,"cost":8513.244339622639,"views":125686.0,"interactions":1945.0},{"date":"2025-07-24","upName":"大家车-YYP","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":10000.0,"cost":8393.450943396227,"views":103626.0,"interactions":639.0},{"date":"2025-07-24","upName":"不是车评","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":10000.0,"cost":4313.165094339623,"views":54340.0,"interactions":216.0},{"date":"2025-07-29","upName":"时睦华","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4196.385849056604,"views":70303.0,"interactions":1388.0},{"date":"2025-07-29","upName":"42号车库","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4218.418867924527,"views":66219.0,"interactions":920.0},{"date":"2025-07-29","upName":"影总聊智驾","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4658.697169811321,"views":67295.0,"interactions":418.0},{"date":"2025-07-29","upName":"智能车研究所志豪","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4389.656603773585,"views":75321.0,"interactions":939.0},{"date":"2025-07-24","upName":"白宁的爱车时光","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4520.233018867924,"views":90569.0,"interactions":1443.0},{"date":"2025-07-24","upName":"电动知士","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4223.835849056603,"views":56054.0,"interactions":184.0},{"date":"2025-07-24","upName":"38号车评中心官方账号","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4269.30283018868,"views":56542.0,"interactions":495.0},{"date":"2025-07-24","upName":"百车全说","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4457.216037735849,"views":64643.0,"interactions":500.0},{"date":"2025-07-24","upName":"勃哥只有一辆车","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4211.915094339623,"views":54263.0,"interactions":226.0},{"date":"2025-07-24","upName":"玩车教授官方","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4223.861320754717,"views":77761.0,"interactions":1357.0},{"date":"2025-07-24","upName":"林德伟Dewey","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4089.2433962264154,"views":61943.0,"interactions":407.0},{"date":"2025-07-24","upName":"元何元","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4293.441509433963,"views":62272.0,"interactions":320.0},{"date":"2025-07-24","upName":"科技小辛","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4824.704716981132,"views":87864.0,"interactions":781.0},{"date":"2025-07-24","upName":"凤凰车研所","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4111.31037735849,"views":46012.0,"interactions":286.0},{"date":"2025-07-31","upName":"老汤哥Tango","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4225.771698113208,"views":56149.0,"interactions":580.0},{"date":"2025-07-24","upName":"笪屹超人_","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4329.322641509434,"views":70374.0,"interactions":1158.0},{"date":"2025-08-04","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4269.973584905661,"views":66809.0,"interactions":841.0},{"date":"2025-07-31","upName":"Geek研究僧","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4233.71037735849,"views":82382.0,"interactions":1054.0},{"date":"2025-07-30","upName":"车的发布会官方","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4219.369811320755,"views":60808.0,"interactions":1269.0},{"date":"2025-08-04","upName":"望远镜-Telescope","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4485.082075471699,"views":55456.0,"interactions":603.0},{"date":"2025-07-29","upName":"科技小辛","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4212.891509433963,"views":54114.0,"interactions":925.0},{"date":"2025-07-24","upName":"-大懒货-","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4331.912264150943,"views":56478.0,"interactions":168.0},{"date":"2025-08-02","upName":"银河小黄哥","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4653.042452830188,"views":73753.0,"interactions":1452.0},{"date":"2025-07-30","upName":"农民新八","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4294.647169811321,"views":63664.0,"interactions":746.0},{"date":"2025-08-01","upName":"保罗车闻Cars01","model":"L9","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4169.479245283019,"views":46515.0,"interactions":22.0},{"date":"2025-07-30","upName":"柳笛-6D","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4222.197169811321,"views":57116.0,"interactions":348.0},{"date":"2025-08-05","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4099.279245283018,"views":51309.0,"interactions":450.0},{"date":"2025-08-06","upName":"仕驾CarStudio","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4223.598113207548,"views":50132.0,"interactions":263.0},{"date":"2025-08-10","upName":"爱车的曼巴_Mamba","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4222.740566037736,"views":50039.0,"interactions":261.0},{"date":"2025-08-12","upName":"影总聊智驾","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4246.7094339622645,"views":48639.0,"interactions":304.0},{"date":"2025-08-12","upName":"柳笛-6D","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4218.393396226415,"views":59092.0,"interactions":320.0},{"date":"2025-08-12","upName":"高奔GoBig","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1668.727358490566,"views":68427.0,"interactions":901.0},{"date":"2025-08-12","upName":"撒把兄弟","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4802.28962264151,"views":67879.0,"interactions":414.0},{"date":"2025-08-12","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4279.729245283019,"views":87362.0,"interactions":1515.0},{"date":"2025-08-12","upName":"科技小辛","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4597.616037735849,"views":57117.0,"interactions":516.0},{"date":"2025-08-12","upName":"-大懒货-","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4247.991509433962,"views":56109.0,"interactions":335.0},{"date":"2025-08-12","upName":"旌旗超智能","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4272.0113207547165,"views":62377.0,"interactions":622.0},{"date":"2025-08-12","upName":"有车以后官方号","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1686.2603773584906,"views":23077.0,"interactions":71.0},{"date":"2025-08-12","upName":"匠小白-","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":1000.0,"cost":853.327358490566,"views":11708.0,"interactions":39.0},{"date":"2025-08-12","upName":"太平洋智驾","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4446.97641509434,"views":50608.0,"interactions":224.0},{"date":"2025-08-12","upName":"42号车库","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4553.9745283018865,"views":73924.0,"interactions":1314.0},{"date":"2025-08-12","upName":"智能车研究所志豪","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4493.453773584905,"views":56026.0,"interactions":509.0},{"date":"2025-08-12","upName":"易车原创节目","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":5073.648113207548,"views":77039.0,"interactions":533.0},{"date":"2025-08-12","upName":"陈庚auto","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4220.380188679245,"views":49703.0,"interactions":347.0},{"date":"2025-08-12","upName":"保罗车闻Cars01","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4241.105660377358,"views":52513.0,"interactions":105.0},{"date":"2025-08-12","upName":"电动知士","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4270.627358490567,"views":61049.0,"interactions":493.0},{"date":"2025-08-14","upName":"兔撕机频道","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4226.102830188679,"views":58746.0,"interactions":350.0},{"date":"2025-08-13","upName":"玩车教授官方","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4232.844339622641,"views":65633.0,"interactions":419.0},{"date":"2025-08-15","upName":"大鹏快开车","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4386.056603773585,"views":91660.0,"interactions":2668.0},{"date":"2025-08-16","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4415.501886792452,"views":66288.0,"interactions":524.0},{"date":"2025-08-18","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1719.416037735849,"views":34499.0,"interactions":470.0},{"date":"2025-08-18","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1833.4952830188677,"views":40430.0,"interactions":408.0},{"date":"2025-08-18","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2157.741509433962,"views":32856.0,"interactions":188.0},{"date":"2025-08-18","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1739.3688679245283,"views":26132.0,"interactions":248.0},{"date":"2025-08-18","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1680.7924528301885,"views":35585.0,"interactions":343.0},{"date":"2025-08-19","upName":"罗永浩的十字路口","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":20000.0,"cost":17008.72641509434,"views":212256.0,"interactions":3640.0},{"date":"2025-08-21","upName":"汽车洋葱圈","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4192.83679245283,"views":17327.0,"interactions":89.0},{"date":"2025-08-21","upName":"随缘公路Anyway","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q3","budget":40000.0,"cost":33657.512264150944,"views":258844.0,"interactions":14292.0},{"date":"2025-08-22","upName":"老汤哥Tango","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4310.074528301887,"views":61142.0,"interactions":668.0},{"date":"2025-08-23","upName":"影总聊智驾","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1613.5556603773584,"views":20555.0,"interactions":92.0},{"date":"2025-08-23","upName":"影总聊智驾","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1679.1113207547169,"views":24201.0,"interactions":94.0},{"date":"2025-08-24","upName":"就是你的VC","model":"理想汽车","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4199.162264150944,"views":65257.0,"interactions":762.0},{"date":"2025-08-29","upName":"花叔频道","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2110.7377358490567,"views":38448.0,"interactions":154.0},{"date":"2025-08-15","upName":"闪电花总","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1729.2735849056603,"views":28791.0,"interactions":646.0},{"date":"2025-08-17","upName":"Car4Fun & 林德伟Dewey & 司机小区","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1675.1462264150944,"views":51651.0,"interactions":115.0},{"date":"2025-08-20","upName":"42号车库","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1633.8735849056604,"views":38317.0,"interactions":92.0},{"date":"2025-08-12","upName":"老司机出品","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1649.7679245283018,"views":43515.0,"interactions":41.0},{"date":"2025-08-24","upName":"类星频道","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1626.7584905660376,"views":53525.0,"interactions":71.0},{"date":"2025-08-26","upName":"有理想的小豹子","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":1000.0,"cost":842.145283018868,"views":15422.0,"interactions":286.0},{"date":"2025-08-30","upName":"亢岳","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1663.2849056603773,"views":24847.0,"interactions":111.0},{"date":"2025-09-13","upName":"老汤哥Tango","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4900.398113207547,"views":78037.0,"interactions":1346.0},{"date":"2025-09-16","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":5000.0,"cost":4415.620754716981,"views":69459.0,"interactions":1096.0},{"date":"2025-09-16","upName":"大梦_LICHAN","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1665.3396226415093,"views":28437.0,"interactions":83.0},{"date":"2025-09-26","upName":"Car4Fun","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":1000.0,"cost":986.0773584905661,"views":1660.0,"interactions":0},{"date":"2025-09-26","upName":"大鹏快开车","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":20000.0,"cost":17781.44433962264,"views":181022.0,"interactions":1323.0},{"date":"2025-09-26","upName":"Car4Fun","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q3","budget":20000.0,"cost":16911.110377358487,"views":162484.0,"interactions":324.0},{"date":"2025-09-26","upName":"差评汽车部","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1770.7245283018867,"views":23481.0,"interactions":169.0},{"date":"2025-09-26","upName":"高转青年-栗子","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2998.0358490566036,"views":36704.0,"interactions":138.0},{"date":"2025-09-26","upName":"小特叔叔","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2141.261320754717,"views":29272.0,"interactions":48.0},{"date":"2025-09-26","upName":"农民新八","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2415.4726415094337,"views":30993.0,"interactions":247.0},{"date":"2025-09-26","upName":"我是HYK","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1713.5575471698112,"views":20620.0,"interactions":132.0},{"date":"2025-09-26","upName":"花叔频道","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2411.0235849056603,"views":27221.0,"interactions":47.0},{"date":"2025-09-26","upName":"保罗车闻Cars01","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1679.8075471698112,"views":19648.0,"interactions":26.0},{"date":"2025-09-26","upName":"42号车库","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2509.0556603773584,"views":32251.0,"interactions":358.0},{"date":"2025-09-26","upName":"白宁的爱车时光","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1685.2245283018867,"views":19788.0,"interactions":144.0},{"date":"2025-09-26","upName":"小赵叨叨车","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1676.9971698113209,"views":19589.0,"interactions":105.0},{"date":"2025-09-26","upName":"车若初见&我是初晓敏","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1540.4009433962265,"views":25024.0,"interactions":83.0},{"date":"2025-09-26","upName":"科技新一官方账号","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2157.8603773584905,"views":25816.0,"interactions":33.0},{"date":"2025-09-26","upName":"科技小辛","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2913.8009433962266,"views":34927.0,"interactions":85.0},{"date":"2025-09-26","upName":"电动知士","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1683.6792452830186,"views":19378.0,"interactions":69.0},{"date":"2025-09-26","upName":"野生11","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1638.7216981132074,"views":20625.0,"interactions":143.0},{"date":"2025-09-26","upName":"王冬怎么说","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1672.4716981132074,"views":21036.0,"interactions":33.0},{"date":"2025-09-26","upName":"驾仕派","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1738.604716981132,"views":20291.0,"interactions":108.0},{"date":"2025-09-27","upName":"就是你的VC","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1619.6009433962263,"views":18984.0,"interactions":82.0},{"date":"2025-09-27","upName":"38号车评中心官方账号","model":"i6","upCat":"头部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1649.224528301887,"views":20078.0,"interactions":345.0},{"date":"2025-09-26","upName":"扬哥YOUNGER","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1662.2320754716982,"views":21068.0,"interactions":69.0},{"date":"2025-09-26","upName":"低转中年李伟龙","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1671.6481132075469,"views":19188.0,"interactions":45.0},{"date":"2025-09-26","upName":"逗斗车-余洋","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1529.1084905660377,"views":24753.0,"interactions":70.0},{"date":"2025-09-26","upName":"秋晨同学","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1667.4622641509434,"views":20895.0,"interactions":65.0},{"date":"2025-09-27","upName":"懂车兄阿森","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1647.8575471698114,"views":25482.0,"interactions":914.0},{"date":"2025-09-27","upName":"3分半说车","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1612.8084905660376,"views":28085.0,"interactions":45.0},{"date":"2025-09-27","upName":"随缘小童","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1690.2169811320755,"views":21810.0,"interactions":144.0},{"date":"2025-09-27","upName":"踢车帮","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1656.093396226415,"views":30369.0,"interactions":42.0},{"date":"2025-09-26","upName":"老司机出品","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":2819.3688679245283,"views":37806.0,"interactions":64.0},{"date":"2025-09-26","upName":"类星频道","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1618.267924528302,"views":25746.0,"interactions":97.0},{"date":"2025-09-27","upName":"NMNP陈璟","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":3193.2509433962264,"views":50720.0,"interactions":224.0},{"date":"2025-09-27","upName":"凤凰车研所","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1662.2235849056603,"views":19226.0,"interactions":69.0},{"date":"2025-09-28","upName":"芝能汽车","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1785.3877358490565,"views":21878.0,"interactions":57.0},{"date":"2025-09-28","upName":"撒把兄弟","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1619.3207547169811,"views":25787.0,"interactions":43.0},{"date":"2025-09-29","upName":"超离谱科技","model":"i6","upCat":"头部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1676.2415094339622,"views":21841.0,"interactions":56.0},{"date":"2025-09-29","upName":"新出行","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1641.8037735849057,"views":22015.0,"interactions":60.0},{"date":"2025-09-28","upName":"有点车事","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q3","budget":2000.0,"cost":1535.6462264150944,"views":119623.0,"interactions":50.0},{"date":"2025-10-03","upName":"38号车评中心官方账号","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1690.8283018867924,"views":39991.0,"interactions":719.0},{"date":"2025-09-29","upName":"有颜值的咸鱼君","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1658.1820754716982,"views":22644.0,"interactions":106.0},{"date":"2025-10-02","upName":"机太美JTM","model":"i8","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1682.7622641509433,"views":22557.0,"interactions":88.0},{"date":"2025-10-17","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1648.5452830188678,"views":17416.0,"interactions":255.0},{"date":"2025-10-15","upName":"超级开箱-BiggerBox","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1660.6783018867925,"views":17457.0,"interactions":151.0},{"date":"2025-10-22","upName":"太平洋汽车精选","model":"理想汽车","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1699.675471698113,"views":21239.0,"interactions":112.0},{"date":"2025-10-30","upName":"韩路大叔","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4225.695283018868,"views":56657.0,"interactions":550.0},{"date":"2025-10-31","upName":"苏黎世贝勒爷","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1811.343396226415,"views":31798.0,"interactions":318.0},{"date":"2025-10-28","upName":"超充时刻","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1642.975471698113,"views":17513.0,"interactions":82.0},{"date":"2025-11-12","upName":"大家车言论&大家车-YYP","model":"MEGA","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4504.117924528303,"views":50382.0,"interactions":280.0},{"date":"2025-11-11","upName":"王冬怎么说","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1777.8735849056604,"views":30433.0,"interactions":39.0},{"date":"2025-11-11","upName":"小吕斯基","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1682.9490566037737,"views":29039.0,"interactions":27.0},{"date":"2025-11-09","upName":"胡正阳-","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1689.7160377358489,"views":22305.0,"interactions":16.0},{"date":"2025-11-07","upName":"抽风的飞机origin","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1746.696226415094,"views":43703.0,"interactions":588.0},{"date":"2025-11-07","upName":"这车值么","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1694.0462264150942,"views":28308.0,"interactions":40.0},{"date":"2025-11-07","upName":"科技新一官方账号","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1681.6584905660377,"views":26732.0,"interactions":50.0},{"date":"2025-11-06","upName":"银河小黄哥","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1742.4933962264151,"views":30009.0,"interactions":98.0},{"date":"2025-11-14","upName":"老汤哥Tango","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2541.914150943396,"views":35126.0,"interactions":381.0},{"date":"2025-11-12","upName":"李大锤同学","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1735.1575471698113,"views":25052.0,"interactions":43.0},{"date":"2025-11-13","upName":"科技疯汇","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1725.7584905660376,"views":22193.0,"interactions":32.0},{"date":"2025-11-26","upName":"泰迪熊本熊-TBK-","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1714.8056603773584,"views":32871.0,"interactions":47.0},{"date":"2025-11-26","upName":"兔撕机频道","model":"i8","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1721.4283018867925,"views":32960.0,"interactions":30.0},{"date":"2025-11-19","upName":"元何元","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1690.4716981132074,"views":34386.0,"interactions":45.0},{"date":"2025-12-01","upName":"老汤哥Tango","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1724.5443396226417,"views":31604.0,"interactions":26.0},{"date":"2025-12-03","upName":"WHYLAB","model":"Livis眼镜","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4245.48679245283,"views":49750.0,"interactions":815.0},{"date":"2025-12-05","upName":"无颜祖祖","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":5000.0,"cost":4270.584905660377,"views":64241.0,"interactions":394.0},{"date":"2025-12-03","upName":"数字尾巴官方账号","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4246.3867924528295,"views":57628.0,"interactions":114.0},{"date":"2025-12-03","upName":"时睦华","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":7000.0,"cost":6023.071698113208,"views":111880.0,"interactions":1535.0},{"date":"2025-12-03","upName":"影总聊智驾","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1784.1650943396226,"views":20883.0,"interactions":22.0},{"date":"2025-12-03","upName":"42号电波","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":7000.0,"cost":5913.093396226415,"views":78503.0,"interactions":117.0},{"date":"2025-12-03","upName":"大王驾道","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1687.364150943396,"views":22410.0,"interactions":189.0},{"date":"2025-12-03","upName":"智东西","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1764.2971698113206,"views":26057.0,"interactions":90.0},{"date":"2025-12-03","upName":"极果AI评测室","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4253.204716981132,"views":53722.0,"interactions":88.0},{"date":"2025-12-03","upName":"科技小辛","model":"Livis眼镜","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":7000.0,"cost":6018.724528301887,"views":75624.0,"interactions":125.0},{"date":"2025-12-03","upName":"科技新一官方账号","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":7000.0,"cost":5924.699999999999,"views":81881.0,"interactions":201.0},{"date":"2025-12-03","upName":"大家测","model":"Livis眼镜","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1657.7490566037734,"views":22722.0,"interactions":126.0},{"date":"2025-12-03","upName":"米帅试车","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":7000.0,"cost":6006.523584905661,"views":82853.0,"interactions":257.0},{"date":"2025-12-03","upName":"胡正阳-","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1710.0424528301885,"views":22517.0,"interactions":358.0},{"date":"2025-12-04","upName":"匠小白-","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1669.7547169811319,"views":20809.0,"interactions":13.0},{"date":"2025-12-03","upName":"VRAR星球","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1733.654716981132,"views":22635.0,"interactions":24.0},{"date":"2025-12-03","upName":"新能车官方","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1685.6066037735848,"views":22615.0,"interactions":39.0},{"date":"2025-12-04","upName":"小西研究所","model":"Livis眼镜","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":4000.0,"cost":3521.7254716981133,"views":74125.0,"interactions":648.0},{"date":"2025-12-04","upName":"爱范儿评测","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1829.7,"views":31726.0,"interactions":163.0},{"date":"2025-12-04","upName":"涛哥爱拆机","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":8000.0,"cost":7022.96320754717,"views":124459.0,"interactions":2091.0},{"date":"2025-12-04","upName":"韩路","model":"Livis眼镜","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":7000.0,"cost":5956.225471698113,"views":72645.0,"interactions":202.0},{"date":"2025-12-04","upName":"赵老师说车","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1730.51320754717,"views":27820.0,"interactions":150.0},{"date":"2025-12-07","upName":"手机暴力测试","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1660.007547169811,"views":21996.0,"interactions":37.0},{"date":"2025-12-04","upName":"有理想的小豹子","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":8000.0,"cost":6919.471698113208,"views":94569.0,"interactions":1430.0},{"date":"2025-12-04","upName":"登登爸A1den","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":4000.0,"cost":3391.548113207547,"views":47134.0,"interactions":117.0},{"date":"2025-12-03","upName":"丘游Chill","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":4000.0,"cost":3390.970754716981,"views":45158.0,"interactions":51.0},{"date":"2025-12-03","upName":"奶爸奥利弗","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":4000.0,"cost":3396.430188679245,"views":56771.0,"interactions":425.0},{"date":"2025-12-04","upName":"有理想的小豹子（第二条）","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":4000.0,"cost":3389.629245283019,"views":50063.0,"interactions":109.0},{"date":"2025-12-02","upName":"开普勒星人","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":4000.0,"cost":4085.3292452830183,"views":98663.0,"interactions":2516.0},{"date":"2025-11-27","upName":"终日败家搞某人","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":5000.0,"cost":4221.271698113208,"views":57196.0,"interactions":60.0},{"date":"2025-12-05","upName":"42号车库","model":"i6","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1746.7471698113209,"views":41418.0,"interactions":265.0},{"date":"2025-12-03","upName":"索以出发","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1688.1198113207547,"views":22493.0,"interactions":30.0},{"date":"2025-12-04","upName":"建约车评","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1685.5896226415093,"views":22127.0,"interactions":24.0},{"date":"2025-12-04","upName":"蜗牛车志","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1688.332075471698,"views":24961.0,"interactions":37.0},{"date":"2025-12-05","upName":"热爱生活的小飞鱼吖","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1701.6792452830189,"views":20146.0,"interactions":21.0},{"date":"2025-12-06","upName":"殷赫颜图","model":"i8","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1701.475471698113,"views":22760.0,"interactions":34.0},{"date":"2025-12-05","upName":"差评君","model":"i8","upCat":"头部","targetType":"通投+定向","quarter":"25年Q4","budget":50000.0,"cost":43107.868867924524,"views":373374.0,"interactions":24324.0},{"date":"2025-12-04","upName":"老汤哥Tango","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1684.3330188679245,"views":19819.0,"interactions":34.0},{"date":"2025-12-02","upName":"90后科技说","model":"L9","upCat":"腰部","targetType":"通投","quarter":"25年Q4","budget":5000.0,"cost":4285.044339622641,"views":56234.0,"interactions":106.0},{"date":"2025-12-08","upName":"若愚_Allen","model":"i6","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1833.5716981132075,"views":27138.0,"interactions":29.0},{"date":"2025-12-05","upName":"阿远与阿中","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":4000.0,"cost":3409.335849056604,"views":50138.0,"interactions":187.0},{"date":"2025-12-11","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1834.259433962264,"views":34076.0,"interactions":137.0},{"date":"2025-12-04","upName":"热爱生活的小飞鱼吖","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1713.7018867924528,"views":25737.0,"interactions":62.0},{"date":"2025-12-06","upName":"宝藏大飞","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":3000.0,"cost":2535.4103773584907,"views":39160.0,"interactions":192.0},{"date":"2025-12-08","upName":"小夫哥","model":"Livis眼镜","upCat":"尾部","targetType":"通投","quarter":"25年Q4","budget":2000.0,"cost":1712.377358490566,"views":22932.0,"interactions":27.0},{"date":"2025-12-11","upName":"晓李同学-","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1719.4330188679244,"views":26221.0,"interactions":159.0},{"date":"2025-12-12","upName":"星奇六先森","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1736.295283018868,"views":22344.0,"interactions":257.0},{"date":"2025-12-12","upName":"孜盐不是孜然","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1689.3509433962263,"views":23596.0,"interactions":266.0},{"date":"2025-12-13","upName":"晴天披沥","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1683.475471698113,"views":23147.0,"interactions":136.0},{"date":"2025-12-12","upName":"老胡的车生活","model":"Livis眼镜","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1687.4405660377358,"views":21818.0,"interactions":101.0},{"date":"2025-12-17","upName":"38号车评中心官方账号","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":4232.99716981132,"views":67588.0,"interactions":1165.0},{"date":"2025-12-18","upName":"绿芯频道_ECC","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":8476.726415094341,"views":68852.0,"interactions":1488.0},{"date":"2025-12-15","upName":"大飙车","model":"Livis眼镜","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1738.5198113207546,"views":24224.0,"interactions":150.0},{"date":"2025-12-16","upName":"大东的车库","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1789.454716981132,"views":19667.0,"interactions":134.0},{"date":"2025-12-17","upName":"司机的自我修养","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1802.5641509433963,"views":20727.0,"interactions":152.0},{"date":"2025-12-12","upName":"麻辣车评君","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1751.6037735849056,"views":16487.0,"interactions":35.0},{"date":"2025-12-18","upName":"越野玩家胖晓","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1752.7160377358489,"views":26927.0,"interactions":176.0},{"date":"2025-12-14","upName":"电研社","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1775.691509433962,"views":15292.0,"interactions":68.0},{"date":"2025-12-16","upName":"二凉同学","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1689.4443396226413,"views":30002.0,"interactions":421.0},{"date":"2025-12-19","upName":"彭弘Red","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4600.010377358491,"views":64077.0,"interactions":816.0},{"date":"2025-12-18","upName":"名车志Daily","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1720.7575471698112,"views":17942.0,"interactions":50.0},{"date":"2025-12-15","upName":"李勇岐","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1713.5490566037736,"views":15535.0,"interactions":61.0},{"date":"2025-12-15","upName":"Geek研究僧","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1686.1330188679246,"views":16863.0,"interactions":97.0},{"date":"2025-12-16","upName":"追梦商店-孟庆嘉","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1715.017924528302,"views":18372.0,"interactions":106.0},{"date":"2025-12-16","upName":"1号车盟","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1679.9264150943395,"views":13306.0,"interactions":102.0},{"date":"2025-12-16","upName":"Car4Fun","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1695.056603773585,"views":19315.0,"interactions":158.0},{"date":"2025-12-19","upName":"Car4Fun","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":10000.0,"cost":8456.187735849056,"views":78335.0,"interactions":671.0},{"date":"2025-12-20","upName":"Hi陆同学","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1744.3273584905658,"views":16845.0,"interactions":144.0},{"date":"2025-12-21","upName":"皓宇轻测评","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1674.5943396226414,"views":17616.0,"interactions":259.0},{"date":"2025-12-19","upName":"电动汽车观察家","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1848.7867924528302,"views":14865.0,"interactions":289.0},{"date":"2025-12-20","upName":"好嘢试物官","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1705.7292452830188,"views":15735.0,"interactions":140.0},{"date":"2025-12-17","upName":"向北不断电","model":"L6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1691.456603773585,"views":16185.0,"interactions":167.0},{"date":"2025-12-11","upName":"Nice好车","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1720.766037735849,"views":11564.0,"interactions":123.0},{"date":"2025-12-17","upName":"壮森","model":"L6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1685.793396226415,"views":10898.0,"interactions":114.0},{"date":"2025-12-20","upName":"电动胡辣汤","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1722.0990566037735,"views":10483.0,"interactions":102.0},{"date":"2025-12-22","upName":"阿岛儿","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2582.5330188679245,"views":23179.0,"interactions":108.0},{"date":"2025-12-23","upName":"保罗车闻Cars01","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2794.567924528302,"views":25037.0,"interactions":182.0},{"date":"2025-12-22","upName":"-五月的天-","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1776.1499999999999,"views":20324.0,"interactions":193.0},{"date":"2025-12-19","upName":"其霖不是麒麟","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1742.145283018868,"views":16204.0,"interactions":89.0},{"date":"2025-12-23","upName":"郝百萬充电中","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1721.4622641509434,"views":10979.0,"interactions":186.0},{"date":"2025-12-23","upName":"充电驱","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1686.2518867924528,"views":17636.0,"interactions":344.0},{"date":"2025-12-23","upName":"客代表","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1684.0443396226415,"views":11561.0,"interactions":143.0},{"date":"2025-12-24","upName":"42号车库","model":"理想汽车","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4266.11037735849,"views":38492.0,"interactions":129.0},{"date":"2025-12-24","upName":"陈宸H","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4211.405660377359,"views":35575.0,"interactions":144.0},{"date":"2025-12-24","upName":"旅行家唐及科得","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4249.630188679245,"views":34273.0,"interactions":107.0},{"date":"2025-12-22","upName":"ZEALER官方频道","model":"理想汽车","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4248.679245283019,"views":36600.0,"interactions":264.0},{"date":"2025-12-25","upName":"大壬车短评","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":1656.4160377358492,"views":14820.0,"interactions":50.0},{"date":"2025-12-25","upName":"云游汽车","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2664.8999999999996,"views":25202.0,"interactions":260.0},{"date":"2025-12-25","upName":"关你车事gossipcar","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2512.9783018867925,"views":17897.0,"interactions":301.0},{"date":"2025-12-26","upName":"冀老师选车","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":1671.1301886792453,"views":16599.0,"interactions":154.0},{"date":"2025-12-25","upName":"松果爸的未来出行","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1702.2820754716981,"views":18882.0,"interactions":169.0},{"date":"2025-12-25","upName":"超级秋秋Vivian","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2682.645283018868,"views":29636.0,"interactions":132.0},{"date":"2025-12-25","upName":"极客村长","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1687.7971698113206,"views":20851.0,"interactions":244.0},{"date":"2025-12-26","upName":"宝华人生ing","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4281.2320754716975,"views":53504.0,"interactions":561.0},{"date":"2025-12-26","upName":"若愚_Allen","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2640.3452830188676,"views":24376.0,"interactions":35.0},{"date":"2025-12-26","upName":"Aaron_然","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2993.0009433962264,"views":26689.0,"interactions":37.0},{"date":"2025-12-28","upName":"亲爱的元元","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1742.5273584905658,"views":23524.0,"interactions":130.0},{"date":"2025-12-28","upName":"汽车之家原创","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":3000.0,"cost":2891.5386792452828,"views":29347.0,"interactions":144.0},{"date":"2025-12-26","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":1000.0,"cost":825.1471698113207,"views":9610.0,"interactions":7.0},{"date":"2025-12-29","upName":"常青呀呀","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1674.7047169811322,"views":17597.0,"interactions":205.0},{"date":"2025-12-29","upName":"车业杂谈","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1684.8169811320754,"views":16970.0,"interactions":209.0},{"date":"2025-12-31","upName":"硅谷101","model":"理想汽车","upCat":"腰部","targetType":"通投+定向","quarter":"25年Q4","budget":5000.0,"cost":4213.952830188679,"views":99057.0,"interactions":197.0},{"date":"2025-12-31","upName":"新出行","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1667.2924528301885,"views":13738.0,"interactions":112.0},{"date":"2025-12-31","upName":"影总聊智驾","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"25年Q4","budget":2000.0,"cost":1763.6518867924528,"views":24236.0,"interactions":37.0},{"date":"2025-12-30","upName":"玩车教授官方","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1740.116037735849,"views":41838.0,"interactions":63.0},{"date":"2025-12-30","upName":"何豆豆酱","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1680.104716981132,"views":40233.0,"interactions":154.0},{"date":"2025-12-30","upName":"电动知士","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4370.340566037736,"views":76344.0,"interactions":85.0},{"date":"2025-12-31","upName":"影总聊智驾","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1768.5,"views":30193.0,"interactions":20.0},{"date":"2026-01-04","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1663.8877358490565,"views":38615.0,"interactions":33.0},{"date":"2026-01-05","upName":"不太聪明的骆智慧","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1681.641509433962,"views":27101.0,"interactions":41.0},{"date":"2026-01-05","upName":"魏布斯","model":"L9","upCat":"腰部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":2511.4839622641507,"views":42614.0,"interactions":39.0},{"date":"2026-01-02","upName":"丘游Chill","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1683.1358490566035,"views":28720.0,"interactions":39.0},{"date":"2026-01-02","upName":"阿伦alun_","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":4000.0,"cost":3470.484905660377,"views":55319.0,"interactions":97.0},{"date":"2025-12-31","upName":"强尼哥","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":4000.0,"cost":3398.433962264151,"views":57055.0,"interactions":691.0},{"date":"2026-01-04","upName":"贪玩小宁子","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4440.455660377358,"views":104501.0,"interactions":1305.0},{"date":"2026-01-07","upName":"钱威不是V","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1733.5783018867924,"views":34006.0,"interactions":59.0},{"date":"2026-01-07","upName":"方成说进口车-","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1676.1396226415093,"views":39408.0,"interactions":436.0},{"date":"2026-01-08","upName":"极速安全车","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":808.488679245283,"views":17267.0,"interactions":52.0},{"date":"2026-01-08","upName":"笪屹超人_","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1727.3716981132075,"views":39997.0,"interactions":42.0},{"date":"2026-01-11","upName":"老汤哥Tango","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1832.0009433962264,"views":34856.0,"interactions":82.0},{"date":"2026-01-08","upName":"五号车论","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1748.8698113207547,"views":46031.0,"interactions":167.0},{"date":"2026-01-09","upName":"查叔Charles","model":"i6","upCat":"腰部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4286.85283018868,"views":88957.0,"interactions":1167.0},{"date":"2026-01-12","upName":"李不卷同学","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1713.8377358490566,"views":28840.0,"interactions":245.0},{"date":"2026-01-16","upName":"光的深处","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4243.618867924529,"views":57421.0,"interactions":94.0},{"date":"2026-01-16","upName":"强尼哥","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1690.8198113207548,"views":38379.0,"interactions":490.0},{"date":"2026-01-19","upName":"杨老师的理想","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1682.1000000000001,"views":18025.0,"interactions":59.0},{"date":"2026-01-19","upName":"Koji杨远骋at十字路口","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1696.4235849056604,"views":20564.0,"interactions":120.0},{"date":"2026-01-21","upName":"影总聊智驾","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1682.4735849056603,"views":19692.0,"interactions":52.0},{"date":"2026-01-22","upName":"影总聊智驾","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":500.0,"cost":441.59433962264154,"views":6402.0,"interactions":23.0},{"date":"2026-01-22","upName":"爽爽侃车","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1700.9830188679246,"views":22042.0,"interactions":34.0},{"date":"2026-01-22","upName":"玩车教授官方","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1689.5801886792453,"views":21929.0,"interactions":48.0},{"date":"2026-01-22","upName":"有理想的小豹子","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1694.1226415094338,"views":23902.0,"interactions":360.0},{"date":"2026-01-23","upName":"安全相对论","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":888.0622641509434,"views":15174.0,"interactions":272.0},{"date":"2026-01-22","upName":"超级秋秋Vivian","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":874.7150943396226,"views":12979.0,"interactions":47.0},{"date":"2026-01-23","upName":"极果新车评","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1887.7754716981135,"views":33866.0,"interactions":298.0},{"date":"2026-01-21","upName":"白头翁玩车","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":854.3207547169811,"views":11816.0,"interactions":30.0},{"date":"2026-01-24","upName":"神鸟刘玉","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1694.182075471698,"views":27110.0,"interactions":360.0},{"date":"2026-01-24","upName":"辣堡黄","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":926.8301886792452,"views":15735.0,"interactions":292.0},{"date":"2026-01-23","upName":"学生华东","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":853.3018867924528,"views":14481.0,"interactions":164.0},{"date":"2026-01-25","upName":"千慕轩","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1684.8509433962263,"views":22304.0,"interactions":232.0},{"date":"2026-01-26","upName":"电动胡辣汤","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":832.3556603773585,"views":10484.0,"interactions":57.0},{"date":"2026-01-29","upName":"类星频道","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4258.715094339622,"views":71016.0,"interactions":1229.0},{"date":"2026-01-29","upName":"白发的威廉汪","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":866.7254716981132,"views":15241.0,"interactions":112.0},{"date":"2026-01-23","upName":"小董就行","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":856.7830188679245,"views":10175.0,"interactions":181.0},{"date":"2026-01-27","upName":"电动胡辣汤","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":886.8396226415093,"views":15074.0,"interactions":46.0},{"date":"2026-01-29","upName":"FX星间漫行","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":896.4339622641509,"views":16427.0,"interactions":66.0},{"date":"2026-01-26","upName":"Aaron_然","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1708.3698113207547,"views":28422.0,"interactions":84.0},{"date":"2026-01-30","upName":"老干部张局","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1707.2575471698112,"views":28783.0,"interactions":129.0},{"date":"2026-01-21","upName":"电驱蚊香","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":835.0726415094339,"views":983.53,"interactions":81.0},{"date":"2026-02-02","upName":"影总聊智驾","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1700.6349056603774,"views":28675.0,"interactions":30.0},{"date":"2026-01-30","upName":"小赵叨叨车","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1716.75,"views":29818.0,"interactions":166.0},{"date":"2026-01-30","upName":"爆米花popcar","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":5000.0,"cost":4253.1283018867925,"views":70735.0,"interactions":129.0},{"date":"2026-01-29","upName":"智能车研究所","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":3000.0,"cost":2545.7518867924528,"views":42548.0,"interactions":160.0},{"date":"2026-02-01","upName":"Timelab","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1705.848113207547,"views":28902.0,"interactions":66.0},{"date":"2026-02-01","upName":"趣玩车编辑部","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":853.7349056603773,"views":14401.0,"interactions":164.0},{"date":"2026-01-31","upName":"大蜡烛","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":3000.0,"cost":2606.7566037735846,"views":44511.0,"interactions":348.0},{"date":"2026-01-22","upName":"匠小白-","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1696.9245283018868,"views":16657.0,"interactions":236.0},{"date":"2026-02-02","upName":"智能车工作室","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":838.5962264150943,"views":15895.0,"interactions":152.0},{"date":"2026-01-26","upName":"肖老师的车生活","model":"L6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1688.2556603773585,"views":16826.0,"interactions":237.0},{"date":"2026-02-05","upName":"仕驾CarStudio","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1681.488679245283,"views":27557.0,"interactions":144.0},{"date":"2026-02-04","upName":"宝藏大飞","model":"i8","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1899.925471698113,"views":29961.0,"interactions":206.0},{"date":"2026-02-03","upName":"类星频道","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1699.9216981132076,"views":25766.0,"interactions":63.0},{"date":"2026-02-06","upName":"康熠车视界","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1682.8811320754717,"views":28251.0,"interactions":413.0},{"date":"2026-02-06","upName":"登登爸A1den","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1896.817924528302,"views":30204.0,"interactions":553.0},{"date":"2026-02-06","upName":"硬核车评&奥杰同学","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1757.9716981132074,"views":30171.0,"interactions":517.0},{"date":"2026-02-06","upName":"杨老师的理想","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1774.7405660377358,"views":29825.0,"interactions":476.0},{"date":"2026-02-06","upName":"皓宇轻测评","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1751.5528301886793,"views":31047.0,"interactions":405.0},{"date":"2026-02-06","upName":"大白话说车","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":3000.0,"cost":2630.462264150943,"views":45488.0,"interactions":359.0},{"date":"2026-02-06","upName":"三不五时SOMEWHILE","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":3000.0,"cost":2545.420754716981,"views":35443.0,"interactions":44.0},{"date":"2026-02-06","upName":"三分钟咸聊","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1785.8037735849057,"views":26496.0,"interactions":75.0},{"date":"2026-01-31","upName":"Aaron_然","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1706.8075471698112,"views":34577.0,"interactions":138.0},{"date":"2026-02-04","upName":"电车室长","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1725.5971698113206,"views":21099.0,"interactions":152.0},{"date":"2026-02-06","upName":"学生华东","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1685.5556603773584,"views":18306.0,"interactions":233.0},{"date":"2026-02-07","upName":"胳膊很粗的骡子","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":976.8820754716982,"views":18289.0,"interactions":254.0},{"date":"2026-02-07","upName":"奶爸奥利弗","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":835.9641509433962,"views":14416.0,"interactions":168.0},{"date":"2026-02-06","upName":"有理想的小豹子","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":3000.0,"cost":2699.558490566038,"views":47696.0,"interactions":869.0},{"date":"2026-02-06","upName":"电动胡辣汤","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":855.738679245283,"views":11819.0,"interactions":178.0},{"date":"2026-02-06","upName":"郝金彪有理想","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":855.6877358490565,"views":13726.0,"interactions":229.0},{"date":"2026-02-06","upName":"兔撕机频道","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":868.1094339622641,"views":14151.0,"interactions":183.0},{"date":"2026-02-06","upName":"奶爸奥利弗","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":857.3858490566038,"views":12373.0,"interactions":229.0},{"date":"2026-02-06","upName":"192黑人","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":842.5273584905659,"views":14129.0,"interactions":181.0},{"date":"2026-02-09","upName":"42号车库","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1695.0396226415094,"views":28431.0,"interactions":170.0},{"date":"2026-02-08","upName":"刘枫瑾","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":872.5160377358492,"views":10516.0,"interactions":188.0},{"date":"2026-02-06","upName":"懒蜗牛讲智能汽车","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":871.683962264151,"views":14604.0,"interactions":272.0},{"date":"2026-02-06","upName":"Hoya日记","model":"理想汽车","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":858.888679245283,"views":12423.0,"interactions":181.0},{"date":"2026-02-06","upName":"超级秋秋Vivian","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1725.656603773585,"views":21230.0,"interactions":53.0},{"date":"2026-02-08","upName":"明阳-同学","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":1280.8783018867923,"views":15967.0,"interactions":146.0},{"date":"2026-02-07","upName":"松果爸的未来出行","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":839.6066037735849,"views":9887.0,"interactions":122.0},{"date":"2026-02-06","upName":"大D有态度","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1692.322641509434,"views":19538.0,"interactions":286.0},{"date":"2026-02-06","upName":"小特叔叔","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1681.7688679245282,"views":20914.0,"interactions":272.0},{"date":"2026-02-06","upName":"智在出行","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":837.1358490566038,"views":8379.0,"interactions":118.0},{"date":"2026-02-06","upName":"车主之家原创","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":845.8301886792453,"views":9257.0,"interactions":105.0},{"date":"2026-02-06","upName":"太空橘子","model":"L9","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1709.1084905660377,"views":27791.0,"interactions":471.0},{"date":"2026-02-13","upName":"42号车库","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1744.972641509434,"views":29210.0,"interactions":79.0},{"date":"2026-03-01","upName":"小雨宙自驾冰岛版","model":"L6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":2000.0,"cost":1785.1584905660377,"views":34028.0,"interactions":150.0},{"date":"2026-02-27","upName":"影总聊智驾","model":"MEGA","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":853.4801886792452,"views":14310.0,"interactions":16.0},{"date":"2026-03-07","upName":"科技Daily","model":"Livis眼镜","upCat":"腰部","targetType":"通投+定向","quarter":"26年Q1","budget":1000.0,"cost":810.6283018867924,"views":10374.0,"interactions":64.0},{"date":"2026-03-13","upName":"老外说车","model":"L6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q2","budget":1000.0,"cost":813.7698113207547,"views":14524.0,"interactions":29.0},{"date":"2026-03-05","upName":"通电试试","model":"Livis眼镜","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q2","budget":1000.0,"cost":813.7443396226414,"views":14848.0,"interactions":22.0},{"date":"2026-03-17","upName":"键盘车神教","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q2","budget":2000.0,"cost":1729.7320754716982,"views":31061.0,"interactions":120.0},{"date":"2026-04-03","upName":"38号车评中心官方账号","model":"i6","upCat":"尾部","targetType":"通投+定向","quarter":"26年Q2","budget":2000.0,"cost":1701.1613207547168,"views":32322.0,"interactions":85.0}];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let allRows = EMBEDDED;
+let selMod = [], selCat = [], selType = [], selQt = [];
+const charts = {};
+let tableRows = []; let currentPage = 1; const PAGE_SIZE = 20;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmt = (n,d=2) => isFinite(n) ? n.toLocaleString('zh-CN',{maximumFractionDigits:d}) : '-';
+const pct = n => isFinite(n) ? (n*100).toFixed(2)+'%' : '-';
+const wan = n => n>=10000 ? (n/10000).toFixed(1)+'万' : fmt(n,0);
+
+function kpi(rows){
+  const tc = rows.reduce((s,r)=>s+r.cost,0);
+  const tv = rows.reduce((s,r)=>s+r.views,0);
+  const ti = rows.reduce((s,r)=>s+r.interactions,0);
+  return {
+    totalCost:tc, totalViews:tv, totalInteractions:ti,
+    cpm: tv>0?tc/tv*1000:0,
+    ir:  tv>0?ti/tv:0,
+    cpe: ti>0?tc/ti:0
+  };
+}
+
+function groupBy(arr,fn){
+  const m={};
+  arr.forEach(r=>{ const k=fn(r); (m[k]=m[k]||[]).push(r); });
+  return m;
+}
+
+function uniq(arr){ return [...new Set(arr)].filter(Boolean).sort(); }
+
+// ─── Filter bar ──────────────────────────────────────────────────────────────
+function buildChips(id, vals, sel, cls, onClick){
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  vals.forEach(v=>{
+    const btn = document.createElement('button');
+    btn.className = 'chip '+(cls||'')+(sel.includes(v)?' on':'');
+    btn.textContent = v;
+    btn.onclick = ()=> onClick(v);
+    el.appendChild(btn);
+  });
+}
+
+function rebuildFilters(){
+  buildChips('modChips',  uniq(allRows.map(r=>r.model)),       selMod,  '',   v=>toggle(selMod,v));
+  buildChips('catChips',  uniq(allRows.map(r=>r.upCat)),       selCat,  'cat',v=>toggle(selCat,v));
+  buildChips('typeChips', uniq(allRows.map(r=>r.targetType)),  selType, '',   v=>toggle(selType,v));
+  buildChips('qtChips',   uniq(allRows.map(r=>r.quarter)),     selQt,   'qt', v=>toggle(selQt,v));
+}
+
+function toggle(arr, v){
+  const i=arr.indexOf(v);
+  i>=0 ? arr.splice(i,1) : arr.push(v);
+  render();
+}
+
+// ─── Filtered rows ───────────────────────────────────────────────────────────
+function filtered(){
+  return allRows.filter(r=>
+    (selMod.length===0  || selMod.includes(r.model)) &&
+    (selCat.length===0  || selCat.includes(r.upCat)) &&
+    (selType.length===0 || selType.includes(r.targetType)) &&
+    (selQt.length===0   || selQt.includes(r.quarter))
+  );
+}
+
+// ─── KPI cards ───────────────────────────────────────────────────────────────
+function renderKPIs(rows){
+  const k = kpi(rows);
+  const cards = [
+    {l:'累计消耗金额', v:'¥'+fmt(k.totalCost,0), s:'总预算支出', cls:''},
+    {l:'总播放量',     v:wan(k.totalViews),        s:'覆盖人次',  cls:''},
+    {l:'总互动量',     v:wan(k.totalInteractions), s:'点赞+评论+收藏', cls:'pink'},
+    {l:'平均 CPM',    v:'¥'+fmt(k.cpm,2),          s:'每千次播放成本', cls:'pink'},
+    {l:'互动率',       v:pct(k.ir),                s:'互动量/播放量',  cls:'gold'},
+    {l:'CPE（单次互动成本）',v:k.totalInteractions>0?'¥'+fmt(k.cpe,2):'-', s:'每次互动成本', cls:'green'},
+    {l:'稿件数',       v:rows.length+'条',          s:'有效投放记录',  cls:'purple'},
+  ];
+  document.getElementById('kpiGrid').innerHTML = cards.map(c=>
+    `<div class="kpi ${c.cls}"><div class="lbl">${c.l}</div><div class="val">${c.v}</div><div class="sub">${c.s}</div></div>`
+  ).join('');
+}
+
+// ─── Chart helpers ───────────────────────────────────────────────────────────
+function destroyChart(id){
+  if(charts[id]){ charts[id].destroy(); delete charts[id]; }
+}
+
+// ─── Trend chart ─────────────────────────────────────────────────────────────
+function renderTrend(rows){
+  destroyChart('trendChart');
+  const g = groupBy(rows.filter(r=>r.date), r=>r.date);
+  const labels = Object.keys(g).sort();
+  const views  = labels.map(d=>g[d].reduce((s,r)=>s+r.views,0));
+  const cost   = labels.map(d=>g[d].reduce((s,r)=>s+r.cost,0));
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  charts['trendChart'] = new Chart(ctx,{
+    data:{
+      labels,
+      datasets:[
+        {type:'line',label:'播放量',data:views,yAxisID:'y',borderColor:'#00A1D6',backgroundColor:'rgba(0,161,214,.1)',fill:true,tension:.35,pointRadius:2,borderWidth:2},
+        {type:'bar', label:'消耗金额(¥)',data:cost,yAxisID:'y2',backgroundColor:'rgba(255,119,170,.6)',borderColor:'#FF77AA',borderWidth:1},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{size:11}}},tooltip:{callbacks:{
+        label: ctx => ctx.dataset.label+'：'+(ctx.dataset.yAxisID==='y2'?'¥':'')+fmt(ctx.raw,0)
+      }}},
+      scales:{
+        x:{ticks:{maxTicksLimit:12,font:{size:10}},grid:{display:false}},
+        y:{position:'left',ticks:{callback:v=>wan(v),font:{size:10}},grid:{color:'#f0f4f8'}},
+        y2:{position:'right',ticks:{callback:v=>'¥'+wan(v),font:{size:10}},grid:{display:false}},
+      }
+    }
+  });
+}
+
+// ─── Bubble chart ────────────────────────────────────────────────────────────
+function renderBubble(rows){
+  destroyChart('bubbleChart');
+  const avgCost  = rows.length?rows.reduce((s,r)=>s+r.cost,0)/rows.length:0;
+  const avgViews = rows.length?rows.reduce((s,r)=>s+r.views,0)/rows.length:0;
+  const maxZ = Math.max(...rows.map(r=>r.views>0?r.interactions/r.views:0),0.001);
+
+  const golden=[], normal=[];
+  rows.forEach(r=>{
+    const ir=r.views>0?r.interactions/r.views:0;
+    const pt={x:r.cost,y:r.views,r:Math.max(4,ir/maxZ*18),label:r.upName||r.model};
+    (r.cost>avgCost&&r.views>avgViews)?golden.push(pt):normal.push(pt);
+  });
+
+  const ctx=document.getElementById('bubbleChart').getContext('2d');
+  charts['bubbleChart']=new Chart(ctx,{
+    type:'bubble',
+    data:{datasets:[
+      {label:'黄金视频 ★',data:golden,backgroundColor:'rgba(255,179,71,.7)',borderColor:'#FFB347',borderWidth:1.5},
+      {label:'普通视频', data:normal,backgroundColor:'rgba(255,119,170,.5)',borderColor:'#FF77AA',borderWidth:1},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>{
+          const d=ctx.raw;
+          return [`UP: ${d.label||''}`,`消耗: ¥${fmt(d.x,0)}`,`播放: ${wan(d.y)}`];
+        }}}
+      },
+      scales:{
+        x:{title:{display:true,text:'消耗金额 (¥)',font:{size:11}},ticks:{callback:v=>'¥'+wan(v),font:{size:10}}},
+        y:{title:{display:true,text:'播放量',font:{size:11}},ticks:{callback:v=>wan(v),font:{size:10}}},
+      }
+    }
+  });
+}
+
+// ─── Category bar chart ──────────────────────────────────────────────────────
+function renderCat(rows){
+  destroyChart('catChart');
+  const g=groupBy(rows,r=>r.upCat);
+  const cats=Object.keys(g).sort();
+  const cpms=cats.map(c=>kpi(g[c]).cpm);
+  const irs=cats.map(c=>kpi(g[c]).ir*100);
+  const ctx=document.getElementById('catChart').getContext('2d');
+  charts['catChart']=new Chart(ctx,{
+    data:{labels:cats,datasets:[
+      {type:'bar', label:'CPM (¥)',data:cpms,backgroundColor:'rgba(0,161,214,.75)',yAxisID:'y',borderRadius:4},
+      {type:'line',label:'互动率 (%)',data:irs,borderColor:'#FF77AA',backgroundColor:'transparent',yAxisID:'y2',tension:.3,pointRadius:5,borderWidth:2},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:11}}},tooltip:{callbacks:{
+        label:ctx=>ctx.dataset.label+'：'+(ctx.dataset.yAxisID==='y2'?fmt(ctx.raw,2)+'%':'¥'+fmt(ctx.raw,2))
+      }}},
+      scales:{
+        x:{ticks:{font:{size:12}}},
+        y:{position:'left',ticks:{callback:v=>'¥'+fmt(v,0),font:{size:10}},title:{display:true,text:'CPM',font:{size:10}}},
+        y2:{position:'right',ticks:{callback:v=>v.toFixed(2)+'%',font:{size:10}},title:{display:true,text:'互动率',font:{size:10}},grid:{display:false}},
+      }
+    }
+  });
+}
+
+// ─── Model horizontal bar ────────────────────────────────────────────────────
+function renderModel(rows){
+  destroyChart('modelChart');
+  const g=groupBy(rows.filter(r=>r.model),r=>r.model);
+  const models=Object.keys(g).sort((a,b)=>kpi(g[b]).cpm-kpi(g[a]).cpm);
+  const cpms=models.map(m=>kpi(g[m]).cpm);
+  const cpes=models.map(m=>kpi(g[m]).cpe);
+  const ctx=document.getElementById('modelChart').getContext('2d');
+  charts['modelChart']=new Chart(ctx,{
+    type:'bar',
+    data:{labels:models,datasets:[
+      {label:'CPM (¥)',data:cpms,backgroundColor:'rgba(0,161,214,.8)',borderRadius:4},
+      {label:'CPE (¥)',data:cpes,backgroundColor:'rgba(255,119,170,.8)',borderRadius:4},
+    ]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:11}}},tooltip:{callbacks:{
+        label:ctx=>'¥'+fmt(ctx.raw,2)
+      }}},
+      scales:{
+        x:{ticks:{callback:v=>'¥'+fmt(v,0),font:{size:10}},grid:{color:'#f0f4f8'}},
+        y:{ticks:{font:{size:12}}},
+      }
+    }
+  });
+}
+
+// ─── Target type chart ───────────────────────────────────────────────────────
+function renderType(rows){
+  destroyChart('typeChart');
+  const g=groupBy(rows.filter(r=>r.targetType),r=>r.targetType);
+  const types=Object.keys(g);
+  if(types.length===0){
+    document.getElementById('typeChart').parentElement.innerHTML='<div style="color:#9ca3af;text-align:center;padding:40px">无投放类型数据</div>';
+    return;
+  }
+  const labels=['CPM (¥)','互动率 (%)','CPE (¥)'];
+  const colors=['rgba(0,161,214,.8)','rgba(255,119,170,.8)','rgba(255,179,71,.8)'];
+  const datasets=labels.map((lbl,li)=>({
+    label:lbl,
+    data:types.map(t=>{
+      const k=kpi(g[t]);
+      return li===0?k.cpm:li===1?k.ir*100:k.cpe;
+    }),
+    backgroundColor:colors[li],borderRadius:4
+  }));
+  const ctx=document.getElementById('typeChart').getContext('2d');
+  charts['typeChart']=new Chart(ctx,{
+    type:'bar',
+    data:{labels:types,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:11}}},tooltip:{callbacks:{
+        label:ctx=>{
+          const lbl=ctx.dataset.label;
+          return lbl+'：'+(lbl.includes('%')?fmt(ctx.raw,2)+'%':'¥'+fmt(ctx.raw,2));
+        }
+      }}},
+      scales:{x:{ticks:{font:{size:12}}},y:{ticks:{font:{size:10}},grid:{color:'#f0f4f8'}}}
+    }
+  });
+}
+
+// ─── Videos table with pagination ────────────────────────────────────────────
+function renderTable(rows){
+  tableRows = rows.slice().sort((a,b)=>b.views-a.views);
+  currentPage = 1;
+  renderTablePage();
+}
+
+function renderTablePage(){
+  const avgCost  = tableRows.length?tableRows.reduce((s,r)=>s+r.cost,0)/tableRows.length:0;
+  const avgViews = tableRows.length?tableRows.reduce((s,r)=>s+r.views,0)/tableRows.length:0;
+  const total = tableRows.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage-1)*PAGE_SIZE;
+  const page = tableRows.slice(start, start+PAGE_SIZE);
+
+  const tbl = document.getElementById('topTable');
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>#</th><th>UP主</th><th>车型</th><th>分类</th><th>投放类型</th><th>消耗季度</th>
+      <th>消耗(¥)</th><th>播放量</th><th>互动量</th><th>互动率</th><th>CPM(¥)</th><th>CPE(¥)</th>
+    </tr></thead>
+    <tbody>${page.map((r,i)=>{
+      const rank = start+i+1;
+      const ir=r.views>0?r.interactions/r.views:0;
+      const cpm=r.views>0?r.cost/r.views*1000:0;
+      const cpe=r.interactions>0?r.cost/r.interactions:0;
+      const golden=r.cost>avgCost&&r.views>avgViews;
+      return `<tr style="${golden?'background:rgba(255,179,71,.08)':''}">
+        <td>${rank}${golden?' ⭐':''}</td>
+        <td>${r.upName||'-'}</td>
+        <td>${r.model||'-'}</td>
+        <td><span class="tag ${r.upCat}">${r.upCat}</span></td>
+        <td>${r.targetType||'-'}</td>
+        <td>${r.quarter||'-'}</td>
+        <td>${fmt(r.cost,0)}</td>
+        <td>${wan(r.views)}</td>
+        <td>${wan(r.interactions)}</td>
+        <td>${pct(ir)}</td>
+        <td>${fmt(cpm,1)}</td>
+        <td>${cpe>0?fmt(cpe,1):'-'}</td>
+      </tr>`;
+    }).join('')}</tbody>`;
+
+  // Pagination controls
+  const pg = document.getElementById('pagination');
+  if(totalPages<=1){pg.innerHTML='';return;}
+  let html = `<span class="pg-info">共 ${total} 条，第 ${currentPage}/${totalPages} 页</span>`;
+  html += `<button class="pg-btn" onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
+  html += `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  // show up to 5 page number buttons
+  const range=2;
+  for(let p=Math.max(1,currentPage-range);p<=Math.min(totalPages,currentPage+range);p++){
+    html += `<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  html += `<button class="pg-btn" onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p){
+  const totalPages = Math.ceil(tableRows.length/PAGE_SIZE);
+  currentPage = Math.max(1,Math.min(p,totalPages));
+  renderTablePage();
+  document.getElementById('topTable').closest('.section').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── Insights ────────────────────────────────────────────────────────────────
+function renderInsights(rows){
+  const k=kpi(rows);
+  const byCat=groupBy(rows,r=>r.upCat);
+  const byModel=groupBy(rows.filter(r=>r.model),r=>r.model);
+  const byType=groupBy(rows.filter(r=>r.targetType),r=>r.targetType);
+
+  // best cat by CPM
+  const catStats=Object.entries(byCat).map(([c,list])=>({cat:c,...kpi(list),n:list.length}));
+  catStats.sort((a,b)=>a.cpm-b.cpm);
+  const bestCat=catStats[0];
+
+  // best model by CPE
+  const modelStats=Object.entries(byModel).map(([m,list])=>({model:m,...kpi(list),n:list.length}));
+  modelStats.sort((a,b)=>a.cpe-b.cpe);
+  const bestModel=modelStats[0];
+
+  // type comparison
+  const typeStats=Object.entries(byType).map(([t,list])=>({type:t,...kpi(list),n:list.length}));
+
+  // golden videos
+  const avgCost=rows.length?rows.reduce((s,r)=>s+r.cost,0)/rows.length:0;
+  const avgViews=rows.length?rows.reduce((s,r)=>s+r.views,0)/rows.length:0;
+  const golden=rows.filter(r=>r.cost>avgCost&&r.views>avgViews).sort((a,b)=>b.views-a.views).slice(0,3);
+
+  // best day of week
+  const byDow=groupBy(rows.filter(r=>r.date),r=>new Date(r.date).getDay());
+  const dows=['周日','周一','周二','周三','周四','周五','周六'];
+  const dowStats=Object.entries(byDow).map(([d,list])=>({label:dows[+d],...kpi(list)}));
+  dowStats.sort((a,b)=>a.cpe-b.cpe);
+  const bestDow=dowStats[0];
+
+  const insights=[
+    {
+      ico:'👑',
+      title:`性价比最高的 UP 主层级：<span class="highlight">${bestCat?.cat||'-'}</span>`,
+      text: bestCat
+        ? `平均CPM <strong>¥${fmt(bestCat.cpm,2)}</strong>，互动率 <strong>${pct(bestCat.ir)}</strong>，共 <strong>${bestCat.n}</strong> 条投放记录。建议优先分配预算至该层级。`
+        : '样本不足'
+    },
+    {
+      ico:'🚗',
+      title:`CPE最低的车型：<span class="highlight pink">${bestModel?.model||'-'}</span>`,
+      text: bestModel
+        ? `CPE = <strong>¥${fmt(bestModel.cpe,2)}</strong>，CPM = <strong>¥${fmt(bestModel.cpm,2)}</strong>，互动率 <strong>${pct(bestModel.ir)}</strong>（${bestModel.n}条），该车型内容引发互动成本最低，建议加大投放。`
+        : '样本不足'
+    },
+    {
+      ico:'🎯',
+      title:'投放类型效果对比',
+      text: typeStats.length>0
+        ? typeStats.map(t=>`<strong>[${t.type}]</strong> CPM=¥${fmt(t.cpm,2)} 互动率=${pct(t.ir)} CPE=¥${fmt(t.cpe,2)}（${t.n}条）`).join('　|　')
+        + (typeStats.length>1?`　→ 推荐：<span class="highlight">${typeStats.sort((a,b)=>a.cpe-b.cpe)[0].type}</span>`:'')
+        : '未检测到投放类型字段'
+    },
+    {
+      ico:'📅',
+      title:`推荐加大投放的时段：<span class="highlight green">${bestDow?.label||'-'}</span>`,
+      text: bestDow
+        ? `该日 CPE=<strong>¥${fmt(bestDow.cpe,2)}</strong>，互动率=<strong>${pct(bestDow.ir)}</strong>，每千次播放成本=<strong>¥${fmt(bestDow.cpm,2)}</strong>，综合效率最优。`
+        : '无日期数据或样本不足'
+    },
+    {
+      ico:'⭐',
+      title:'高曝光-高互动黄金视频（建议追加投放）',
+      text: golden.length>0
+        ? golden.map(r=>`<strong>${r.upName||r.model}</strong>（播放${wan(r.views)}，互动率${pct(r.views>0?r.interactions/r.views:0)}，消耗¥${fmt(r.cost,0)}）`).join('　')
+        : '当前筛选下无黄金视频'
+    }
+  ];
+
+  document.getElementById('insightList').innerHTML = insights.map(ins=>
+    `<div class="insight">
+      <div class="ico">${ins.ico}</div>
+      <div class="txt"><strong>${ins.title}</strong><p>${ins.text}</p></div>
+    </div>`
+  ).join('');
+}
+
+// ─── Main render ─────────────────────────────────────────────────────────────
+function render(){
+  rebuildFilters();
+  const rows=filtered();
+  renderKPIs(rows);
+  renderTrend(rows);
+  renderBubble(rows);
+  renderCat(rows);
+  renderModel(rows);
+  renderType(rows);
+  renderTable(rows);
+  renderInsights(rows);
+}
+
+// ─── File upload ─────────────────────────────────────────────────────────────
+function cleanKey(k){ return (k||'').replace(/[\r\n]+/g,'').trim(); }
+function toNum(v){ if(!v&&v!==0)return 0; const s=String(v).replace(/[,\s￥¥$]/g,''); const n=parseFloat(s); return isFinite(n)?n:0; }
+
+const COL={
+  date:        ['视频上线时间','发布时间','发布日期'],
+  cost:        ['结算金额（含折扣及服务费、不含税）','结算金额','消耗金额','花费','加热预算（含税的账户金额）'],
+  views:       ['播放量','播放数','播放'],
+  interactions:['互动量','互动数','互动'],
+  model:       ['车型','车型名称','车系'],
+  fans:        ['UP主粉丝数','粉丝数'],
+  upCat:       ['UP主分类','UP主级别'],
+  upName:      ['UP主名称','UP主','博主'],
+  targetType:  ['投放类型（定向/通投）','投放类型','定向类型'],
+  quarter:     ['消耗季度','预算季度','季度'],
+};
+
+function pick(row,cands){ for(const k of Object.keys(row)){if(cands.includes(cleanKey(k)))return row[k];} return undefined; }
+
+function normRow(row,i){
+  let date=pick(row,COL.date);
+  if(date instanceof Date) date=date.toISOString().slice(0,10);
+  else if(date) date=String(date).slice(0,10);
+  return {
+    id:i, date:date||null,
+    upName:(pick(row,COL.upName)||'').toString().trim(),
+    model:(pick(row,COL.model)||'').toString().trim()||null,
+    upCat:(pick(row,COL.upCat)||'').toString().trim()||'未知',
+    targetType:(pick(row,COL.targetType)||'').toString().trim()||null,
+    quarter:(pick(row,COL.quarter)||'').toString().trim()||null,
+    cost:Math.max(0,toNum(pick(row,COL.cost))),
+    views:Math.max(0,toNum(pick(row,COL.views))),
+    interactions:Math.max(0,toNum(pick(row,COL.interactions))),
+  };
+}
+
+document.getElementById('fileInput').addEventListener('change',async function(e){
+  const file=e.target.files[0]; if(!file)return;
+  const name=file.name.toLowerCase();
+  const el=document.getElementById('fname'); if(el) el.textContent=file.name;
+  try{
+    let rows=[];
+    if(name.endsWith('.csv')){
+      await new Promise(res=>{
+        Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>{
+          rows=r.data.map((row,i)=>{ const rr={}; Object.keys(row).forEach(k=>rr[cleanKey(k)]=row[k]); return normRow(rr,i); });
+          res();
+        }});
+      });
+    } else {
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const json=XLSX.utils.sheet_to_json(ws,{raw:false,defval:''});
+      rows=json.map((row,i)=>{ const rr={}; Object.keys(row).forEach(k=>rr[cleanKey(k)]=row[k]); return normRow(rr,i); });
+    }
+    rows=rows.filter(r=>r.cost>0||r.views>0);
+    if(!rows.length){alert('未能解析到有效数据，请检查列名格式');return;}
+    allRows=rows; selMod=[]; selCat=[]; selType=[]; selQt=[];
+    render();
+  } catch(err){ alert('解析失败：'+err.message); }
+});
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
